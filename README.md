@@ -1,7 +1,7 @@
+***DO NOT FORK THIS REPOSITORY!***
+
 # jobs-analysis
 This analyses jobs data to identify trends in job types related to software development. 
-
-***DO NOT FORK THIS REPOSITORY!***
 
 ## Files
 
