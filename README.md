@@ -2,6 +2,7 @@
 # jobs-analysis
 This analyses jobs data to identify trends in job types related to software development. This is the master branch. Other branches in this repository consist of:
 
+* `dissertation` - MSc project work being undertaken by Shicheng Zhang.
 * `mario` - mario's development branch.
 * `ssi` - Iain's classifier.
 
