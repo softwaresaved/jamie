@@ -5,7 +5,8 @@ This analyses jobs data to identify trends in job types related to software deve
 * `MarioDev` - mario's development branch.
 * `dissertation` - MSc project work being undertaken by Shicheng Zhang.
 * `iaindev` - Iain's development branch.
-* `ssi` - Iain's classifier.
+* `ssi` - Iain's human classifier to build a training set based on the work done by Ernest.
+* `stevedev` - Steve's development branch.
 
 ## Files
 
