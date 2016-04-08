@@ -3,8 +3,8 @@
 This analyses jobs data to identify trends in job types related to software development. This is the master branch. Other branches in this repository consist of:
 
 * `dissertation` - MSc project work being undertaken by Shicheng Zhang.
-* `mariodev` - mario's development branch.
 * `iaindev` - Iain's development branch.
+* `mariodev` - mario's development branch.
 * `ssi` - Iain's human classifier to build a training set based on the work done by Ernest.
 * `stevedev` - Steve's development branch.
 
