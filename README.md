@@ -10,10 +10,9 @@ This analyses jobs data to identify trends in job types related to software deve
 
 ## Files
 
-* `DataCleaning` - Python scripts to clean data from a CSV file of jobs.
 * `classifier-app` - an app that faciliates tthe classifying of software jobs - could be used to build a training set.
 * `data` - some data required for the job analysis.
-* `job2csv` - Python scripts to parse html job fragments and transform them to a CSV file.
+* `job2db` - Python scripts to parse html job fragments -- clean the information -- Record the result into a MongoDB database
 * `jobs-data-etl` - scripts implementing an extract, transform and load (ETL) process for jobs data.
 * `jobstats` - using python to analyse the data.
 * `scripts` - Perl script used to scrape job information, Perl script to process the job files and flatten these into a csv file. R scripts that do analysis of the jobs.csv file. Some of the results can be found in the [project wiki](https://github.com/softwaresaved/jobs-analysis/wiki).
