@@ -7,6 +7,7 @@ This analyses jobs data to identify trends in job types related to software deve
 * `mariodev` - mario's development branch.
 * `ssi` - Iain's human classifier to build a training set based on the work done by Ernest.
 * `stevedev` - Steve's development branch.
+* `dev_olivier` - Olivier's development branch.
 
 ## Files
 
