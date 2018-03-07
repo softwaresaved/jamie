@@ -16,6 +16,10 @@ import errno
 
 import pymongo
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path('.').absolute().parent))
+
 from common.logger import logger
 from common.configParser import ConfigParserPerso as configParser
 
@@ -30,10 +34,10 @@ from dataCollection.include.summary_day_operation import generateReport
 RUNNING = 'dev'
 
 if RUNNING == 'dev':
-    CONFIG_FILE = './config/config_dev.ini'
+    CONFIG_FILE = '../config/config_dev.ini'
     DEBUGGING='DEBUG'
 elif RUNNING == 'prod':
-    CONFIG_FILE = './config/config.ini'
+    CONFIG_FILE = '../config/config.ini'
     DEBUGGING='INFO'
 
 
