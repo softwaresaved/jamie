@@ -1,0 +1,21 @@
+# Ignore summary directory produced by the process.R script
+.Rhistory
+.DS_Store
+summary/
+jobs1000/
+report_*/
+Slide-Summary_*/
+jobs3/
+jobs
+Rplots.pdf
+scripts.Rproj
+InUK.txt
+knownjobs.txt
+skippedjobs.txt
+contracts.txt
+process.pdf
+test.Rmd
+*.zip
+*.swp
+*.csv
+*.html

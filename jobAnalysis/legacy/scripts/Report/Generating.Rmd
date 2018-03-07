@@ -1,0 +1,60 @@
+This report is automatically generated - the graphs generated will
+correspond to the latest data available. The report is generated using
+R markdown. To generate it you have to make sure that you set the
+working directory for your system to point to where this file
+(`report.Rmd`) is located. You  can get the files from GitHub using:
+
+```bash
+git clone https://github.com/softwaresaved/jobs-analysis.git
+```
+
+Then in Rstudio do `File->New Project`. Pick the `Existing Directory` and
+choose the directory that contains the git clone.
+
+It is assumed that you have:
+
+* the right R libraries installed - you will at least need:
+    * ***ggplot2*** - this is required for doing plots.
+    * ***pander*** - this allows tables to be printed in markdown.
+    * ***scales*** - currently using it for the `percent` function.
+    * ***rmarkdown*** - R markdown utilities (for processing out of Rstudio).
+    * ***ggmap*** - required for doing plots.
+  you can do:
+```r
+install.packages(c("ggplot2","pander","scales","rmarkdown","ggmap","knitr","tm"))
+```
+  This will install the required packages and any dependencies.
+* that you have the corresponding R files (if you pulled this from the
+  GitHub then all should be ok)
+* you have the `jobs.csv` file with the raw data in `../data/jobs.csv`
+  relative to this directory. If you do not have this already you should be 
+  able to pick this up from
+```bash
+https://trac.software.ac.uk/ssi/browser/Policy/SizeOfResearchSoftwareCommunity/JobAdvertsInvestigation/jobs.csv
+```
+  or if you would rather keep this updated (it changes every working day) then 
+  better to check it out from the svn repository:
+```bash
+svn checkout https://trac.software.ac.uk/svn/Policy/SizeOfResearchSoftwareCommunity/JobAdvertsInvestigation
+```
+  if you already have it on your system best to put a symbolic link to it or an 
+  alias as it is rather large.
+  
+You will have to edit the argument in the
+`setwd` call to point to your local working directory where this file
+is contained. 
+
+This document can be rendered directly from
+[Rstudio](http://rmarkdown.rstudio.com/) otherwise one can use:
+
+```bash
+R -e 'library(rmarkdown); render("Readme.Rmd")'
+```
+
+at the command line. Note that results are cached. 
+
+A `process_cache` and `process_files` directory are created in the
+directory where this script is run. You may have to remove these
+directories if re-running the scripts is not reflecting changes in the
+data.
+

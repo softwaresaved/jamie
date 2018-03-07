@@ -1,0 +1,2 @@
+University,URL,Category,University Code,Last Job Number
+University of Cambridge,http://www.jobs.cam.ac.uk/job/,Full,CBG,0

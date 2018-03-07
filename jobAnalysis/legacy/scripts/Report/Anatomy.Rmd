@@ -1,0 +1,141 @@
+There are
+[three classes](http://www.jobs.ac.uk/recruiters/products-and-prices/)
+of jobs to fit every size of pocket (the costs quoted were as on the
+23/7/15):
+
+* **standard advert** which allows:
+    * 550 words
+    * Advertiser's logo
+    * Emailed out to a target audicence
+    * The cost to a university would be £179
+* **standard advert+** has the features of the **standard advert** plus:
+    * Branded header image at the top
+    * Logo in the search results
+    * Cost to a university would be £279
+* **enhanced adverts** have all the previous features as well as:
+    * Unlimited words
+    * Branded and full bespoke design (which kills our ability to parse these)
+    * Highlighted blue box in the search results
+    * Free further particulars and additional logos
+    * Supports video content
+    * The price to a university would be £379
+
+Both the **standard advert** and the **standard advert+** are
+downloaded and processed.  The **enhanced adverts** are downloaded but
+not processed as the internal structure does not appear to be
+uniform. Currently the data from **enhanced adverts** is not included.
+They also publish some stats on the [job seekers](http://www.jobs.ac.uk/recruiters/why-jobsacuk/demographics/)
+that apply for jobs.
+
+A typical job consists of the following structures:
+
+![](imgs/job.png)
+
+Each job has a unique 6 character identifier consisting of capital
+letters and numbers.  The components that are currently being picked
+up are:
+
+* **Job Name** (maybe this should be called title). This comprises of the first 
+  html h1 header.
+* **Job Metadata** as this is in a table with a ***table.advert-details***
+  css class, which we can pull out individual pieces of job information.
+  These comprise of:
+     * **Location** - the Location pulled from the job. Format for this
+       is not uniform. Also when a list of locations is provided these are
+       not separated into the distinct locations but are treated as a
+       single location entity in itself.
+     * **Salary** - the salary field
+     * **Hours** - contracted hours as specified in the job ad.
+     * **Contract** - whether the job is offered: 
+         * ***Contract/Tempory***
+         * ***Permanent***
+         * ***Unspecified***.
+     * **Contract Type** - information about the contract.
+     * **Placed on** - the date of when the job was added.
+     * **Closes** - the date of when the job closes.
+     * **Job Ref** or **Reference ** - the job reference as provided by the
+	 job supplier.
+* **Job Description** - the main description for the job. This is
+  the main body of the text that gives a description of the job.
+* **Additional Job Metadata**
+      * **Type/Role** - Type of role as defined in the job ad.
+      * **Subject Area** - Semicolon delimited list of subject areas
+	    as specified in the job ad.
+	  * **Location2** - a second geographica classifier as specified in
+		the job ad.
+
+In addition the following metadata is derived:
+
+* **Employer** - the employer is identified from the html excerpt - this
+ is pulled from an `href` tag which provides a uniform description
+ for each institution. 
+* **InUK** - determines whether a job is located in the UK - this uses
+  a hand-maintained semicolon delimited look-up table in the
+  `InUK.txt` file.  If a job Location is located in the UK it is
+  specifed by a `1`, otherwise the value is `0`. Sometimes a location
+  is composed of a list a comma separated values - in this case the
+  location is treated as a single entity and if any of the locations
+  contained is in the UK then the entity is classified as being in the
+  UK.
+* **SoftwareJob** - determines whether a job is a software job or
+ not. A job is classifed as a software job if it has any of the
+ following terms:
+      * `software developer`|`coding`|`coder`|`research software engineer`|
+        `software engineer`|`programming`|`programmer`|`Fortran`|`C++`|`Java`|
+        `JavaScript`|`Matlab`|`python|perl`
+* **SoftTermIn** - indicate whether the software term as described
+  above is found in:
+* the job name or title in which case it is assigned a `T` or
+    * if it is found in the body it is assigned a `B` or 
+    * it is found in the job name and and body and is assigned with a `TB` or 
+    * nowhere, in which gets a `N`.	
+* **SalaryMin** - the minimum salary where it can be identified from
+  the Salaray field.
+* **SalaryMax** - the maximum saraly where it can be identified from
+  the Salaray field.
+* **h1** - a list of all the html h1 titles in the file.
+* **h2** - a list of all the html h2 titles in the file.
+* **h3** - a list of all the html h3 titles in the file.
+
+Also now collect:
+
+* **Contract Type** has been given it's own column.
+* **Reference** is now aliased to **Job Ref**.
+* **Funding amount** that is being recorded.
+* **Funding for** is now aliased to **Salary**.
+* **Qualification type** that is being recorded.
+
+As a final note the typical workflow is:
+
+* [getJobs.pl](https://github.com/softwaresaved/jobs-analysis/blob/master/scripts/getJobs.pl)
+  is run every week-day morning at 5am. It searches for all jobs on
+  the web-site then compares the job ids to those already downloaded
+  and then downloads any new ones it does not know about.
+* [jobs2csv.pl](https://github.com/softwaresaved/jobs-analysis/blob/master/scripts/jobs2csv.pl)   
+is run subsequently extracting the job information into a `jobs.csv`
+  file. It also picks up any locations it does not know
+  about. Generally the unknown location will be classified and the
+  `jobs2csv.pl` script run again to classify the job locations.
+
+
+## What is a software job?
+
+For the purpose of this study we take a **software job** to be (from Simon):
+
+>
+> Any job that requires development of software.
+>
+
+## Identifying software jobs
+
+As previously stated a ***software job*** is currently identfied by having one
+or more of a case insenstive search of each job of the following terms:
+
+```
+        `software developer`|`coding`|`coder`|`research software engineer`|
+        `software engineer`|`programming`|`programmer`|`Fortran`|`C++`|`Java`|
+        `JavaScript`|`Matlab`|`python|perl`
+```
+
+If any such term is found then the job is said to be a ***software job***. Not
+a very good way of classifying jobs.
