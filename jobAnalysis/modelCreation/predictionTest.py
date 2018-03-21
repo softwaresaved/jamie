@@ -1,35 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# from sklearn.metrics import classification_report
-from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
-from sklearn import preprocessing
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-# from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-# from sklearn.model_selection import train_test_split
-import warnings
-import sklearn.exceptions
-warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
-from include.vectorProcess import vectorProcess
-from include.getData import collectData
-from include.trainingData import trainingData
-from include.logger import logger
-from include.configParser import ConfigParserPerso as configParser
-
-import pymongo
 
 import os
 import re
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path('.').absolute().parent))
+
 from io import StringIO
 
+import pymongo
 import pandas as pd
 import numpy as np
+
+from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
+from sklearn import preprocessing
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+# from sklearn.model_selection import train_test_split
+import sklearn.exceptions
+
+import warnings
+warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
+
+
+from common.logger import logger
+from common.configParser import ConfigParserPerso as configParser
 
 logger = logger(name='prediction', stream_level='DEBUG')
 
