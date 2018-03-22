@@ -8,7 +8,7 @@ from configparser import ConfigParser
 """
 
 
-class ConfigParserPerso(ConfigParser):
+class configParserPerso(ConfigParser):
     """ Inherit from configparser and modify the method get() to
         return a list if it catch [ at the beginning and ] at the end
     """
@@ -22,13 +22,3 @@ class ConfigParserPerso(ConfigParser):
 
     def getlistint(self, section, option):
         return [int(x) for x in self.getlist(section, option)]
-
-
-def main():
-    """ """
-    parser = ConfigParserPerso()
-    parser.read('../config_dev.ini')
-
-
-if __name__ == '__main__':
-    main()
