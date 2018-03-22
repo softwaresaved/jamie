@@ -80,3 +80,9 @@ This is needed because the way the records are store in mysql is one record per 
 
 * Python 3.5
 * `pip install -r requirements.txt`
+
+
+### Source and references
+* Visualise which words are the most correlated to each categories
+  * https://towardsdatascience.com/multi-class-text-classification-with-scikit-learn-12f1e60e0a9f
+  * https://buhrmann.github.io/tfidf-analysis.html
