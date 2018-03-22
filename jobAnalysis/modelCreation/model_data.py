@@ -27,43 +27,24 @@ warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWar
 
 
 from common.logger import logger
-from common.configParser import ConfigParserPerso as configParser
+from common.getConnection import connectDB
 
 logger = logger(name='prediction', stream_level='DEBUG')
 
+# ## GLOBAL VARIABLES  ###
+# # To set up the variable on prod or dev for config file and level of debugging in the
+# # stream_level
+RUNNING = 'dev'
 
-def connectDB():
-    """
-    """
-    CONFIG_FILE = 'config_dev.ini'
-    config_value = configParser()
-    config_value.read(CONFIG_FILE)
+if RUNNING == 'dev':
+    CONFIG_FILE = '../config/config_dev.ini'
+    DEBUGGING='DEBUG'
+elif RUNNING == 'prod':
+    CONFIG_FILE = '../config/config.ini'
+    DEBUGGING='INFO'
 
-    DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
-    access_value = configParser()
-    access_value.read(DB_ACC_FILE)
 
-    # # MongoDB ACCESS # #
-    mongoDB_USER = access_value['MongoDB'].get('db_username'.lower(), None)
-    mongoDB_PASS = access_value['MongoDB'].get('DB_PASSWORD'.lower(), None)
-    mongoDB_AUTH_DB = access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None)
-    mongoDB_AUTH_METH = access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None)
-
-    # Get the information about the db and the collections
-    mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
-
-    # Create the instance that connect to the db storing the training set
-    mongoDB = collectData(mongoDB_NAME, mongoDB_USER,
-                          mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
-    return mongoDB
-
-def return_collection(self, collection='tags'):
-    """
-    Return the collection name where the tags are
-    """
-    return self.db[collection]
-
-def building_pipeline(self, collection, *args, **kwargs):
+def building_pipeline(collection, *args, **kwargs):
     """
     Build a pipeline for the aggregator in mongodb.
     1. match: Return the documents that have either SoftwareJob set to Yes or to None in
@@ -85,10 +66,11 @@ def building_pipeline(self, collection, *args, **kwargs):
     match = {'$match': {'$or': [{'SoftwareJob': 'Yes'}, {'SoftwareJob': 'None'}]}}
     lookup = {'$lookup': {'from': collection, 'localField': 'jobid', 'foreignField': 'jobid', 'as': 'data'}}
     unwind = {'$unwind': '$data'}
-    field_to_return = {'jobid': 1, 'SoftwareJob': 1, '$data': 1}
+    field_to_return = {'jobid': 1, 'SoftwareJob': 1, 'data': 1}
     if args:
         added_field_to_return = dict(('data.{}'.format(k), 1) for k in args)
         field_to_return.update(added_field_to_return)
+        del field_to_return['data']
 
     project = {'$project': field_to_return}
     if kwargs:
@@ -98,7 +80,7 @@ def building_pipeline(self, collection, *args, **kwargs):
     return [match, lookup, unwind, project]
 
 
-def get_documents(self, collection, *args, **kwargs):
+def get_documents(db, collection, *args, **kwargs):
     """
     Get a collection object than build the pipeline and return the id, tag and associated vector
     :params:
@@ -116,9 +98,9 @@ def get_documents(self, collection, *args, **kwargs):
         :document[0][type_vector]: list() of list() of tuple()
             that contain the vector of the document
     """
-    db = self.return_collection()
-    pipeline = self.building_pipeline(collection, *args, **kwargs)
-    for document in db.aggregate(pipeline):
+    pipeline = building_pipeline(collection, *args, **kwargs)
+    for document in db['tags'].aggregate(pipeline):
+        # yield document
         try:
             yield document['jobid'], document['SoftwareJob'], document['data']
         except IndexError:  # Happen when the vector is empty because not processed in the vector db
@@ -127,39 +109,30 @@ def get_documents(self, collection, *args, **kwargs):
             raise
 
 
-def get_training_set(db_conn, collection, *args, **kwargs):
+def get_training_set(db, collection, *args, **kwargs):
     """
     """
     job_ids = list()
     X = list()
     y = list()
-    for job_id, y_, x in db_conn.get_documents(collection, *args, **kwargs):
+    for job_id, y_, x in get_documents(db, collection, *args, **kwargs):
         job_ids.append(job_id)
         x_unlist = '\n'.join([x[arg] for arg in args])
         X.append(x_unlist)
         y.append(y_)
     return job_ids, X, y
 
+
 if __name__ == "__main__":
 
     # Connect to the database
-    db_conn = connectDB()
-    db_dataset = db_conn.return_collection(collection='jobs')
-    db_prediction = db_conn.return_collection(collection='prediction')
-    db_prediction.create_index([('jobid', pymongo.DESCENDING),
-                                ('input_field', pymongo.ASCENDING),
-                                ('operation', pymongo.ASCENDING),
-                                ('input_data', pymongo.ASCENDING),
-                                ('model', pymongo.ASCENDING),
-                                ('folding', pymongo.ASCENDING),
-                                ('params', pymongo.ASCENDING)],
-                               unique=True)
-
-    input_field = 'description'
+    db_conn = connectDB(CONFIG_FILE)
+    db_dataset = db_conn['jobs']
     job_ids, X_train, y_train = get_training_set(db_conn, 'jobs', 'description')
-    # tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english')
-    # features = tfidf.fit_transform(X_train).toarray()
-    # print(features.shape)
+    print(len(job_ids))
+    tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english')
+    features = tfidf.fit_transform(X_train).toarray()
+    print(features.shape)
 
     # nbr_folds = 20
     #
