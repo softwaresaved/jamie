@@ -14,16 +14,18 @@ import pymongo
 import pandas as pd
 import numpy as np
 
-from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
-from sklearn import preprocessing
-from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-# from sklearn.model_selection import train_test_split
-import sklearn.exceptions
 
-import warnings
-warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
+from  sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
+# from sklearn import preprocessing
+# from sklearn.svm import SVC
+# from sklearn.naive_bayes import GaussianNB
+# from sklearn.tree import DecisionTreeClassifier
+# from sklearn.model_selection import train_test_split
+# import sklearn.exceptions
+
+# import warnings
+# warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
 
 
 from common.logger import logger
@@ -102,6 +104,7 @@ def get_documents(db, collection, *args, **kwargs):
     for document in db['tags'].aggregate(pipeline):
         # yield document
         try:
+            del document['data']['_id']
             yield document['jobid'], document['SoftwareJob'], document['data']
         except IndexError:  # Happen when the vector is empty because not processed in the vector db
             yield document['jobid'], document['SoftwareJob'], None
@@ -117,8 +120,11 @@ def get_training_set(db, collection, *args, **kwargs):
     y = list()
     for job_id, y_, x in get_documents(db, collection, *args, **kwargs):
         job_ids.append(job_id)
-        x_unlist = '\n'.join([x[arg] for arg in args])
-        X.append(x_unlist)
+        if len(args) == 1:
+            x_unlist = '\n'.join([x[arg] for arg in args])
+            X.append(x_unlist)
+        else:
+            X.append(x)
         y.append(y_)
     return job_ids, X, y
 
@@ -128,7 +134,8 @@ if __name__ == "__main__":
     # Connect to the database
     db_conn = connectDB(CONFIG_FILE)
     db_dataset = db_conn['jobs']
-    job_ids, X_train, y_train = get_training_set(db_conn, 'jobs', 'description')
+    job_ids, X_train, y_train = get_training_set(db_conn, 'jobs')
+    print(X_train)
     print(len(job_ids))
     tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english')
     features = tfidf.fit_transform(X_train).toarray()
