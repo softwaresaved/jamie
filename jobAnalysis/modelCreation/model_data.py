@@ -46,103 +46,21 @@ elif RUNNING == 'prod':
     DEBUGGING='INFO'
 
 
-def building_pipeline(collection, *args, **kwargs):
-    """
-    Build a pipeline for the aggregator in mongodb.
-    1. match: Return the documents that have either SoftwareJob set to Yes or to None in
-        the db.tags collection
-    2. lookup: do inner join from the jobid keys in the db.collection to find which of the
-        jobid are present in the collection given by args[0]
-    3. Unwind: the result under the `data` keys to have access to all the keys/values
-    4. second_match: only match the results that satisfied the k:v given with **kwargs
-    5. project: return only the jobid, the tag and the data
-
-    :params:
-        :collection str(): which database need to be queried
-        :args: which keys need to be returned. If not args specified, return the entire document
-        :kwargs: the keys and values to match which type of data needed to be returned. If none, return all the
-        data associated for each keys
-
-    :return: list() pipeline to be parsed into the aggregate function
-    """
-    match = {'$match': {'$or': [{'SoftwareJob': 'Yes'}, {'SoftwareJob': 'None'}]}}
-    lookup = {'$lookup': {'from': collection, 'localField': 'jobid', 'foreignField': 'jobid', 'as': 'data'}}
-    unwind = {'$unwind': '$data'}
-    field_to_return = {'jobid': 1, 'SoftwareJob': 1, 'data': 1}
-    if args:
-        added_field_to_return = dict(('data.{}'.format(k), 1) for k in args)
-        field_to_return.update(added_field_to_return)
-        del field_to_return['data']
-
-    project = {'$project': field_to_return}
-    if kwargs:
-        second_match = {'$match': {'$and': [{'data.{}'.format(k): v} for k, v in kwargs.items() if v is not None]}}
-        # project = {'$project': {'jobid': 1, 'SoftwareJob': 1, 'data.data': 1}}
-        return [match, lookup, unwind, second_match, project]
-    return [match, lookup, unwind, project]
-
-
-def get_documents(db, collection, *args, **kwargs):
-    """
-    Get a collection object than build the pipeline and return the id, tag and associated vector
-    :params:
-        :collection: mongDB.collection() collection where txt data are stored
-        :args: which keys need to be returned. If not args specified, return the entire document
-        :**kwargs: string of the fields that needs to be parsed. The different possibilities are
-            :input_field str(): Which field it is from the job advert
-            :operation str(): which operation that has been applied on the data to generate it
-            :input_data str(): which data have been used. If the collection used is db.txt_clean, this
-            field is ommited.
-    :return:
-        :document[jobid]: str() of the jobid
-        :document['SoftwareJob']: str() of the tag associated to the jobid,
-            either 'Yes' or 'None'
-        :document[0][type_vector]: list() of list() of tuple()
-            that contain the vector of the document
-    """
-    pipeline = building_pipeline(collection, *args, **kwargs)
-    for document in db['tags'].aggregate(pipeline):
-        # yield document
-        try:
-            del document['data']['_id']
-        except KeyError:
-            pass
-        try:
-            yield document['jobid'], document['SoftwareJob'], document['data']
-        except IndexError:  # Happen when the vector is empty because not processed in the vector db
-            yield document['jobid'], document['SoftwareJob'], None
-        except KeyError:
-            raise
-
-
-def get_training_set(db, collection, *args, **kwargs):
-    """
-    """
-    job_ids = list()
-    X = list()
-    y = list()
-    for job_id, y_, x in get_documents(db, collection, *args, **kwargs):
-        job_ids.append(job_id)
-        if len(args) == 1:
-            x_unlist = '\n'.join([x[arg] for arg in args])
-            X.append(x_unlist)
-        else:
-            X.append(x)
-        y.append(y_)
-    return job_ids, X, y
-
-
 def nested_cross_validation(X, y, feature, nbr_folds=2):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
     """
-    # Relabel the 'yes' to 1 and 'no' to 0
-    lb = preprocessing.LabelBinarizer()
+    print(set(y))
+    raise
+    if len(set(y)) > 2:
+        # Relabel the 'yes' to 1 and 'no' to 0
+        lb = preprocessing.LabelBinarizer()
     y = lb.fit_transform(y)
+    print(y)
     # Reshaped the matrix for working with StratifiedKFold
     # see: https://stackoverflow.com/a/35022548/3193951
-    y = np.reshape(y, [len(y)])
+    # y = np.reshape(y, [len(y)])
 
     # prepare models
     models = []
@@ -209,7 +127,6 @@ def nested_cross_validation(X, y, feature, nbr_folds=2):
                                                     scoring='f1',
                                                     n_jobs=-1)
 
-        score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['input_data']] = input_data
         score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature']] = feature
         score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
 
@@ -252,12 +169,16 @@ if __name__ == "__main__":
     # Connect to the database
     db_conn = connectDB(CONFIG_FILE)
     db_dataset = db_conn['jobs']
-    job_ids, X_train, y_train = get_training_set(db_conn, 'jobs', 'description')
+    path_to_df = './data/model_data.pk1'
+    df = pd.read_pickle(path_to_df)
+    train_df = df[df.SoftwareJob.notnull()]
+    job_ids, X_train, y_train = train_df['jobid'], train_df['description'], train_df['SoftwareJob']
+    # print(X_train)
     tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english')
     features = tfidf.fit_transform(X_train).toarray()
     print(features.shape)
 
-    model_name, model_best_params, model = nested_cross_validation(features, y_train, 'description', nbr_folds=20)
+    model_name, model_best_params, model = nested_cross_validation(features, y_train, 'description', nbr_folds=2)
 
         # vectorising_data = vectorProcess(dict_name='_'.join([collection_data, input_field, input_data, operation, 'vector']))
         # m=0
