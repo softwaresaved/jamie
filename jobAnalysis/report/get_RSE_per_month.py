@@ -1,25 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-
 import os
 import csv
-from datetime import datetime
-import re
-
 import sys
+import re
+from datetime import datetime
 from pathlib import Path
-sys.path.append(str(Path('.').absolute().parent))
-
-
-from common.getConnection import connectDB
-from common.textClean import textClean
 
 from io import StringIO
 
 import pandas as pd
 import numpy as np
+
+sys.path.append(str(Path('.').absolute().parent))
+
+from common.getConnection import connectDB
+from common.textClean import textClean
 
 
 # ## GLOBAL VARIABLES  ###
@@ -38,17 +35,22 @@ elif RUNNING == 'prod':
 def write_csv(header, results, filename):
     """
     """
-    # result['total']
     with open(filename, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=header)
         writer.writeheader()
         for date in sorted(results.keys()):
             try:
-                rse_number = results[date]['number rse']
+                rse_number = results[date]['research_soft_eng']
             except KeyError:
-                results[date]['number rse'] = 0
+                results[date]['research_soft_eng'] = 0
+
+            try:
+                rs_number = results[date]['research_soft']
+            except KeyError:
+                results[date]['research_soft'] = 0
             row = {'Date': date,
-                   'Number of RSEs': results[date]['number rse'],
+                   'Number of Research Software Jobs': results[date]['research_soft'],
+                   'Number of RSEs': results[date]['research_soft_eng'],
                    'Total ads': results[date]['total ads']}
             print(row)
             writer.writerow(row)
@@ -56,22 +58,26 @@ def write_csv(header, results, filename):
 
 def check_if_rse(cleaner, txt):
 
-    rse_list = ['research software engineer', 'rse', 'r s e']
     txt = cleaner.clean_text(txt)
+    to_return = False
     for pos, word in enumerate(txt):
         if word == 'rse':
-            return True
+            to_return = 'research_soft_eng'
+            return to_return
         elif word in ['research', 'r']:
-            if len(txt) > pos+2:
+            try:
                 if txt[pos+1]  in ['software', 's']:
+                    to_return = 'research_soft'
                     if txt[pos+2] in ['engineer', 'e']:
-                        return True
-    return False
-
+                        to_return = 'research_soft_eng'
+            except IndexError:
+                pass
+    return to_return
 
 
 def remove_suffix_date(s):
     return re.sub(r'(\d)(st|nd|rd|th)', r'\1', str(s))
+
 
 def transform_valid_date(s):
     return datetime.strptime(s, '%d %B %Y')
@@ -79,21 +85,17 @@ def transform_valid_date(s):
 
 def get_month(date):
     """
-    retuirn the month from the formating datestring
+    return the month from the formatting datestring
     23th June 2016
     """
     date_time_obj = transform_valid_date(remove_suffix_date(date))
     # Get only the year and the month and transforming str month into numbered month
     return date_time_obj.strftime('%Y-%m')
-    # return ' '.join(date.split(' ')[1:])
 
 
 def get_all_documents(db_conn, cleaner):
     results = {}
-    n = 1
     for doc in db_conn['jobs'].find({}, {'description': 1, 'placed_on': 1}):
-        n +=1
-        # print(n)
         try:
             doc['description']
             doc['placed_on']
@@ -104,27 +106,39 @@ def get_all_documents(db_conn, cleaner):
                 results[date]['total ads'] += 1
             else:
                 results[date] = {'total ads': 1}
-            if check_if_rse(cleaner, doc['description']):
-                if 'number rse' in results[date]:
-                    results[date]['number rse'] += 1
+            match_soft = check_if_rse(cleaner, doc['description'])
+            if match_soft:
+                if match_soft in results[date]:
+                    results[date][match_soft] += 1
                 else:
-                    results[date].update({'number rse': 1})
-            # print(results)
+                    results[date].update({match_soft: 1})
+                # If the match_soft is equal to research_soft_eng it means it is also equal to research_soft
+                if match_soft == 'research_soft_eng':
+                    if 'research_soft' in results[date]:
+                        results[date]['research_soft'] +=1
+                    else:
+                        results[date].update({'research_soft': 1})
 
         except KeyError:
-            pass
             # results['invalid'] = results.get('invalid', 0) +1
+            pass
 
     return results
 
+
 if __name__ == "__main__":
-    filename = '../../outputs/rse_per_monhts.csv'
-    header = ['Date', 'Number of RSEs', 'Total ads']
+
+    filename = '../../outputs/research_software_per_month.csv'
+    header = ['Date', 'Number of Research Software Jobs', 'Number of RSEs', 'Total ads']
+
     # Connect to the database
     db_conn = connectDB(CONFIG_FILE)
+
     # init text_cleaner
     cleaner = textClean(remove_stop=False)
+
     # Parse the db and get the number of RSE per months
     results = get_all_documents(db_conn, cleaner)
+
     # record the results
     write_csv(header, results, filename)
