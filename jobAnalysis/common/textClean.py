@@ -24,7 +24,7 @@ from nltk.corpus import stopwords
 # from include.update_nltk import init_nltk
 
 try:
-    from include.logger import logger
+    from common.logger import logger
 except ImportError:
     from logger import logger
 # from include.benchmark import timeit
@@ -43,10 +43,11 @@ class textClean:
     Return the list
     """
 
-    def __init__(self, remove_stop=True, **kwargs):
+    def __init__(self, remove_stop=True, flat_list=True, **kwargs):
         """
         """
         self.remove_stop = remove_stop
+        self.flat_list = flat_list
         # Allow to install the nltk files directly in the current folder
         # self.nltk_path = init_nltk(**kwargs)
         # if self.nltk_path:
@@ -289,7 +290,8 @@ class textClean:
             if self.remove_stop:
                 sent_cleaned = self.remove_stop_sent(sent_cleaned)
             txt_cleaned.append(sent_cleaned)
-
+        if self.flat_list is True:
+            return self.flattening_list(txt_cleaned)
         return txt_cleaned
 
     def clean_stop(self, text):
