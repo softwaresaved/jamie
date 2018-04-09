@@ -99,14 +99,15 @@ def get_documents(db, collection, *args, **kwargs):
     pipeline = building_pipeline(collection, *args, **kwargs)
     for document in db['tags'].aggregate(pipeline):
         # yield document
-        try:
-            del document['data']['_id']
-        except KeyError:
-            pass
-        try:
-            del document['_id']
-        except KeyError:
-            document.update(document['data'])
+        document.update({k: v for k, v in document['data'].items()})
+        # try:
+        #     del document['data']['_id']
+        # except KeyError:
+        #     pass
+        # try:
+        #     del document['_id']
+        # except KeyError:
+        #     document.update(document['data'])
         try:
             del document['data']
         except KeyError:
@@ -114,13 +115,12 @@ def get_documents(db, collection, *args, **kwargs):
         yield document
 
 
-def get_training_set(db, collection, *args, record=False, **kwargs):
+def get_training_set(db, collection, *args, **kwargs):
     """
     """
     df = pd.DataFrame.from_dict(list(get_documents(db, collection, *args, **kwargs)))
-    if record is True:
-        path_to_df = './data/model_data.pk1'
-        df.to_pickle(path_to_df)
+    path_to_df = './data/model_data.pk1'
+    df.to_pickle(path_to_df)
     return df
 
 
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     # Connect to the database
     db_conn = connectDB(CONFIG_FILE)
-    df = get_training_set(db_conn, 'jobs', record=True)
+    df = get_training_set(db_conn, 'jobs')
     print(df)
 
 

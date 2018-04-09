@@ -21,7 +21,7 @@ from nltk import sent_tokenize
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 
-from include.update_nltk import init_nltk
+# from include.update_nltk import init_nltk
 
 try:
     from include.logger import logger
@@ -43,14 +43,14 @@ class textClean:
     Return the list
     """
 
-    def __init__(self, remove_stop=False, **kwargs):
+    def __init__(self, remove_stop=True, **kwargs):
         """
         """
         self.remove_stop = remove_stop
         # Allow to install the nltk files directly in the current folder
-        self.nltk_path = init_nltk(**kwargs)
-        if self.nltk_path:
-            data.path.append(self.nltk_path)
+        # self.nltk_path = init_nltk(**kwargs)
+        # if self.nltk_path:
+            # data.path.append(self.nltk_path)
         self.stop_words = stopwords.words('english')
         # Use to remove the trailing punctuation in words that remain after tokenization
         self.REGEX_EMAIL = re.compile(("([a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`" "{|}~-]+)*(@|\sat\s)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(\.|" "\sdot\s))+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)"))

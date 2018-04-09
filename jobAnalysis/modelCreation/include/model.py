@@ -1,24 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 import os
-import re
 
-import sys
-from pathlib import Path
-sys.path.append(str(Path('.').absolute().parent))
-
-from io import StringIO
-
-import pymongo
 import pandas as pd
 import numpy as np
 
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn import preprocessing
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import train_test_split
@@ -28,40 +19,29 @@ import warnings
 warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
 
 
-from common.logger import logger
-from common.getConnection import connectDB
+def record_result_csv(df, name_folds, folder):
+    """
+    Record the result of each outer_cv loop into a panda df and
+    then record it into a csv.
+    Before saving it checks if a similar csv file exists to append it instead
+    of overwritting it.
+    The name is based on the method to folds and just write the different models unders
+    """
+    filename = folder + 'average_scores_' + name_folds+ '.csv'
+    if os.path.isfile(filename):
+        df_to_append = pd.read_csv(filename, index_col=0)
+        df_to_append = df_to_append.append(df)
+        df_to_append.to_csv(filename)
+    else:
+        df.to_csv(filename)
 
-logger = logger(name='prediction', stream_level='DEBUG')
-
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
-
-
-def nested_cross_validation(X, y, feature, nbr_folds=2):
+def nested_cross_validation(X, y, feature_type, nbr_folds=2, folder='./outputs/'):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
     """
-    print(set(y))
-    raise
-    if len(set(y)) > 2:
-        # Relabel the 'yes' to 1 and 'no' to 0
-        lb = preprocessing.LabelBinarizer()
-    y = lb.fit_transform(y)
-    print(y)
-    # Reshaped the matrix for working with StratifiedKFold
-    # see: https://stackoverflow.com/a/35022548/3193951
-    # y = np.reshape(y, [len(y)])
 
+    print(y)
     # prepare models
     models = []
     # models.append(('LR', LogisticRegression()))
@@ -89,12 +69,14 @@ def nested_cross_validation(X, y, feature, nbr_folds=2):
     # outer_cv = StratifiedKFold(nbr_folds)
     # outer_csv = LeaveOneOut()
     # outer_cv  = LeaveOneOut(nbr_folds)
-    outer_cv = KFold(nbr_folds)
+    # outer_cv = KFold(nbr_folds)
 
     # When trained a certain fold, doing the second cross-validation split to choose hyper parameters
     if isinstance(nbr_folds, int):
-        inner_cv = StratifiedKFold(nbr_folds)
+        # outer_cv = KFold(nbr_folds)
         outer_cv = StratifiedKFold(nbr_folds)
+        # inner_cv = KFold(nbr_folds)
+        inner_cv = StratifiedKFold(nbr_folds)
         name_outer_cv = 'kfold-{}'.format(nbr_folds)
     else:
         if nbr_folds.lower() == 'leaveoneout':
@@ -104,7 +86,7 @@ def nested_cross_validation(X, y, feature, nbr_folds=2):
             name_outer_cv = 'leaveoneout-{}'.format(str(nbr_folds))
 
     score_for_outer_cv = pd.DataFrame(index=range(len(models)),
-                                      columns=['model', 'feature'])
+                                      columns=['model', 'feature_type'])
     score_for_outer_cv['model'] = [name for name in models]
 
     columns_to_add = ['fold-{}'.format(int(i)+ 1) for i in range(nbr_folds)]
@@ -127,7 +109,7 @@ def nested_cross_validation(X, y, feature, nbr_folds=2):
                                                     scoring='f1',
                                                     n_jobs=-1)
 
-        score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature']] = feature
+        score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
         score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
 
         # get the mean MSE across each of outer_cv's K-folds
@@ -140,7 +122,7 @@ def nested_cross_validation(X, y, feature, nbr_folds=2):
 
 
 
-    record_result_csv(score_for_outer_cv, name_outer_cv)
+    record_result_csv(score_for_outer_cv, name_outer_cv, folder)
     print('Average score across the outer folds: ', average_scores_across_outer_folds_for_each_model)
     many_stars = '\n' + '*' * 100 + '\n'
     print(many_stars + 'Fitting the model on the training set Complete summary of the best model' + many_stars)
@@ -164,67 +146,24 @@ def nested_cross_validation(X, y, feature, nbr_folds=2):
     return best_model_name, best_params, final_model
 
 
-if __name__ == "__main__":
+def adaboost(X, y):
+    seed = 7
+    num_trees = 100
+    kfold = KFold(n_splits=10, random_state=seed)
+    model = GradientBoostingClassifier(n_estimators=num_trees, random_state=seed)
+    results = cross_val_score(model, X, y, cv=kfold)
+    print(results.mean())
+    # return print_score(model)
 
-    # Connect to the database
-    db_conn = connectDB(CONFIG_FILE)
-    db_dataset = db_conn['jobs']
-    path_to_df = './data/model_data.pk1'
-    df = pd.read_pickle(path_to_df)
-    train_df = df[df.SoftwareJob.notnull()]
-    job_ids, X_train, y_train = train_df['jobid'], train_df['description'], train_df['SoftwareJob']
-    # print(X_train)
-    tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english')
-    features = tfidf.fit_transform(X_train).toarray()
-    print(features.shape)
+def models_pipeline():
+    """
+    Create a pipeline to test several models at once
+    """
+    models = Pipeline(['model':
 
-    model_name, model_best_params, model = nested_cross_validation(features, y_train, 'description', nbr_folds=2)
 
-        # vectorising_data = vectorProcess(dict_name='_'.join([collection_data, input_field, input_data, operation, 'vector']))
-        # m=0
-        # n=0
-        # nbr_yes = 0
-        # nbr_no = 0
-        # db_doc = db_conn.return_collection(collection=collection_data)
-        # for document in db_doc.find({'input_field': input_field,
-        #                              'operation': operation,
-        #                              'input_data': input_data,
-        #                              'data': {'$exists': True}}):
-        #     m+=1
-        #     try:
-        #         data_vector = vectorising_datr.get_vector(document['data'], update_dict=False)
-        #         data_sparse_matrix = training_set.create_sparse_matrix(data_vector, training_set.max_vector)
-        #         data_tfidf = training_set.transform_tfidf(data_sparse_matrix)
-        #
-        #
-        #         prediction = model.predict(data_tfidf)[0]
-        #         # prediction = model.predict(data_sparse_matrix)[0]
-        #         if prediction == 0:
-        #             prediction = 'No'
-        #         if prediction == 1:
-        #             prediction = 'Yes'
-        #         db_prediction.update({'jobid': document['JobId'],
-        #                                 'input_field': input_field,
-        #                                 'input_data': input_data,
-        #                                 'operation': operation,
-        #                                 'model': model_name,
-        #                                 'folding': name_fold,
-        #                                 'params': model_best_params},
-        #                                 {'$set': {'prediction': prediction}},
-        #                                 upsert=True)
-        #         n+=1
-        #         if prediction == 'Yes':
-        #             nbr_yes +=1
-        #         if prediction == 'No':
-        #             nbr_no +=1
-        #
-        #         if m % 5000 == 0:
-        #             print('Number of document processed: {}'.format(m))
-        #             print('Number of document classified: {}'.format(n))
-        #             print('Number of Yes: {}'.format(nbr_yes))
-        #             print('Number of No: {}'.format(nbr_no))
-        #             print('\n')
-        #     except KeyError:
-        #         pass
-        #     except ValueError:
-        #         pass
+def param_grid():
+    """
+    Change the hyperparameters for
+
+
