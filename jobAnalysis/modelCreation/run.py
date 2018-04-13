@@ -17,6 +17,7 @@ import numpy as np
 from include.features import get_train_data
 from include.model import nested_cross_validation, adaboost
 
+from sklearn.metrics import confusion_matrix
 
 from common.logger import logger
 
@@ -38,8 +39,21 @@ elif RUNNING == 'prod':
 
 if __name__ == "__main__":
 
-    job_ids, X, y = get_train_data()
-    adaboost(X, y)
+    X_train, X_test, y_train, y_test = get_train_data()
+
+    best_model_name, best_model_params, final_model = nested_cross_validation(X_train, y_train)
+    y_pred = final_model.predict(X_test)
+    y_score = final_model.predict_proba(X_test)
+    print(y_score)
+    print(y_pred)
+    print(confusion_matrix(y_test, y_pred))
+    # model = adaboost(X_train, y_train)
+    # # model.refit()
+    # preds = model.predict(X_test)
+    # probs = model.predict_proba(X_test)
+    # print('Predictions: {}'.format(preds))
+    # print('Probability: {}'.format(probs))
+    # print(np.means(preds == y_test))
     # model_name, model_best_params, model = nested_cross_validation(X, y, 'description-job_title', nbr_folds=2)
 
 

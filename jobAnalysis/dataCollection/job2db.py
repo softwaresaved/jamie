@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
 from common.logger import logger
-from common.configParser import ConfigParserPerso as configParser
+from common.configParser import configParserPerso as configParser
 
 from dataCollection.include.fileProcess import fileProcess
 from dataCollection.include.cleaningInformation import OutputRow

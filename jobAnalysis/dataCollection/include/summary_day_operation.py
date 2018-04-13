@@ -10,7 +10,7 @@ import pymongo
 from tabulate import tabulate
 from common.logger import logger
 
-from common.configParser import ConfigParserPerso as configParser
+from common.configParser import configParserPerso as configParser
 
 logger = logger(name='summary_day_operation', stream_level='DEBUG')
 
