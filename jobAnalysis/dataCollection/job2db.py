@@ -196,30 +196,11 @@ def main():
                     print('Enhanced: {}'.format(data['enhanced']))
                 except KeyError:
                     print('Enhanced: False')
-                # print(data.keys())
                 print('List of InvalidCodes: {}'.format(data['invalid_code']))
                 print('List of Keys: {}'.format(original_content.keys()))
-                if data['jobid'] == 'BFW435':
-                    # print(original_content['raw_content'])
-                    # for k in data:
-                    #     print(k)
-                    #     print(data[k])
-                    #     print('\n')
-                    # print('\n')
-                    # print('\n')
-                    # for k in original_content:
-                    #     if k != 'raw_content':
-                    #         print(k)
-                    #         print(original_content[k])
-                    #         print('\n')
-                    raise
+
         except KeyError:
             pass
-            # print(original_content.keys())
-        # except Exception as e:
-        #     pass
-        #     logger.info(e)
-        # else:
         try:
             db_jobs.insert(data)
             report.nb_inserted_job +=1
