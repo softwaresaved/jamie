@@ -17,6 +17,7 @@ sys.path.append(str(Path('.').absolute().parent))
 
 from common.getConnection import connectDB
 from common.textClean import textClean
+from common.date_transformation import get_month
 
 
 # ## GLOBAL VARIABLES  ###
@@ -73,24 +74,6 @@ def check_if_rse(cleaner, txt):
             except IndexError:
                 pass
     return to_return
-
-
-def remove_suffix_date(s):
-    return re.sub(r'(\d)(st|nd|rd|th)', r'\1', str(s))
-
-
-def transform_valid_date(s):
-    return datetime.strptime(s, '%d %B %Y')
-
-
-def get_month(date):
-    """
-    return the month from the formatting datestring
-    23th June 2016
-    """
-    date_time_obj = transform_valid_date(remove_suffix_date(date))
-    # Get only the year and the month and transforming str month into numbered month
-    return date_time_obj.strftime('%Y-%m')
 
 
 def get_all_documents(db_conn, cleaner):
