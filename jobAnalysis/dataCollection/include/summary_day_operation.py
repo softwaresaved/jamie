@@ -33,7 +33,7 @@ class generateReport:
         self.nb_processed_job = 0
         self.nb_inserted_job = 0
         self.nb_duplicated_job = 0
-        self.report_csv_filename = '../../../outputs/dataCollection_job2db.csv'
+        self.report_csv_filename = '../../outputs/dataCollection/data_collected.csv'
         self.nb_mongo_error_job = 0
         self.last_id = self.get_last_id()
         self.pipeline = self.build_pipeline()

@@ -4,8 +4,6 @@
 import os
 import csv
 import sys
-import re
-from datetime import datetime
 from pathlib import Path
 
 from io import StringIO

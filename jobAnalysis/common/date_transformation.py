@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
+
+from datetime import datetime
+
 
 """ Small scripts to transform the date received from the jobs.ac.uk into a strtime rather
 than their format
@@ -12,7 +16,10 @@ def remove_suffix_date(s):
 
 
 def transform_valid_date(s):
-    return datetime.strptime(s, '%d %B %Y')
+    try:
+        return datetime.strptime(s, '%d %B %Y')
+    except ValueError:
+        return datetime.strptime(s, "%Y-%m-%d")
 
 
 def get_month(date):

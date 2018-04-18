@@ -7,6 +7,9 @@ import os
 import pandas as pd
 import numpy as np
 
+
+from sklearn.pipeline import Pipeline
+
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
@@ -38,7 +41,7 @@ def record_result_csv(df, name_folds, folder):
     else:
         df.to_csv(filename)
 
-def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
+def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/modelCreation/'):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
@@ -46,7 +49,7 @@ def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
     c_params = 10. ** np.arange(-3, 8)
     gamma_params = 10. ** np.arange(-5, 4)
 
-    models = {'SVC': {'model': SVC(),
+    models = {'SVC': {'model': SVC(probability=True),
                       'params': [{'C': c_params,
                                   'gamma': gamma_params,
                                   'kernel': ['rbf'],
@@ -64,9 +67,9 @@ def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
                        'matrix': 'sparse'
                       },
 
-              'NB' : {'model': GaussianNB(),
-                      'matrix': 'sparse'
-                     },
+              # 'NB' : {'model': GaussianNB(),
+              #         'matrix': 'sparse'
+              #        },
 
               'Gradient Boosting': {'model': GradientBoostingClassifier(),
                                     'params': {'n_estimators': [100],
@@ -77,6 +80,9 @@ def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
                                                },
                                     'matrix': 'sparse'
                                    },
+              'RandomForest': {'model': RandomForestClassifier(),
+                               'matrix': 'sparse'
+                              },
               }
 
     # Create the outer_cv with 3 folds for estimating generalization error
@@ -91,7 +97,7 @@ def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
         outer_cv = StratifiedKFold(nbr_folds)
         # inner_cv = KFold(nbr_folds)
         inner_cv = StratifiedKFold(nbr_folds)
-        name_outer_cv = 'kfold-{}'.format(nbr_folds)
+        name_outer_cv = 'kfold'.format(nbr_folds)
     else:
         if nbr_folds.lower() == 'leaveoneout':
             inner_cv = LeaveOneOut()
@@ -100,36 +106,40 @@ def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
             name_outer_cv = 'leaveoneout-{}'.format(str(nbr_folds))
 
     score_for_outer_cv = pd.DataFrame(index=range(len(models)),
-                                      columns=['model', 'feature_type'])
+                                      columns=['model'])
     score_for_outer_cv['model'] = [name for name in models]
 
     columns_to_add = ['fold-{}'.format(int(i)+ 1) for i in range(nbr_folds)]
     score_for_outer_cv = score_for_outer_cv.reindex(columns=score_for_outer_cv.columns.tolist() + columns_to_add)
-    #
+
     average_scores_across_outer_folds_for_each_model = dict()
-    # Get the average of the scores for the 10 folds
+    # Get the average of the scores for the {nbr_fold} folds
     for i, name in enumerate(models):
         estimator = models[name]['model']
+        # estimator = Pipeline([('features', features), ('clf', model)])
+
+        # print(estimator.get_params().keys())
+
         try:
             params = models[name]['params']
         except KeyError:
             params = None
-        print(name, estimator, params)
-        if models[name]['matrix'] == 'dense':
-            X = X.toarray()
+        # print(name, estimator, params)
+        # if models[name]['matrix'] == 'dense':
+        #     X = X.toarray()
         if params:
 
-            estimator = GridSearchCV(estimator=estimator,
-                                    param_grid=params,
-                                    cv=inner_cv,
-                                    scoring='average_precision',
-                                    n_jobs=-1)
+            estimator = GridSearchCV(estimator,
+                                     param_grid=params,
+                                     cv=inner_cv,
+                                     scoring='precision',
+                                     n_jobs=-1)
 
         # estimate generalization error on the K-fold splits of the data
         scores_across_outer_folds = cross_val_score(estimator,
                                                     X, y,
                                                     cv=outer_cv,
-                                                    scoring='average_precision',
+                                                    scoring='precision',
                                                     n_jobs=-1)
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
@@ -166,10 +176,8 @@ def nested_cross_validation(X, y, nbr_folds=2, folder='./outputs/'):
         final_model.fit(X, y)
     except ValueError:
         final_model.fit(X.toarray(), y)
-    best_params = final_model.best_params_
-    print(best_params)
 
     # return best_model, best_model_params
-    return best_model_name, best_params, final_model
+    return best_model_name, final_model.best_params_, final_model
 
 

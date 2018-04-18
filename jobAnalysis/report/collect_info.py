@@ -2,22 +2,33 @@
 # encoding: utf-8
 
 """
-Generate report for job2db.py run
+Generate data for all the different operations
 """
 import os
 import csv
 import pymongo
 
 from tabulate import tabulate
-try:
-    from include.logger import logger
-except ModuleNotFoundError:
-    from logger import logger
 
-try:
-    from include.configParser import ConfigParserPerso as configParser
-except ModuleNotFoundError:
-    from configParser import ConfigParserPerso as configParser
+import sys
+from pathlib import Path
+sys.path.append(str(Path('.').absolute().parent))
+
+from common.logger import logger
+from common.getConnection import connectDB
+from common.date_transformation import get_month
+
+# ## GLOBAL VARIABLES  ###
+# # To set up the variable on prod or dev for config file and level of debugging in the
+# # stream_level
+RUNNING = 'dev'
+
+if RUNNING == 'dev':
+    CONFIG_FILE = '../config/config_dev.ini'
+    DEBUGGING='DEBUG'
+elif RUNNING == 'prod':
+    CONFIG_FILE = '../config/config.ini'
+    DEBUGGING='INFO'
 
 logger = logger(name='collect info', stream_level='DEBUG')
 
@@ -38,8 +49,8 @@ class generateReport:
         """
         self.db = args[0]
         self.db_tag = args[1]
-        self.db_classification = args[2]
-        self.report_csv_folder = './results/'
+        self.db_predictions = args[2]
+        self.report_csv_folder = '../../outputs/'
         self.last_id = self.get_last_id()
 
     def get_last_id(self):
@@ -86,6 +97,7 @@ class generateReport:
     def write_csv(self, header, result, name):
         """
         """
+
         filename = os.path.join(self.report_csv_folder, '{}.csv'.format(name))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
@@ -186,7 +198,8 @@ class generateReport:
         output_dict = dict()
         for data in self.db.find({}, {'placed_on': True}):
             try:
-                output_dict[data['placed_on']] = output_dict.get(data['placed_on'], 0)+1
+                date = get_month(data['placed_on'])
+                output_dict[date] = output_dict.get(date, 0)+1
                 # output_dict[data['placed_on'])] = output_dict.setdefault(data['placed_one'], 0)+1
             except KeyError:
                 pass
@@ -195,10 +208,10 @@ class generateReport:
     def get_salary(self):
         """
         """
-        with open('./results/temp/salary.csv', 'w') as f:
+        with open('../../outputs/salary.csv', 'w') as f:
             for data in self.db.find({'invalid_code': 'salary'}):
                 try:
-                    f.write('{}'.format(data['salary']))
+                    f.write('{}'.format(data['salary'].strip()))
                     f.write('\n')
                 except KeyError:
                     pass
@@ -209,7 +222,6 @@ class generateReport:
         """
         pipeline = [{'$group': {'_id': '$SoftwareJob', 'count': {'$sum': 1}}},
                     {'$sort': {'count': -1}}]
-                    # {'$project': {'_id':  1, 'count': 1}}]
 
         data_for_csv = list()
         for data in self.db_tag.aggregate(pipeline):
@@ -220,16 +232,13 @@ class generateReport:
         """
         Return data about the spread of the classification
         """
-        pipeline=[{'$group': {'_id': {'folding': '$folding',
-                                      'input_data': '$input_data',
-                                      'input_field': '$input_field',
-                                      'operation': '$operation',
+        pipeline=[{'$group': {'_id': {'model': '$model',
                                       'prediction': '$prediction'},
                                       'count': {'$sum': 1}}}]
 
         data_for_csv = list()
-        header_csv = ['folding', 'input_data', 'input_field', 'operation', 'prediction', 'count']
-        for data in self.db_classification.aggregate(pipeline):
+        header_csv = ['prediction', 'count']
+        for data in self.db_predictions.aggregate(pipeline):
             to_add = data['_id']
             to_add['count'] = data['count']
             list_to_append = [to_add[i] for i in header_csv]
@@ -243,117 +252,74 @@ class generateReport:
         type of information. Do it for each distinct algorithm and features
         """
         # First match every single combination
-        pipeline_distinct =[{'$group': {'_id': {'folding': '$folding',
-                                                'input_data': '$input_data',
-                                                'input_field': '$input_field',
-                                                'operation': '$operation'}}}]
-        for data in self.db_classification.aggregate(pipeline_distinct):
-            fields_to_match = data['_id']
-            pipeline = [{'$match': {k: fields_to_match[k] for k in fields_to_match}},
-                         {'$lookup': {'from': 'jobs',
-                                      'localField': 'jobid',
-                                      'foreignField': 'jobid',
-                                      'as': 'results'}},
-                        {'$unwind': '$results'},
-                        {'$project': {'folding': 1,
-                                      'input_data': 1,
-                                      'input_field': 1,
-                                      'model': 1,
-                                      'operation': 1,
-                                      'prediction': 1,
-                                      # Split the date field with the space ('$split') then
-                                      # return only the last element of that list (corresponding to the date
-                                      # with '$slice'
-                                      'year': {'$slice': [{'$split': ['$results.placed_on', ' ']}, -1] }}},
-                         {'$group': {'_id': {'prediction': '$prediction',
-                                             'model': '$model',
-                                             'year': '$year'},
-                                     'count': {'$sum': 1}}}
-                        ]
-            data_for_csv = list()
-            name_file = 'prediction-per-year-{}'.format('-'.join(fields_to_match[k] for k in ['input_data', 'input_field', 'operation']))
+        # pipeline_distinct =[{'$group': {'_id': {'folding': '$folding',
+        #                                         'input_data': '$input_data',
+        #                                         'input_field': '$input_field',
+        #                                         'operation': '$operation'}}}]
+        # for data in self.db_predictions.find():
+        # fields_to_match = data['_id']
+        pipeline = [#{'$match': {k: fields_to_match[k] for k in fields_to_match}},
+                        {'$lookup': {'from': 'jobs',
+                                    'localField': 'jobid',
+                                    'foreignField': 'jobid',
+                                    'as': 'results'}},
+                    {'$unwind': '$results'},
+                    {'$project': {'model': 1,
+                                    'prediction': 1,
+                                    # Split the date field with the space ('$split') then
+                                    # return only the last element of that list (corresponding to the date
+                                    # with '$slice'
+                                    'year': {'$slice': [{'$split': ['$results.placed_on', ' ']}, -1] }}},
+                        {'$group': {'_id': {'prediction': '$prediction',
+                                            'model': '$model',
+                                            'year': '$year'},
+                                    'count': {'$sum': 1}}}
+                    ]
+        data_for_csv = list()
+        # name_file = 'prediction-per-year-{}'.format('-'.join(fields_to_match[k] for k in ['input_data', 'input_field', 'operation']))
+        name_file = 'prediction-per-year'
 
-            header_csv = ['year', 'model', 'prediction', 'count']
-            for d in self.db_classification.aggregate(pipeline):
-                to_add = d['_id']
-                to_add['count'] = d['count']
-                #Tranform the list of year (containing only one element) to a string
-                try:
-                    to_add['year'] = to_add['year'][0]
-                except TypeError: # some none value due to impossibility to find the right date
-                    to_add['year'] = 'Year not found'
+        header_csv = ['year', 'model', 'prediction', 'count']
+        for d in self.db_predictions.aggregate(pipeline):
+            to_add = d['_id']
+            to_add['count'] = d['count']
+            #Tranform the list of year (containing only one element) to a string
+            try:
+                to_add['year'] = to_add['year'][0]
+            except TypeError: # some none value due to impossibility to find the right date
+                to_add['year'] = 'Year not found'
 
-                list_to_append = [to_add[i] for i in header_csv]
-                data_for_csv.append(list_to_append)
-            self.write_csv(header_csv, data_for_csv, name_file)
+            list_to_append = [to_add[i] for i in header_csv]
+            data_for_csv.append(list_to_append)
+        self.write_csv(header_csv, data_for_csv, name_file)
 
 
 def main():
     """
     """
-    def get_connection(*args):
-        """
-        Parse the argument to Pymongo Client
-        and return a collection object to connect to the db
-        """
-        db = args[0]
-        coll = args[1]
-        c = pymongo.MongoClient()
-        try:
-            user = args[2]
-            passw = args[3]
-            db_auth = args[4]
-            db_mech = args[5]
-            confirmation = c[db].authenticate(user, passw, source=db_auth, mechanism=db_mech)
-            logger.info('Authenticated: {}'.format(confirmation))
-        except (IndexError, ValueError, TypeError):
-            logger.info('Connection to the database without password and authentication')
-        return c[db][coll]
-
-    # ### Get the variables NAMES from the config.ini file
-    # config_value = configParser().read_config('./config.ini')
-    config_value = configParser()
-    config_value.read('./config_dev.ini')
-
-    # Get the folder or the file where the input data are stored
-    DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
-
-    access_value = configParser()
-    access_value.read(DB_ACC_FILE)
-    # # MongoDB ACCESS # #
-    mongoDB_USER = access_value['MongoDB'].get('db_username'.lower(), None)
-    mongoDB_PASS = access_value['MongoDB'].get('DB_PASSWORD'.lower(), None)
-    mongoDB_AUTH_DB = access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None)
-    mongoDB_AUTH_METH = access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None)
-
-    # Get the information about the db and the collections
-    mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
-    mongoDB_JOB_COLL = config_value['MongoDB'].get('DB_JOB_COLLECTION'.lower(), None)
-    mongoDB_TAG = config_value['MongoDB'].get('DB_TAG_COLLECTION'.lower(), None)
-    mongoDB_PREDICTION= config_value['MongoDB'].get('DB_PREDICTION_COLLECTION'.lower(), None)
-
-    # ### Init the processes #####
-
     # Connect to the database
-    logger.info('Connection to the database')
-    db_jobs = get_connection(mongoDB_NAME, mongoDB_JOB_COLL, mongoDB_USER,
-                             mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
-    db_tag = get_connection(mongoDB_NAME, mongoDB_TAG, mongoDB_USER,
-                             mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
-
-    db_prediction = get_connection(mongoDB_NAME,mongoDB_PREDICTION, mongoDB_USER,
-                             mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
+    db_conn = connectDB(CONFIG_FILE)
+    db_jobs = db_conn['jobs']
+    db_tag = db_conn['tags']
+    db_prediction  = db_conn['predictions']
     generate_report = generateReport(db_jobs, db_tag, db_prediction)
 
     logger.info('Invalid code with salary')
     logger.info(generate_report.get_invalid_code())
     logger.info('Invalid code without salary')
     generate_report.get_invalid_code(with_salary=False)
+    logger.info('Count invalid code without salary')
     generate_report.count_invalid_codes()
+    logger.info('Get the posted date')
     generate_report.get_list_posted_date()
+
+    logger.info('Get the training set')
     generate_report.get_training_set()
-    # generate_report.get_salary()
+    logger.info('Get the salary unique')
+    generate_report.get_salary()
+    logger.info('Get the classifications')
     generate_report.get_classification()
+    logger.info('Get the details about the classifications')
     generate_report.get_classification_per_details()
 
 
