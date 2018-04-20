@@ -7,6 +7,8 @@ This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs 
 
 import re
 
+from datetime import datetime
+
 
 class OutputRow:
     """
@@ -101,6 +103,42 @@ class OutputRow:
             except AttributeError:
                 setattr(self, key, '')
 
+    @staticmethod
+    def remove_suffix_date(s):
+        """
+        Remove the st, th,... added to a string containing
+        a date
+        :params:
+            s str(): containing the string representation
+                        of the date
+        :return:
+            str() without the st, th
+        """
+        return re.sub(r'(\d)(st|nd|rd|th)', r'\1', str(s))
+
+    @staticmethod
+    def transform_valid_date(s):
+        """
+        Transform a string into a datetime object
+        Suppose to receive a string in two formats:
+                - 17th July 2018
+                - 2018-07-17
+
+        :params:
+            s str(): containing the string representation of
+                        an date time object
+        :return:
+            a datetime object if valid. The str itself if transformation
+            failed
+        """
+        try:
+            return datetime.strptime(s, '%d %B %Y')
+        except ValueError:
+            try:
+                return datetime.strptime(s.replace(' ', '').strip(), "%Y-%m-%d")
+            except ValueError:
+                return s
+
     def clean_description(self):
         """
         """
@@ -160,11 +198,14 @@ class OutputRow:
         """
         """
         self.check_validity(self.placed_on, 'placed_on')
+        self.placed_on = transform_valid_date(remove_suffix_date(self.place_on))
+
 
     def clean_closes(self):
         """
         """
         self.check_validity(self.closes, 'closes')
+        self.closes = transform_valid_date(remove_suffix_date(self.closes))
 
     def clean_employRef(self):
         """
