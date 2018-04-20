@@ -8,7 +8,6 @@ import os
 import csv
 import pymongo
 
-from tabulate import tabulate
 
 import sys
 from pathlib import Path
@@ -16,7 +15,6 @@ sys.path.append(str(Path('.').absolute().parent))
 
 from common.logger import logger
 from common.getConnection import connectDB
-from common.date_transformation import get_month
 
 # ## GLOBAL VARIABLES  ###
 # # To set up the variable on prod or dev for config file and level of debugging in the
@@ -94,18 +92,20 @@ class generateReport:
             yield info
 
 
-    def write_csv(self, header, result, name):
+    def write_csv(self, header, result, name, type_info='dataCollection'):
         """
         """
 
-        filename = os.path.join(self.report_csv_folder, '{}.csv'.format(name))
+
+        filename = os.path.join(self.report_csv_folder, type_info, '{}.csv'.format(name))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(header)
             for row in result:
                 writer.writerow(row)
 
-
+    def get_totals(self):
+        pass
 
     def get_invalid_code(self, with_salary=True, from_begginning=True):
 
@@ -198,7 +198,8 @@ class generateReport:
         output_dict = dict()
         for data in self.db.find({}, {'placed_on': True}):
             try:
-                date = get_month(data['placed_on'])
+                # date = get_month(data['placed_on'])
+                date = data['placed_on']
                 output_dict[date] = output_dict.get(date, 0)+1
                 # output_dict[data['placed_on'])] = output_dict.setdefault(data['placed_one'], 0)+1
             except KeyError:
@@ -228,70 +229,44 @@ class generateReport:
             data_for_csv.append([data['_id'], data['count']])
         self.write_csv(['Type of classification', 'count'], data_for_csv, 'type_classification_bob')
 
-    def get_classification(self):
-        """
-        Return data about the spread of the classification
-        """
-        pipeline=[{'$group': {'_id': {'model': '$model',
-                                      'prediction': '$prediction'},
-                                      'count': {'$sum': 1}}}]
 
-        data_for_csv = list()
-        header_csv = ['prediction', 'count']
-        for data in self.db_predictions.aggregate(pipeline):
-            to_add = data['_id']
-            to_add['count'] = data['count']
-            list_to_append = [to_add[i] for i in header_csv]
-            data_for_csv.append(list_to_append)
-        self.write_csv(header_csv, data_for_csv, 'predictions')
-
-    def get_classification_per_details(self, key_to_get=None):
+    def get_classification(self, key_to_get=None):
         """
         Get the classified jobs from the prediction db
         and match some field from the jobs db to aggregate by other
         type of information. Do it for each distinct algorithm and features
         """
-        # First match every single combination
-        # pipeline_distinct =[{'$group': {'_id': {'folding': '$folding',
-        #                                         'input_data': '$input_data',
-        #                                         'input_field': '$input_field',
-        #                                         'operation': '$operation'}}}]
-        # for data in self.db_predictions.find():
-        # fields_to_match = data['_id']
-        pipeline = [#{'$match': {k: fields_to_match[k] for k in fields_to_match}},
-                        {'$lookup': {'from': 'jobs',
+        pipeline = [                        {'$lookup': {'from': 'jobs',
                                     'localField': 'jobid',
                                     'foreignField': 'jobid',
                                     'as': 'results'}},
                     {'$unwind': '$results'},
                     {'$project': {'model': 1,
                                     'prediction': 1,
-                                    # Split the date field with the space ('$split') then
-                                    # return only the last element of that list (corresponding to the date
-                                    # with '$slice'
-                                    'year': {'$slice': [{'$split': ['$results.placed_on', ' ']}, -1] }}},
+                                  'date': '$results.placed_on'
+                                 }},
                         {'$group': {'_id': {'prediction': '$prediction',
                                             'model': '$model',
-                                            'year': '$year'},
+                                            'date': '$date'},
                                     'count': {'$sum': 1}}}
                     ]
         data_for_csv = list()
-        # name_file = 'prediction-per-year-{}'.format('-'.join(fields_to_match[k] for k in ['input_data', 'input_field', 'operation']))
-        name_file = 'prediction-per-year'
+        name_file = 'predictions'
 
-        header_csv = ['year', 'model', 'prediction', 'count']
+        header_csv = ['date', 'model', 'prediction', 'count']
         for d in self.db_predictions.aggregate(pipeline):
             to_add = d['_id']
             to_add['count'] = d['count']
-            #Tranform the list of year (containing only one element) to a string
-            try:
-                to_add['year'] = to_add['year'][0]
-            except TypeError: # some none value due to impossibility to find the right date
-                to_add['year'] = 'Year not found'
+            #Tranform the list of date (containing only one element) to a string
+            # try:
+            to_add['date'] = d['_id']['date']
+            #     # to_add['date'] = to_add['date'][0]
+            # except (KeyError, TypeError): # some none value due to impossibility to find the right date
+            #     to_add['date'] = 'date not found'
 
             list_to_append = [to_add[i] for i in header_csv]
             data_for_csv.append(list_to_append)
-        self.write_csv(header_csv, data_for_csv, name_file)
+        self.write_csv(header_csv, data_for_csv, name_file, type_info='dataPrediction')
 
 
 def main():
@@ -319,8 +294,6 @@ def main():
     generate_report.get_salary()
     logger.info('Get the classifications')
     generate_report.get_classification()
-    logger.info('Get the details about the classifications')
-    generate_report.get_classification_per_details()
 
 
 if __name__ == '__main__':
