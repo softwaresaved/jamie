@@ -46,7 +46,8 @@ class OutputRow:
         self.new_keys = ['include_in_study',
                          'invalid_code',
                          'salary_min',
-                         'salary_max']
+                         'salary_max',
+                         'duration_ad_days']
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
@@ -198,14 +199,28 @@ class OutputRow:
         """
         """
         self.check_validity(self.placed_on, 'placed_on')
-        self.placed_on = transform_valid_date(remove_suffix_date(self.place_on))
-
+        self.placed_on = self.transform_valid_date(self.remove_suffix_date(self.placed_on))
+        if isinstance(self.placed_on, str):
+            self.add_invalid_code('placed_on')
 
     def clean_closes(self):
         """
         """
         self.check_validity(self.closes, 'closes')
-        self.closes = transform_valid_date(remove_suffix_date(self.closes))
+        self.closes = self.transform_valid_date(self.remove_suffix_date(self.closes))
+        if isinstance(self.closes, str):
+            self.add_invalid_code('closes')
+
+    def add_duration(self):
+        """
+        Add a duration of the job ads by substracting closes to placed_on
+        """
+        if 'placed_on' is not in self.invalid_code and 'closes' is not in self.invalid_code:
+            try:
+                duration_ad = self.closes - self.placed_on
+                self.duration_ad_days = duration_ad.days
+            except AttributeError, TypeError:
+                pass
 
     def clean_employRef(self):
         """
