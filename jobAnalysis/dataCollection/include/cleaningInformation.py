@@ -215,11 +215,11 @@ class OutputRow:
         """
         Add a duration of the job ads by substracting closes to placed_on
         """
-        if 'placed_on' is not in self.invalid_code and 'closes' is not in self.invalid_code:
+        if 'placed_on' not in self.invalid_code and 'closes' not in self.invalid_code:
             try:
                 duration_ad = self.closes - self.placed_on
                 self.duration_ad_days = duration_ad.days
-            except AttributeError, TypeError:
+            except (AttributeError, TypeError):
                 pass
 
     def clean_employRef(self):
