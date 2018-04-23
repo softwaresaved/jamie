@@ -51,6 +51,7 @@ class generateReport:
         self.db_tag = args[2]
         self.db_predictions = args[3]
         self.report_csv_folder = '../../outputs/'
+        self.first_id = self.get_first_id()
         self.last_id = self.get_last_id()
 
     def get_all_keys(self, collection):
@@ -74,6 +75,15 @@ class generateReport:
         """
         try:
             return self.db_jobs.find({}, {'_id': True}).sort('_id', -1).limit(1)[0]['_id']
+        except IndexError:  # In case of an empty collection
+            return None
+
+    def get_first_id(self):
+        """
+        Get the first record from the db
+        """
+        try:
+            return self.db_jobs.find({}, {'_id': True}).sort('_id', 1).limit(1)[0]['_id']
         except IndexError:  # In case of an empty collection
             return None
 
@@ -293,7 +303,8 @@ class generateReport:
         list_to_parse = self.get_all_keys('jobs')
         for k in list_to_parse:
             print(k)
-
+        print(self.first_id)
+        print(self.last_id)
 
 def main():
     """
