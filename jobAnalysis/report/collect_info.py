@@ -6,6 +6,8 @@ Generate data for all the different operations
 """
 import os
 import csv
+from datetime import date, timedelta
+
 import pymongo
 from bson import Code
 
@@ -53,6 +55,7 @@ class generateReport:
         self.report_csv_folder = '../../outputs/'
         self.first_id = self.get_first_id()
         self.last_id = self.get_last_id()
+        self.days_range = self.create_days_range()
 
     def get_all_keys(self, collection):
         """
@@ -86,6 +89,23 @@ class generateReport:
             return self.db_jobs.find({}, {'_id': True}).sort('_id', 1).limit(1)[0]['_id']
         except IndexError:  # In case of an empty collection
             return None
+
+    def create_days_range(self):
+        """
+        Create a range of date per days for all the records.
+        Search the placed_on key for the first and the last entry in the db and then delta them
+        Loop throught the size of difference and add the day only to a list
+        :params: None
+        :return list(): ordered list of datetime object containing the date only
+        """
+        first_date = self.db['jobs'].find_one({'_id': self.first_id}, {'placed_on': True, '_id': False})['placed_on']
+        last_date = self.db['jobs'].find_one({'_id': self.last_id}, {'placed_on': True, '_id': False})['placed_on']
+        delta = last_date - first_date
+        days_range = list()
+        for i in range(delta.days + 1):
+            day = first_date + timedelta(days=i)
+            days_range.append(day.date())
+        return sorted(days_range)
 
     @property
     def match_last_id(self):
@@ -305,6 +325,7 @@ class generateReport:
             print(k)
         print(self.first_id)
         print(self.last_id)
+        print(len(self.days_range))
 
 def main():
     """
