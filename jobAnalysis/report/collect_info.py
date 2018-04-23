@@ -7,7 +7,7 @@ Generate data for all the different operations
 import os
 import csv
 import pymongo
-
+from bson import Code
 
 import sys
 from pathlib import Path
@@ -45,11 +45,27 @@ class generateReport:
     def __init__(self, *args):
         """
         """
+
         self.db = args[0]
-        self.db_tag = args[1]
-        self.db_predictions = args[2]
+        self.db_jobs = args[1]
+        self.db_tag = args[2]
+        self.db_predictions = args[3]
         self.report_csv_folder = '../../outputs/'
         self.last_id = self.get_last_id()
+
+    def get_all_keys(self, collection):
+        """
+        Function to return all the distinct keys present in a collection
+        :source: https://stackoverflow.com/a/48117846
+
+        :params: coll str(): the collection to parse
+
+        :return: list(): all the keys as str()
+        """
+        map = Code("function() { for (var key in this) { emit(key, null); } }")
+        reduce = Code("function(key, stuff) { return null; }")
+        result = self.db[collection].map_reduce(map, reduce, "myresults")
+        return result.distinct('_id')
 
     def get_last_id(self):
         """
@@ -57,7 +73,7 @@ class generateReport:
         of the newly inserted jobs
         """
         try:
-            return self.db.find({}, {'_id': True}).sort('_id', -1).limit(1)[0]['_id']
+            return self.db_jobs.find({}, {'_id': True}).sort('_id', -1).limit(1)[0]['_id']
         except IndexError:  # In case of an empty collection
             return None
 
@@ -88,15 +104,12 @@ class generateReport:
             dict() of the values
 
         """
-        for info in self.db.aggregate(pipeline):
+        for info in self.db_jobs.aggregate(pipeline):
             yield info
-
 
     def write_csv(self, header, result, name, type_info='dataCollection'):
         """
         """
-
-
         filename = os.path.join(self.report_csv_folder, type_info, '{}.csv'.format(name))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
@@ -105,6 +118,7 @@ class generateReport:
                 writer.writerow(row)
 
     def get_totals(self):
+
         pass
 
     def get_invalid_code(self, with_salary=True, from_begginning=True):
@@ -113,6 +127,7 @@ class generateReport:
             """
             """
             get_enhanced_invalid_code = [{'$project': {'enhanced': 1,
+                                                       'placed_on': 1,
                                                     'invalid_code': {'$cond': [{'$gt': ['$invalid_code', None]}, 'invalid_code', 'clean_entry']}}},
                                         {'$group': {'_id': {'enhanced': '$enhanced', 'invalid_code': '$invalid_code'},
                                                     'count': {'$sum':1}}}
@@ -192,27 +207,28 @@ class generateReport:
             data_for_csv.append([data['_id'], data['count']])
         self.write_csv(['Type of invalid_code', 'count'], data_for_csv, 'count of invalid_code')
 
-    def get_list_posted_date(self):
-        """
-        """
-        output_dict = dict()
-        for data in self.db.find({}, {'placed_on': True}):
-            try:
-                # date = get_month(data['placed_on'])
-                date = data['placed_on']
-                output_dict[date] = output_dict.get(date, 0)+1
-                # output_dict[data['placed_on'])] = output_dict.setdefault(data['placed_one'], 0)+1
-            except KeyError:
-                pass
-        self.write_csv(['date posted', 'count'], [[k, output_dict[k]] for k in output_dict], 'date_posted')
+    # def get_list_posted_date(self):
+    #     """
+    #     """
+    #     output_dict = dict()
+    #     for data in self.db.find({}, {'placed_on': True}):
+    #         try:
+    #             # date = get_month(data['placed_on'])
+    #             date = data['placed_on']
+    #             output_dict[date] = output_dict.get(date, 0)+1
+    #             # output_dict[data['placed_on'])] = output_dict.setdefault(data['placed_one'], 0)+1
+    #         except KeyError:
+    #             pass
+    #     self.write_csv(['date posted', 'count'], [[k, output_dict[k]] for k in output_dict], 'date_posted')
 
     def get_salary(self):
         """
+        return unique value for the salary field
         """
         with open('../../outputs/salary.csv', 'w') as f:
-            for data in self.db.find({'invalid_code': 'salary'}):
+            for data in self.db_jobs.distinct('salary', {'invalid_code': 'salary'}):
                 try:
-                    f.write('{}'.format(data['salary'].strip()))
+                    f.write('{}'.format(data.replace('\n', '\t').strip()))
                     f.write('\n')
                 except KeyError:
                     pass
@@ -227,7 +243,7 @@ class generateReport:
         data_for_csv = list()
         for data in self.db_tag.aggregate(pipeline):
             data_for_csv.append([data['_id'], data['count']])
-        self.write_csv(['Type of classification', 'count'], data_for_csv, 'type_classification_bob')
+        self.write_csv(['Type of classification', 'count'], data_for_csv, 'type_classification_bob', 'modelCreation')
 
 
     def get_classification(self, key_to_get=None):
@@ -236,19 +252,21 @@ class generateReport:
         and match some field from the jobs db to aggregate by other
         type of information. Do it for each distinct algorithm and features
         """
-        pipeline = [                        {'$lookup': {'from': 'jobs',
-                                    'localField': 'jobid',
-                                    'foreignField': 'jobid',
-                                    'as': 'results'}},
+        pipeline = [{'$lookup': {'from': 'jobs',
+                                 'localField': 'jobid',
+                                 'foreignField': 'jobid',
+                                 'as': 'results'
+                                }},
                     {'$unwind': '$results'},
                     {'$project': {'model': 1,
-                                    'prediction': 1,
+                                  'prediction': 1,
                                   'date': '$results.placed_on'
                                  }},
-                        {'$group': {'_id': {'prediction': '$prediction',
-                                            'model': '$model',
-                                            'date': '$date'},
-                                    'count': {'$sum': 1}}}
+                    {'$group': {'_id': {'prediction': '$prediction',
+                                        'model': '$model',
+                                        'date': '$date'},
+                               'count': {'$sum': 1}
+                               }}
                     ]
         data_for_csv = list()
         name_file = 'predictions'
@@ -268,6 +286,14 @@ class generateReport:
             data_for_csv.append(list_to_append)
         self.write_csv(header_csv, data_for_csv, name_file, type_info='dataPrediction')
 
+    def get_keys_per_day(self):
+        """
+        Output a csv file with the count for each keys
+        """
+        list_to_parse = self.get_all_keys('jobs')
+        for k in list_to_parse:
+            print(k)
+
 
 def main():
     """
@@ -277,24 +303,22 @@ def main():
     db_jobs = db_conn['jobs']
     db_tag = db_conn['tags']
     db_prediction  = db_conn['predictions']
-    generate_report = generateReport(db_jobs, db_tag, db_prediction)
-
-    logger.info('Invalid code with salary')
-    logger.info(generate_report.get_invalid_code())
-    logger.info('Invalid code without salary')
-    generate_report.get_invalid_code(with_salary=False)
-    logger.info('Count invalid code without salary')
-    generate_report.count_invalid_codes()
-    logger.info('Get the posted date')
-    generate_report.get_list_posted_date()
-
-    logger.info('Get the training set')
-    generate_report.get_training_set()
-    logger.info('Get the salary unique')
-    generate_report.get_salary()
-    logger.info('Get the classifications')
-    generate_report.get_classification()
-
+    generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
+    generate_report.get_keys_per_day()
+    # logger.info('Invalid code with salary')
+    # logger.info(generate_report.get_invalid_code())
+    # logger.info('Invalid code without salary')
+    # generate_report.get_invalid_code(with_salary=False)
+    # logger.info('Count invalid code without salary')
+    # generate_report.count_invalid_codes()
+    #
+    # logger.info('Get the training set')
+    # generate_report.get_training_set()
+    # logger.info('Get the salary unique')
+    # generate_report.get_salary()
+    # logger.info('Get the classifications')
+    # generate_report.get_classification()
+    #
 
 if __name__ == '__main__':
     main()
