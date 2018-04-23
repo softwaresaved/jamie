@@ -6,6 +6,7 @@ Generate data for all the different operations
 """
 import os
 import csv
+import itertools
 from datetime import date, timedelta
 
 import pymongo
@@ -47,15 +48,21 @@ class generateReport:
     def __init__(self, *args):
         """
         """
-
         self.db = args[0]
+
         self.db_jobs = args[1]
         self.db_tag = args[2]
         self.db_predictions = args[3]
+
         self.report_csv_folder = '../../outputs/'
-        self.first_id = self.get_first_id()
-        self.last_id = self.get_last_id()
-        self.days_range = self.create_days_range()
+
+        self.first_id = self.get_record_ord(key='_id', order=1)
+        self.last_id = self.get_record_ord(key='_id', order=-1)
+
+        self.first_date = self.get_record_ord(key='placed_on', order=1)
+        self.last_date = self.get_record_ord(key='placed_on', order=-1)
+
+        self.days_range = self.create_days_range(self.first_date, self.last_date)
 
     def get_all_keys(self, collection):
         """
@@ -71,35 +78,29 @@ class generateReport:
         result = self.db[collection].map_reduce(map, reduce, "myresults")
         return result.distinct('_id')
 
-    def get_last_id(self):
+    def get_record_ord(self, key, order):
         """
         Get the last record from the db before the run. Used to generated the report
         of the newly inserted jobs
+        params:
+            key str(): which key to query
+            order int(): if -1 it give the last record, if 1 it gives the first record
         """
         try:
-            return self.db_jobs.find({}, {'_id': True}).sort('_id', -1).limit(1)[0]['_id']
+            return self.db_jobs.find({key: {'$exists': True}}, {key: True}).sort(key, order).limit(1)[0][key]
         except IndexError:  # In case of an empty collection
             return None
 
-    def get_first_id(self):
-        """
-        Get the first record from the db
-        """
-        try:
-            return self.db_jobs.find({}, {'_id': True}).sort('_id', 1).limit(1)[0]['_id']
-        except IndexError:  # In case of an empty collection
-            return None
-
-    def create_days_range(self):
+    def create_days_range(self, first_date, last_date):
         """
         Create a range of date per days for all the records.
         Search the placed_on key for the first and the last entry in the db and then delta them
         Loop throught the size of difference and add the day only to a list
-        :params: None
+        :params:
+            fist_date datetime()
+            last_date datetime()
         :return list(): ordered list of datetime object containing the date only
         """
-        first_date = self.db['jobs'].find_one({'_id': self.first_id}, {'placed_on': True, '_id': False})['placed_on']
-        last_date = self.db['jobs'].find_one({'_id': self.last_id}, {'placed_on': True, '_id': False})['placed_on']
         delta = last_date - first_date
         days_range = list()
         for i in range(delta.days + 1):
@@ -320,10 +321,53 @@ class generateReport:
         """
         Output a csv file with the count for each keys
         """
-        list_to_parse = self.get_all_keys('jobs')
-        for k in list_to_parse:
-            print(k)
-        dict_key_with_date  = {k: {v: 0}, for k in self.days_range, for v in list_to_parse}
+        # Add a key total to get all the entry for one day
+        list_to_parse = ['Total']
+        list_to_parse.extend(sorted(self.get_all_keys('jobs')))
+
+        # Remove the empty entry, jobid and _id
+        list_to_parse.remove('')
+        list_to_parse.remove('_id')
+        list_to_parse.remove('jobid')
+
+        # Create a dictionary with all the days and set up an empty dict
+        dict_key_with_date  = {date: dict() for date in self.days_range}
+
+        # Populate each entry with
+        for k in dict_key_with_date:
+            dict_key_with_date[k] = {key: 0 for key in list_to_parse}
+
+        # Add the Nan key
+        dict_key_with_date['NaN'] = {key: 0 for key in list_to_parse}
+
+        # Parse the db and return all the results
+        # for record in self.db_jobs.find({}, {'_id': False, 'jobid': False, '': False}):
+        for record in self.db_jobs.find({}):
+            try:
+                date = record['placed_on'].date()
+            except KeyError:
+                date = 'NaN'
+            # Inc the total
+            dict_key_with_date[date]['Total'] +=1
+            # Inc any keys that are present
+            for k in record:
+                try:
+                    dict_key_with_date[date][k] +=1
+                except KeyError:
+                    pass
+
+        # Record the results
+        filename = '{}dataCollection/presence_keys.csv'.format(self.report_csv_folder)
+        with open(filename, "w") as f:
+            days_list = ['Day']
+            fields = days_list + list_to_parse
+            w = csv.DictWriter(f, fields)
+            w.writeheader()
+            for k in dict_key_with_date:
+                row = dict_key_with_date[k]
+                row['Day'] = k
+                w.writerow(row)
+
 
 def main():
     """
