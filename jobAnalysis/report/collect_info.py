@@ -323,9 +323,7 @@ class generateReport:
         list_to_parse = self.get_all_keys('jobs')
         for k in list_to_parse:
             print(k)
-        print(self.first_id)
-        print(self.last_id)
-        print(len(self.days_range))
+        dict_key_with_date  = {k: {v: 0}, for k in self.days_range, for v in list_to_parse}
 
 def main():
     """
