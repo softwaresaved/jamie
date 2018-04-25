@@ -236,7 +236,7 @@ class generateReport:
         set_unique = set()
         for data in self.db_jobs.find({key: {'$exists': True}}, {key: 1, '_id': 0}):
             set_unique.add(data[key].replace('\n', '\t').strip())
-        with open('../../outputs/unique_{}.csv'.format(key), 'w') as f:
+        with open('../../outputs/uniqueValue/{}.csv'.format(key), 'w') as f:
             for record in set_unique:
                 try:
                     f.write('{}'.format(record))
@@ -350,37 +350,53 @@ class generateReport:
                 row['Day'] = k
                 w.writerow(row)
 
-    def get_average_per_day(self, key):
+    def _get_average_per_day(self, key):
 
         pipeline = [{'$match': {'placed_on': {'$exists': True},
-                                key: {'$exists': True}
+                                key: {'$exists': True},
+                                'prediction': {'$exists': True},
                                }
                     },
-                    {'$group': {'_id': {'placed_on': '$placed_on',
+                    {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction'},
                                 key: {'$avg': '${}'.format(key)}
                                }
                     }
                    ]
 
-        header_csv = ['date', 'prediction', key]
         for d in self.db_jobs.aggregate(pipeline):
-            print(d)
+            yield d
+
+    def get_average_per_day(self, list_to_parse):
+        """
+        """
+        if isinstance(list_to_parse, str):
+            list_to_parse = [list_to_parse]
+
+        for key in list_to_parse:
+            header_csv = ['date', 'prediction', key, 'average']
+            data_for_csv = list()
+            name_file = 'average_{}'.format(key)
+            for data in self._get_sum_per_day(key):
+                data = data['_id']
+                data_for_csv.append([data['date'], data['prediction'], data[key]])
+            self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
     def _get_sum_per_day(self, key):
 
         pipeline = [{'$match': {'placed_on': {'$exists': True},
-                               key: {'$exists': True}
+                                'prediction': {'$exists': True},
+                                key: {'$exists': True}
                               }
                     },
 
                     {'$unwind': '${}'.format(key)},
 
-                    {'$group': {'_id': {'placed_on': '$placed_on',
+                    {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction',
                                         key: '${}'.format(key)},
                                 # 'total': {'$sum': '${}'.format(key)}
-                                'total': {'$sum': 1}
+                                'count': {'$sum': 1}
                                }
                     }
                     ]
@@ -388,9 +404,18 @@ class generateReport:
             yield d
 
     def get_sum_per_day(self, list_to_parse):
+        """
+        """
+        if isinstance(list_to_parse, str):
+            list_to_parse = [list_to_parse]
         for key in list_to_parse:
-            for result in self._get_sum_per_day(key):
-                print(result)
+            data_for_csv = list()
+            header_csv = ['date', 'prediction', key, 'total']
+            name_file = 'sum_{}'.format(key)
+            for data in self._get_sum_per_day(key):
+                to_add = data['_id']
+                data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
+            self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
 
 def main():
@@ -415,10 +440,10 @@ def main():
     generate_report.count_invalid_codes()
     logger.info('Get the training set')
     generate_report.get_training_set()
-    logger.info('Get the salary unique')
-    generate_report.get_unique_values('salary')
-    logger.info('Get the Employers')
-    generate_report.get_unique_values('employer')
+    # logger.info('Get the salary unique')
+    # generate_report.get_unique_values('salary')
+    # logger.info('Get the Employers')
+    # generate_report.get_unique_values('employer')
     logger.info('Get the classifications')
     generate_report.get_classification()
 
