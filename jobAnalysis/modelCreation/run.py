@@ -108,16 +108,15 @@ def predicting(db_conn, features, model, relaunch):
     if relaunch == 'True':
         search = {}
     elif relaunch == 'False':
-        search = {'predicted': {'$exists': False}}
+        search = {'prediction': {'$exists': False}}
     for doc in db_conn['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
+        _id = doc['_id']
         try:
             df = pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
             X_to_predict = features.transform(df)
             jobid = doc['jobid']
-            _id = doc['_id']
             prediction = model.predict(X_to_predict)
         except KeyError:
-            jobid = None
             prediction = None
 
         yield jobid, prediction, _id
@@ -126,12 +125,16 @@ def predicting(db_conn, features, model, relaunch):
 def record_prediction(db, prediction, jobid, _id, model_name, model_best_params):
     """
     """
-    if prediction is None or jobid is None:
+    if jobid is None:
         return
-    if prediction[0] == 0:
-        prediction = 'No'
-    if prediction[0] == 1:
-        prediction = 'Yes'
+    if prediction is None:
+        prediction = 'None'
+    else:
+        prediction = int(prediction[0])
+    # if prediction[0] == 0:
+    #     prediction = 'No'
+    # if prediction[0] == 1:
+    #     prediction = 'Yes'
     print(prediction)
     # print('model - type: {} - value: {}'.format(type(model_name), model_name))
     # print('model best params - type: {}  - values: {}'.format(type(model_best_params), model_best_params))
@@ -142,7 +145,7 @@ def record_prediction(db, prediction, jobid, _id, model_name, model_best_params)
                             # 'params': model_best_params},
                             {'$set': {'prediction': prediction}},
                             upsert=True)
-    db['jobs'].update({'_id': _id}, {'$set': {'predicted': True}})
+    db['jobs'].update({'_id': _id}, {'$set': {'prediction': prediction}})
 
 
 def main():
@@ -155,7 +158,7 @@ def main():
 
     parser.add_argument('-r', '--relaunch',
                         type=str,
-                        default='True',
+                        default='False',
                         help='Decide if rerun the modelling or pickle the existing one if exists. Default value is true')
     args = parser.parse_args()
 
@@ -167,50 +170,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-        # m=0
-        # n=0
-        # nbr_yes = 0
-        # nbr_no = 0
-        # db_doc = db_conn.return_collection(collection=collection_data)
-        # for document in db_doc.find({'input_field': input_field,
-        #                              'operation': operation,
-        #                              'input_data': input_data,
-        #                              'data': {'$exists': True}}):
-        #     m+=1
-        #     try:
-        #         data_vector = vectorising_datr.get_vector(document['data'], update_dict=False)
-        #         data_sparse_matrix = training_set.create_sparse_matrix(data_vector, training_set.max_vector)
-        #         data_tfidf = training_set.transform_tfidf(data_sparse_matrix)
-        #
-        #
-        #         prediction = model.predict(data_tfidf)[0]
-        #         # prediction = model.predict(data_sparse_matrix)[0]
-        #         if prediction == 0:
-        #             prediction = 'No'
-        #         if prediction == 1:
-        #             prediction = 'Yes'
-        #         db_prediction.update({'jobid': document['JobId'],
-        #                                 'input_field': input_field,
-        #                                 'input_data': input_data,
-        #                                 'operation': operation,
-        #                                 'model': model_name,
-        #                                 'folding': name_fold,
-        #                                 'params': model_best_params},
-        #                                 {'$set': {'prediction': prediction}},
-        #                                 upsert=True)
-        #         n+=1
-        #         if prediction == 'Yes':
-        #             nbr_yes +=1
-        #         if prediction == 'No':
-        #             nbr_no +=1
-        #
-        #         if m % 5000 == 0:
-        #             print('Number of document processed: {}'.format(m))
-        #             print('Number of document classified: {}'.format(n))
-        #             print('Number of Yes: {}'.format(nbr_yes))
-        #             print('Number of No: {}'.format(nbr_no))
-        #             print('\n')
-        #     except KeyError:
-        #         pass
-        #     except ValueError:
-        #         pass
