@@ -64,6 +64,7 @@ class generateReport:
 
         self.days_range = self.create_days_range(self.first_date, self.last_date)
 
+
     def get_all_keys(self, collection):
         """
         Function to return all the distinct keys present in a collection
@@ -76,7 +77,7 @@ class generateReport:
         map = Code("function() { for (var key in this) { emit(key, null); } }")
         reduce = Code("function(key, stuff) { return null; }")
         result = self.db[collection].map_reduce(map, reduce, "myresults")
-        return result.distinct('_id')
+        return sorted(result.distinct('_id'))
 
     def get_record_ord(self, key, order):
         """
@@ -117,15 +118,6 @@ class generateReport:
         """
         return [{'$match': {'_id': {'$gt': self.last_id}}}]
 
-    def limiting_pipeline(self, pipeline, match):
-        """
-        Add a $match condition to a pipeline to filter the result to
-        the record greater than the argument.
-        return the appended pipeline
-        """
-        # match = self.build_match()
-        return match + pipeline
-
     def aggregate(self, pipeline):
         """
         :params:
@@ -149,7 +141,6 @@ class generateReport:
                 writer.writerow(row)
 
     def get_totals(self):
-
         pass
 
     def get_invalid_code(self, with_salary=True, from_begginning=True):
@@ -210,7 +201,7 @@ class generateReport:
         if from_begginning:
             pass
         else:
-            pipeline = self.limiting_pipeline(pipeline, self.match_last_id)
+            pipeline = self.match_last_id + pipeline
         output = dict()
         for data in self.aggregate(pipeline):
             output.setdefault(data['_id']['enhanced'], {}).update({data['_id']['invalid_code']: data['count']})
@@ -238,28 +229,17 @@ class generateReport:
             data_for_csv.append([data['_id'], data['count']])
         self.write_csv(['Type of invalid_code', 'count'], data_for_csv, 'count of invalid_code')
 
-    # def get_list_posted_date(self):
-    #     """
-    #     """
-    #     output_dict = dict()
-    #     for data in self.db.find({}, {'placed_on': True}):
-    #         try:
-    #             # date = get_month(data['placed_on'])
-    #             date = data['placed_on']
-    #             output_dict[date] = output_dict.get(date, 0)+1
-    #             # output_dict[data['placed_on'])] = output_dict.setdefault(data['placed_one'], 0)+1
-    #         except KeyError:
-    #             pass
-    #     self.write_csv(['date posted', 'count'], [[k, output_dict[k]] for k in output_dict], 'date_posted')
-
-    def get_salary(self):
+    def get_unique_values(self, key):
         """
-        return unique value for the salary field
+        return unique value for the field specified by the key
         """
-        with open('../../outputs/salary.csv', 'w') as f:
-            for data in self.db_jobs.distinct('salary', {'invalid_code': 'salary'}):
+        set_unique = set()
+        for data in self.db_jobs.find({key: {'$exists': True}}, {key: 1, '_id': 0}):
+            set_unique.add(data[key].replace('\n', '\t').strip())
+        with open('../../outputs/unique_{}.csv'.format(key), 'w') as f:
+            for record in set_unique:
                 try:
-                    f.write('{}'.format(data.replace('\n', '\t').strip()))
+                    f.write('{}'.format(record))
                     f.write('\n')
                 except KeyError:
                     pass
@@ -275,7 +255,6 @@ class generateReport:
         for data in self.db_tag.aggregate(pipeline):
             data_for_csv.append([data['_id'], data['count']])
         self.write_csv(['Type of classification', 'count'], data_for_csv, 'type_classification_bob', 'modelCreation')
-
 
     def get_classification(self, key_to_get=None):
         """
@@ -341,7 +320,6 @@ class generateReport:
         dict_key_with_date['NaN'] = {key: 0 for key in list_to_parse}
 
         # Parse the db and return all the results
-        # for record in self.db_jobs.find({}, {'_id': False, 'jobid': False, '': False}):
         for record in self.db_jobs.find({}):
             try:
                 date = record['placed_on'].date()
@@ -352,7 +330,11 @@ class generateReport:
             # Inc any keys that are present
             for k in record:
                 try:
-                    dict_key_with_date[date][k] +=1
+                    try:
+                        if k not in record['invalid_code']:
+                            dict_key_with_date[date][k] +=1
+                    except KeyError:
+                        dict_key_with_date[date][k] +=1
                 except KeyError:
                     pass
 
@@ -368,6 +350,48 @@ class generateReport:
                 row['Day'] = k
                 w.writerow(row)
 
+    def get_average_per_day(self, key):
+
+        pipeline = [{'$match': {'placed_on': {'$exists': True},
+                                key: {'$exists': True}
+                               }
+                    },
+                    {'$group': {'_id': {'placed_on': '$placed_on',
+                                        'prediction': '$prediction'},
+                                key: {'$avg': '${}'.format(key)}
+                               }
+                    }
+                   ]
+
+        header_csv = ['date', 'prediction', key]
+        for d in self.db_jobs.aggregate(pipeline):
+            print(d)
+
+    def _get_sum_per_day(self, key):
+
+        pipeline = [{'$match': {'placed_on': {'$exists': True},
+                               key: {'$exists': True}
+                              }
+                    },
+
+                    {'$unwind': '${}'.format(key)},
+
+                    {'$group': {'_id': {'placed_on': '$placed_on',
+                                        'prediction': '$prediction',
+                                        key: '${}'.format(key)},
+                                # 'total': {'$sum': '${}'.format(key)}
+                                'total': {'$sum': 1}
+                               }
+                    }
+                    ]
+        for d in self.db_jobs.aggregate(pipeline):
+            yield d
+
+    def get_sum_per_day(self, list_to_parse):
+        for key in list_to_parse:
+            for result in self._get_sum_per_day(key):
+                print(result)
+
 
 def main():
     """
@@ -379,20 +403,24 @@ def main():
     db_prediction  = db_conn['predictions']
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
     generate_report.get_keys_per_day()
-    # logger.info('Invalid code with salary')
-    # logger.info(generate_report.get_invalid_code())
-    # logger.info('Invalid code without salary')
-    # generate_report.get_invalid_code(with_salary=False)
-    # logger.info('Count invalid code without salary')
-    # generate_report.count_invalid_codes()
-    #
-    # logger.info('Get the training set')
-    # generate_report.get_training_set()
-    # logger.info('Get the salary unique')
-    # generate_report.get_salary()
-    # logger.info('Get the classifications')
-    # generate_report.get_classification()
-    #
+    for key in ['duration_days']:
+        generate_report.get_average_per_day(key)
+    key_to_parse_for_sum_per_day = ['contract', 'hour', 'extra_location_s']
+    generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
+    logger.info('Invalid code with salary')
+    logger.info(generate_report.get_invalid_code())
+    logger.info('Invalid code without salary')
+    generate_report.get_invalid_code(with_salary=False)
+    logger.info('Count invalid code without salary')
+    generate_report.count_invalid_codes()
+    logger.info('Get the training set')
+    generate_report.get_training_set()
+    logger.info('Get the salary unique')
+    generate_report.get_unique_values('salary')
+    logger.info('Get the Employers')
+    generate_report.get_unique_values('employer')
+    logger.info('Get the classifications')
+    generate_report.get_classification()
 
 if __name__ == '__main__':
     main()
