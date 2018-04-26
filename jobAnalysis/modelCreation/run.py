@@ -111,10 +111,10 @@ def predicting(db_conn, features, model, relaunch):
         search = {'prediction': {'$exists': False}}
     for doc in db_conn['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
         _id = doc['_id']
+        jobid = doc['jobid']
         try:
             df = pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
             X_to_predict = features.transform(df)
-            jobid = doc['jobid']
             prediction = model.predict(X_to_predict)
         except KeyError:
             prediction = None
