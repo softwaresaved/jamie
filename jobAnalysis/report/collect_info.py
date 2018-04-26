@@ -437,7 +437,7 @@ def main():
     generate_report.get_keys_per_day()
     for key in ['duration_days']:
         generate_report.get_average_per_day(key)
-    key_to_parse_for_sum_per_day = ['contract', 'hour', 'extra_location_s']
+    key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s']
     generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
     logger.info('Invalid code with salary')
     logger.info(generate_report.get_invalid_code())
