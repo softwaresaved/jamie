@@ -308,16 +308,21 @@ class generateReport:
         list_to_parse.remove('')
         list_to_parse.remove('_id')
         list_to_parse.remove('jobid')
+        # list_to_parse.remove('prediction')
 
         # Create a dictionary with all the days and set up an empty dict
         dict_key_with_date  = {date: dict() for date in self.days_range}
 
         # Populate each entry with
         for k in dict_key_with_date:
-            dict_key_with_date[k] = {key: 0 for key in list_to_parse}
+            for i in [0, 1, 'None']:
+                dict_key_with_date[k][i] = {key: 0 for key in list_to_parse}
 
         # Add the Nan key
-        dict_key_with_date['NaN'] = {key: 0 for key in list_to_parse}
+
+        for i in [0, 1, 'None']:
+            dict_key_with_date['NaN'] = dict()
+            dict_key_with_date['NaN'][i] = {key: 0 for key in list_to_parse}
 
         # Parse the db and return all the results
         for record in self.db_jobs.find({}):
@@ -326,29 +331,32 @@ class generateReport:
             except KeyError:
                 date = 'NaN'
             # Inc the total
-            dict_key_with_date[date]['Total'] +=1
+            dict_key_with_date[date][record['prediction']]['Total'] +=1
             # Inc any keys that are present
             for k in record:
                 try:
                     try:
                         if k not in record['invalid_code']:
-                            dict_key_with_date[date][k] +=1
+                            dict_key_with_date[date][record['prediction']][k] +=1
                     except KeyError:
-                        dict_key_with_date[date][k] +=1
+                        dict_key_with_date[date][record['prediction']][k]+=1
                 except KeyError:
                     pass
 
         # Record the results
         filename = '{}dataCollection/presence_keys.csv'.format(self.report_csv_folder)
         with open(filename, "w") as f:
-            days_list = ['Day']
-            fields = days_list + list_to_parse
+            group = ['date', 'prediction']
+            fields = group + list_to_parse
             w = csv.DictWriter(f, fields)
             w.writeheader()
-            for k in dict_key_with_date:
-                row = dict_key_with_date[k]
-                row['Day'] = k
-                w.writerow(row)
+            for date in dict_key_with_date:
+                date_record = dict_key_with_date[date]
+                for prediction in date_record:
+                    row = date_record[prediction]
+                    row['date'] = date
+                    row['prediction'] = prediction
+                    w.writerow(row)
 
     def _get_average_per_day(self, key):
 
