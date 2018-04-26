@@ -286,11 +286,10 @@ class generateReport:
             to_add = d['_id']
             to_add['count'] = d['count']
             #Tranform the list of date (containing only one element) to a string
-            # try:
-            to_add['date'] = d['_id']['date']
-            #     # to_add['date'] = to_add['date'][0]
-            # except (KeyError, TypeError): # some none value due to impossibility to find the right date
-            #     to_add['date'] = 'date not found'
+            try:
+                to_add['date'] = d['_id']['date']
+            except KeyError:
+                to_add['date'] = 'None'
 
             list_to_append = [to_add[i] for i in header_csv]
             data_for_csv.append(list_to_append)
@@ -301,7 +300,7 @@ class generateReport:
         Output a csv file with the count for each keys
         """
         # Add a key total to get all the entry for one day
-        list_to_parse = ['Total']
+        list_to_parse = ['total']
         list_to_parse.extend(sorted(self.get_all_keys('jobs')))
 
         # Remove the empty entry, jobid and _id
@@ -331,7 +330,7 @@ class generateReport:
             except KeyError:
                 date = 'NaN'
             # Inc the total
-            dict_key_with_date[date][record['prediction']]['Total'] +=1
+            dict_key_with_date[date][record['prediction']]['total'] +=1
             # Inc any keys that are present
             for k in record:
                 try:
