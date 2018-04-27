@@ -385,11 +385,10 @@ class generateReport:
             data_for_csv = list()
             name_file = 'average_{}'.format(key)
             for data in self._get_average_per_day(key):
+                to_add = data['_id']
+                to_add[key] = data[key]
 
-                print(data)
-                data = data['_id']
-
-                data_for_csv.append([data['date'], data['prediction'], data[key]])
+                data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key]])
             self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
     def _get_sum_per_day(self, key):
