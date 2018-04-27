@@ -1,2 +1,0 @@
-University,URL,Category,University Code,Last Job Number
-University of Bristol,https://emea3.recruitmentplatform.com/syndicated/lay/jsoutputinitrapido.cfm?component=lay9999_lst400a&page=jsoutputinitrapido.cfm&ID=Q50FK026203F3VBQBV7V77V83&Resultsperpage=999&lg=UK&mask=uobext&pagenum=1&option=21&sort=ASC,Full,BTL,0
