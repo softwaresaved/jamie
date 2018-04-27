@@ -381,7 +381,7 @@ class generateReport:
             list_to_parse = [list_to_parse]
 
         for key in list_to_parse:
-            header_csv = ['date', 'prediction', key, 'average']
+            header_csv = ['date', 'prediction', key]
             data_for_csv = list()
             name_file = 'average_{}'.format(key)
             for data in self._get_average_per_day(key):
