@@ -384,8 +384,11 @@ class generateReport:
             header_csv = ['date', 'prediction', key, 'average']
             data_for_csv = list()
             name_file = 'average_{}'.format(key)
-            for data in self._get_sum_per_day(key):
+            for data in self._get_average_per_day(key):
+
+                print(data)
                 data = data['_id']
+
                 data_for_csv.append([data['date'], data['prediction'], data[key]])
             self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
@@ -437,7 +440,7 @@ def main():
     generate_report.get_keys_per_day()
     for key in ['duration_days']:
         generate_report.get_average_per_day(key)
-    key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s']
+    key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s', 'employer']
     generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
     logger.info('Invalid code with salary')
     logger.info(generate_report.get_invalid_code())
