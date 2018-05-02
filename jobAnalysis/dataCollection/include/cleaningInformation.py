@@ -51,7 +51,6 @@ class OutputRow:
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
-        print(self.keys_to_record)
         self.create_dictionary()
         # Set attribute include_in_study as True by default
         # This attribute is changed when some invalid codes
@@ -254,8 +253,11 @@ class OutputRow:
         """
         self.check_validity(field, fieldname)
         try:
+
+            # First remove all the white spaces and replace then with a single whitespace
+            salary_fields = ' '.join(salary_fields.split())
             # Are there numbers associated with a £ symbol in the format £nn,nnn or £nnn,nnn?
-            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9](?: |$)', field,
+            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9]', field,
                                        flags=re.MULTILINE)
             num_salary_fields = len(salary_fields)
             if num_salary_fields == 0:
@@ -388,5 +390,29 @@ class OutputRow:
         return result
 
 
+
+def main():
+    """
+    Running for test purpose
+    """
+    file_to_parse = '../../../outputs/uniqueValue/salary.csv'
+    print('Reading: {}'.format(file_to_parse))
+    result = dict()
+    with open(file_to_parse, 'r') as f:
+        for l in f:
+
+            l = ' '.join(l.split())
+            # salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9](?: |$)', l,
+            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9]', l,
+                                                flags=re.MULTILINE)
+            result[len(salary_fields)] = result.get(len(salary_fields), 0)+1
+            size = len(salary_fields)
+            if size == 1:
+                print(l)
+                print(salary_fields)
+    for k in result:
+        print(k, result[k])
+
+
 if __name__ == '__main__':
-    pass
+    main()
