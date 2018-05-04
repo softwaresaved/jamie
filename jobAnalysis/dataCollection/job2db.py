@@ -158,7 +158,7 @@ def main():
 
     # Ensure the indexes are created
     create_index(db_jobs, 'jobid', unique=True)
-    create_index(db_jobs, 'IncludeInStudy', unique=False)
+    # create_index(db_jobs, 'IncludeInStudy', unique=False)
     create_index(db_jobs, 'predicted')
 
     logger.info('Collecting the already recorded jobsIds')

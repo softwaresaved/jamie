@@ -450,9 +450,9 @@ def main():
     logger.info('Get the training set')
     generate_report.get_training_set()
     # logger.info('Get the salary unique')
-    # generate_report.get_unique_values('salary')
+    generate_report.get_unique_values('salary')
     # logger.info('Get the Employers')
-    # generate_report.get_unique_values('employer')
+    generate_report.get_unique_values('employer')
     logger.info('Get the classifications')
     generate_report.get_classification()
 

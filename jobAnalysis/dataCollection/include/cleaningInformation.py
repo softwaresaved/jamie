@@ -255,7 +255,7 @@ class OutputRow:
         try:
 
             # First remove all the white spaces and replace then with a single whitespace
-            salary_fields = ' '.join(salary_fields.split())
+            field = ' '.join(field.split())
             # Are there numbers associated with a £ symbol in the format £nn,nnn or £nnn,nnn?
             salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9]', field,
                                        flags=re.MULTILINE)
