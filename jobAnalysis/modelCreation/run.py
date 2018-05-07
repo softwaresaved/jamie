@@ -147,10 +147,11 @@ def main():
                         help='Decide if rerun the modelling or pickle the existing one if exists. Default value is true')
     parser.add_argument('-c', '--config',
                         type=str,
-                        default='../config/config_dev.ini')
-    args = parser.parse_args()
+                        default='config_dev.ini')
 
-    db_conn = connectDB(args.config)
+    args = parser.parse_args()
+    config_file = '../config/'+args.config
+    db_conn = connectDB(config_file)
     db_conn['predictions'].create_index('jobid', unique=True)
     db_conn['predictions'].create_index('prediction', unique=False)
 

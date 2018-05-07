@@ -16,21 +16,24 @@ def connectDB(config_file):
     # set up access credentials
     config_value = configParser()
     config_value.read(config_file)
-
     DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
     access_value = configParser()
     access_value.read(DB_ACC_FILE)
+    args_to_connect = list()
+    args_to_connect.append(config_value['MongoDB'].get('DB_NAME'.lower(), None))
     # # MongoDB ACCESS # #
-    mongoDB_USER = access_value['MongoDB'].get('db_username'.lower(), None)
-    mongoDB_PASS = access_value['MongoDB'].get('DB_PASSWORD'.lower(), None)
-    mongoDB_AUTH_DB = access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None)
-    mongoDB_AUTH_METH = access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None)
+    try:
+        args_to_connect.append(access_value['MongoDB'].get('db_username'.lower(), None))
+        args_to_connect.append(access_value['MongoDB'].get('DB_PASSWORD'.lower(), None))
+
+        args_to_connect.append(access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None))
+        args_to_connect.append(access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None))
+    except KeyError:
+        pass
 
     # Get the information about the db and the collections
-    mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
     # Create the instance that connect to the db storing the training set
-    mongoDB = connectMongo(mongoDB_NAME, mongoDB_USER,
-                           mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
+    mongoDB = connectMongo(*args_to_connect)
     return mongoDB
 
 

@@ -136,13 +136,16 @@ def main():
 
     parser = argparse.ArgumentParser(description='Get the tags from the mysql database')
 
-    parser.add_argument('-c', '--config', type=str, default='../config/config_dev.ini')
-    args = parser.parse_args()
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='config_dev.ini')
 
-    db_conn = connectDB(args.config)
+    args = parser.parse_args()
+    config_file = '../config/'+args.config
+    db_conn = connectDB(config_file)
     # set up access credentials
     config_value = configParser()
-    config_value.read(args.config)
+    config_value.read(config_file)
 
     DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
     access_value = configParser()

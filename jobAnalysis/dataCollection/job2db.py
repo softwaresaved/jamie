@@ -30,20 +30,7 @@ from dataCollection.include.cleaningInformation import OutputRow
 from dataCollection.include.summary_day_operation import generateReport
 
 
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
-
-
-logger = logger(name='jobs2db', stream_level=DEBUGGING)
+logger = logger(name='jobs2db', stream_level='DEBUG')
 
 
 def make_sure_path_exists(path):
@@ -134,14 +121,14 @@ def main():
 
     parser.add_argument('-c', '--config',
                         type=str,
-                        default='../config/config_dev.ini')
-    args = parser.parse_args()
+                        default='config_dev.ini')
 
-    db_conn = connectDB(args.config)
+    args = parser.parse_args()
+    config_file = '../config/'+args.config
     # set up access credentials
     config_value = configParser()
-    config_value.read(args.config)
-
+    config_value.read(config_file)
+    db_conn = connectDB(config_file)
     # Get the folder or the file where the input data are stored
     INPUT_FOLDER = config_value['input'].get('INPUT_FOLDER'.lower(), None)
     # ### Init the processes #####

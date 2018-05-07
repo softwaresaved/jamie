@@ -106,13 +106,13 @@ def get_training_set(db, collection, *args, **kwargs):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Get the training set')
-
     parser.add_argument('-c', '--config',
                         type=str,
-                        default='../config/config_dev.ini')
+                        default='config_dev.ini')
+
     args = parser.parse_args()
-    # Connect to the database
-    db_conn = connectDB(args.config)
+    config_file = '../config/'+args.config
+    db_conn = connectDB(config_file)
+    # set up access credentials
     df = get_training_set(db_conn, 'jobs')
     print(df)
