@@ -51,7 +51,6 @@ class OutputRow:
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
-        print(self.keys_to_record)
         self.create_dictionary()
         # Set attribute include_in_study as True by default
         # This attribute is changed when some invalid codes
@@ -254,8 +253,10 @@ class OutputRow:
         """
         self.check_validity(field, fieldname)
         try:
+            # First remove all the white spaces and replace them with a single whitespace
+            field = ' '.join(field.split())
             # Are there numbers associated with a £ symbol in the format £nn,nnn or £nnn,nnn?
-            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9](?: |$)', field,
+            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9]', field,
                                        flags=re.MULTILINE)
             num_salary_fields = len(salary_fields)
             if num_salary_fields == 0:
@@ -336,6 +337,7 @@ class OutputRow:
         self.clean_place_on()
         self.clean_closes()
         self.clean_contract()
+        self.add_duration()
         self.clean_salary(self.salary, 'salary')
         self.clean_salary(self.funding_amount, 'funding_amount')
         if hasattr(self, 'funding_amount') and 'contract' in self.invalid_code:
