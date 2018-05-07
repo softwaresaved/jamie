@@ -7,6 +7,7 @@ from common.logger import logger
 
 logger = logger(name='getConnection', stream_level='DEBUG')
 
+
 def connectDB(config_file):
     """
     """
@@ -16,8 +17,6 @@ def connectDB(config_file):
     config_value = configParser()
     config_value.read(config_file)
 
-    # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_value['input'].get('INPUT_FOLDER'.lower(), None)
     DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
     access_value = configParser()
     access_value.read(DB_ACC_FILE)

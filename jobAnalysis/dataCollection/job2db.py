@@ -12,6 +12,7 @@ Input:
 
 import os
 import itertools
+import argparse
 import errno
 
 import pymongo
@@ -21,6 +22,7 @@ from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
 from common.logger import logger
+from common.getConnection import connectDB
 from common.configParser import configParserPerso as configParser
 
 from dataCollection.include.fileProcess import fileProcess
@@ -128,34 +130,25 @@ def main():
     """
     Wrapper around for the data parser from html to mongodb
     """
-    # ### CONNECTION TO DB ### #
+    parser = argparse.ArgumentParser(description='Transform jobs ads stored in html file into the mongodb')
 
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='../config/config_dev.ini')
+    args = parser.parse_args()
+
+    db_conn = connectDB(args.config)
     # set up access credentials
     config_value = configParser()
-    config_value.read(CONFIG_FILE)
+    config_value.read(args.config)
 
     # Get the folder or the file where the input data are stored
     INPUT_FOLDER = config_value['input'].get('INPUT_FOLDER'.lower(), None)
-    DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
-    access_value = configParser()
-    access_value.read(DB_ACC_FILE)
-    # # MongoDB ACCESS # #
-    mongoDB_USER = access_value['MongoDB'].get('db_username'.lower(), None)
-    mongoDB_PASS = access_value['MongoDB'].get('DB_PASSWORD'.lower(), None)
-    mongoDB_AUTH_DB = access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None)
-    mongoDB_AUTH_METH = access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None)
-
-    # Get the information about the db and the collections
-    mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
-    mongoDB_JOB_COLL = config_value['MongoDB'].get('DB_JOB_COLLECTION'.lower(), None)
-
     # ### Init the processes #####
 
     # Connect to the database
     logger.info('Connection to the database')
-    db_jobs = get_connection(mongoDB_NAME, mongoDB_JOB_COLL, mongoDB_USER,
-                             mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
-
+    db_jobs = db_conn['jobs']
     # Ensure the indexes are created
     create_index(db_jobs, 'jobid', unique=True)
     create_index(db_jobs, 'IncludeInStudy', unique=False)

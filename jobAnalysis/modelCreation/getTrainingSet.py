@@ -11,6 +11,7 @@ It return a dataframe and store it in a pickle form for later use
 
 
 import sys
+import argparse
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
@@ -24,18 +25,6 @@ from common.logger import logger
 from common.getConnection import connectDB
 
 logger = logger(name='getTrainingSet', stream_level='DEBUG')
-
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
 
 
 def building_pipeline(collection, *args, **kwargs):
@@ -98,16 +87,7 @@ def get_documents(db, collection, *args, **kwargs):
     """
     pipeline = building_pipeline(collection, *args, **kwargs)
     for document in db['tags'].aggregate(pipeline):
-        # yield document
         document.update({k: v for k, v in document['data'].items()})
-        # try:
-        #     del document['data']['_id']
-        # except KeyError:
-        #     pass
-        # try:
-        #     del document['_id']
-        # except KeyError:
-        #     document.update(document['data'])
         try:
             del document['data']
         except KeyError:
@@ -126,9 +106,13 @@ def get_training_set(db, collection, *args, **kwargs):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description='Get the training set')
+
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='../config/config_dev.ini')
+    args = parser.parse_args()
     # Connect to the database
-    db_conn = connectDB(CONFIG_FILE)
+    db_conn = connectDB(args.config)
     df = get_training_set(db_conn, 'jobs')
     print(df)
-
-
