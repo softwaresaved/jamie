@@ -56,6 +56,7 @@ class OutputRow:
         # This attribute is changed when some invalid codes
         # are found
         self.include_in_study = True
+        self.invalid_code = list()
 
     def matching_key(self, key):
         """
