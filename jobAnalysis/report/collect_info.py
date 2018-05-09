@@ -64,7 +64,6 @@ class generateReport:
 
         self.days_range = self.create_days_range(self.first_date, self.last_date)
 
-
     def get_all_keys(self, collection):
         """
         Function to return all the distinct keys present in a collection
@@ -229,12 +228,15 @@ class generateReport:
             data_for_csv.append([data['_id'], data['count']])
         self.write_csv(['Type of invalid_code', 'count'], data_for_csv, 'count of invalid_code')
 
-    def get_unique_values(self, key):
+    def get_unique_values(self, key, research_soft_only=False):
         """
         return unique value for the field specified by the key
         """
         set_unique = set()
-        for data in self.db_jobs.find({key: {'$exists': True}}, {key: 1, '_id': 0}):
+        search = {key: {'$exists': True}}
+        if research_soft_only is True:
+            search['prediction'] = 1
+        for data in self.db_jobs.find(search, {key: 1, '_id': 0}):
             set_unique.add(data[key].replace('\n', '\t').strip())
         with open('../../outputs/uniqueValue/{}.csv'.format(key), 'w') as f:
             for record in set_unique:
@@ -426,6 +428,30 @@ class generateReport:
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
+    def get_employer_uni(self):
+        """
+        """
+        pipeline = [{'$match': {
+                                'prediction': {'$exists': True},
+                                'uk_university': {'$exists': True}
+                              }
+                    },
+
+                    {'$group': {'_id': {'prediction': '$prediction',
+                                        'uk_university': '$uk_university'},
+                                # 'total': {'$sum': '${}'.format(key)}
+                                'count': {'$sum': 1}
+                               }
+                    }
+                    ]
+        header = ['UK University', 'prediction', 'total']
+        data_for_csv = list()
+        for data in self.db_jobs.aggregate(pipeline):
+            data_for_csv.append([data['_id']['uk_university'],
+                                data['_id']['prediction'],
+                                data['count']])
+        self.write_csv(header, data_for_csv, 'sum_uk-university', 'dataAnalysis')
+
 
 def main():
     """
@@ -436,8 +462,9 @@ def main():
     db_tag = db_conn['tags']
     db_prediction  = db_conn['predictions']
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
+    generate_report.get_employer_uni()
     generate_report.get_keys_per_day()
-    for key in ['duration_days']:
+    for key in ['duration_ad_days']:
         generate_report.get_average_per_day(key)
     key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s', 'employer']
     generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
@@ -452,7 +479,7 @@ def main():
     # logger.info('Get the salary unique')
     generate_report.get_unique_values('salary')
     # logger.info('Get the Employers')
-    generate_report.get_unique_values('employer')
+    generate_report.get_unique_values('job_title', research_soft_only=True)
     logger.info('Get the classifications')
     generate_report.get_classification()
 

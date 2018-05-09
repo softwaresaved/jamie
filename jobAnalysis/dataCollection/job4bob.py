@@ -6,6 +6,7 @@ Script to filter the job list with different parameters and copy that selected j
 for input into the classifier Bob. Connect to the mongodb and copy file in folder
 """
 import os
+import argparse
 from shutil import copy2
 
 import sys
@@ -18,18 +19,6 @@ from common.configParser import ConfigParserPerso as configParser
 from job2db import make_sure_path_exists
 from job2db import get_connection
 
-
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
 
 logger = logger(name='jobs4bob', stream_level='DEBUG')
 
@@ -59,10 +48,18 @@ def copy_file(filename, inputfolder, outputfolder):
 def main():
     """
     """
+    parser = argparse.ArgumentParser(description='Transform jobs ads stored in html file into the mongodb')
+
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='config_dev.ini')
+
+    args = parser.parse_args()
+    config_file = '../config/'+args.config
+    db_conn = connectDB(config_file)
     # set up access credentials
     config_value = configParser()
-    config_value.read(CONFIG_FILE)
-
+    config_value.read(config_file)
     # Get the folder or the file where the input data are stored
     INPUT_FOLDER = config_value['input'].get('INPUT_FOLDER'.lower(), None)
     DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
@@ -71,24 +68,13 @@ def main():
     # Check if the folder exists and if not, create it
     make_sure_path_exists(SAMPLE_FOLDER)
 
-    access_value = configParser()
-    access_value.read(DB_ACC_FILE)
     # # MongoDB ACCESS # #
-    mongoDB_USER = access_value['MongoDB'].get('db_username'.lower(), None)
-    mongoDB_PASS = access_value['MongoDB'].get('DB_PASSWORD'.lower(), None)
-    mongoDB_AUTH_DB = access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None)
-    mongoDB_AUTH_METH = access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None)
-
-    # Get the information about the db and the collections
-    mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
-    mongoDB_JOB_COLL = config_value['MongoDB'].get('DB_JOB_COLLECTION'.lower(), None)
-
-    # ### Init the processes #####
-
     # Connect to the database
     logger.info('Connection to the database')
-    db_jobs = get_connection(mongoDB_NAME, mongoDB_JOB_COLL, mongoDB_USER,
-                             mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
+    db_jobs = db_conn['jobs']
+    # Ensure the indexes are created
+
+    # ### Init the processes #####
 
     for filename in get_valid_id(db_jobs):
         print(filename)

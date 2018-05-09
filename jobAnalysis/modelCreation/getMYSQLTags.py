@@ -7,6 +7,8 @@ Require a connection to the MySQL database (where the tags are stored) and a con
 information is stored
 """
 
+import argparse
+
 import pymongo
 import pymysql as mdb
 
@@ -14,17 +16,6 @@ from include.logger import logger
 from include.configParser import ConfigParserPerso as configParser
 # from configparser import ConfigParser as configParser
 
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = 'config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = 'config.ini'
-    DEBUGGING='INFO'
 
 
 logger = logger(name='dbPreparation', stream_level=DEBUGGING)
@@ -143,21 +134,22 @@ def main():
     """
     # ### CONNECTION TO DB ### #
 
+    parser = argparse.ArgumentParser(description='Get the tags from the mysql database')
+
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='config_dev.ini')
+
+    args = parser.parse_args()
+    config_file = '../config/'+args.config
+    db_conn = connectDB(config_file)
     # set up access credentials
-    # config_value = configParser().read_config(CONFIG_FILE)
     config_value = configParser()
-    config_value.read(CONFIG_FILE)
+    config_value.read(config_file)
 
     DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
     access_value = configParser()
     access_value.read(DB_ACC_FILE)
-    # # MongoDB ACCESS # #
-    mongoDB_USER = access_value['MongoDB'].get('db_username'.lower(), None)
-    mongoDB_PASS = access_value['MongoDB'].get('DB_PASSWORD'.lower(), None)
-    mongoDB_AUTH_DB = access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None)
-    mongoDB_AUTH_METH = access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None)
-
-    # # MYSQL ACCESS # #
 
     # Get the information about the db and the collections
     mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
@@ -172,8 +164,14 @@ def main():
     # several time
     mongoTag.create_index(mongoDB_TAG_COLL, 'jobid', unique=True)
 
+    # # MYSQL ACCESS # #
+    mysql_host = access_value['MYSQL'].get('db_host', None)
+    mysql_dbname = access_value['MYSQL'].get('db_name', None)
+    mysql_username = access_value['MYSQL'].get('db_username', None)
+    mysql_password= access_value['MYSQL'].get('db_password', None)
+
     # Connect to the mysql db
-    mysqlConnection = mySQL(host='127.0.0.1', user='root', password='root_password', db='classify')
+    mysqlConnection = mySQL(host=mysql_host, user=mysql_username, password=mysql_password, db=mysql_dbname)
 
     # Transferring the data from mysql to mongoDB
     for rows in mysqlConnection.search_final_classification():

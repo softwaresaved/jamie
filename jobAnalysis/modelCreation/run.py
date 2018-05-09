@@ -27,17 +27,6 @@ from common.logger import logger
 
 logger = logger(name='prediction_run', stream_level='DEBUG')
 
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
 
 
 def record_information(best_model_name, best_model_params,
@@ -150,17 +139,21 @@ def record_prediction(db, prediction, jobid, _id, model_name, model_best_params)
 
 def main():
 
-    db_conn = connectDB(CONFIG_FILE)
-    db_conn['predictions'].create_index('jobid', unique=True)
-    db_conn['predictions'].create_index('prediction', unique=False)
-
     parser = argparse.ArgumentParser(description='Launch prediction modelling of jobs ads')
 
     parser.add_argument('-r', '--relaunch',
                         type=str,
                         default='False',
                         help='Decide if rerun the modelling or pickle the existing one if exists. Default value is true')
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='config_dev.ini')
+
     args = parser.parse_args()
+    config_file = '../config/'+args.config
+    db_conn = connectDB(config_file)
+    db_conn['predictions'].create_index('jobid', unique=True)
+    db_conn['predictions'].create_index('prediction', unique=False)
 
     final_model, features, best_model_name, best_model_params = get_model(args.relaunch)
     for job_id, prediction, _id in predicting(db_conn, features, final_model, args.relaunch):
