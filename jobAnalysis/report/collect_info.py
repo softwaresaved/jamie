@@ -64,7 +64,6 @@ class generateReport:
 
         self.days_range = self.create_days_range(self.first_date, self.last_date)
 
-
     def get_all_keys(self, collection):
         """
         Function to return all the distinct keys present in a collection
@@ -429,6 +428,30 @@ class generateReport:
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
+    def get_employer_uni(self):
+        """
+        """
+        pipeline = [{'$match': {
+                                'prediction': {'$exists': True},
+                                'uk_university': {'$exists': True}
+                              }
+                    },
+
+                    {'$group': {'_id': {'prediction': '$prediction',
+                                        'uk_university': '$uk_university'},
+                                # 'total': {'$sum': '${}'.format(key)}
+                                'count': {'$sum': 1}
+                               }
+                    }
+                    ]
+        header = ['UK University', 'prediction', 'total']
+        data_for_csv = list()
+        for data in self.db_jobs.aggregate(pipeline):
+            data_for_csv.append([data['_id']['uk_university'],
+                                data['_id']['prediction'],
+                                data['count']])
+        self.write_csv(header, data_for_csv, 'sum_uk-university', 'dataAnalysis')
+
 
 def main():
     """
@@ -439,6 +462,7 @@ def main():
     db_tag = db_conn['tags']
     db_prediction  = db_conn['predictions']
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
+    generate_report.get_employer_uni()
     generate_report.get_keys_per_day()
     for key in ['duration_ad_days']:
         generate_report.get_average_per_day(key)

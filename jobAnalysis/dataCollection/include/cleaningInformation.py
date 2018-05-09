@@ -6,7 +6,8 @@ This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs 
 """
 
 import re
-
+import difflib
+from operator import itemgetter
 from datetime import datetime
 
 
@@ -47,7 +48,8 @@ class OutputRow:
                          'invalid_code',
                          'salary_min',
                          'salary_max',
-                         'duration_ad_days']
+                         'duration_ad_days',
+                         'uk_university']
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
@@ -57,6 +59,20 @@ class OutputRow:
         # are found
         self.include_in_study = True
         self.invalid_code = list()
+        # get the list of university from the file ./uk_uni_list.txt for the method
+        # self.add_uk_university
+        self.uk_uni_list = self.read_uni_list_file()
+
+    def read_uni_list_file(self):
+        """
+        Read the txt file containing all universities from a text file
+        and create a set of strings
+        """
+        set_uni_list = set()
+        with open('./uk_uni_list.txt', 'r') as f:
+            for l in f:
+                set_uni_list.add(l)
+        return set_uni_list
 
     def matching_key(self, key):
         """
@@ -325,6 +341,34 @@ class OutputRow:
             self.invalid_code = [key]
         self.include_in_study = False
 
+    def add_uk_university(self):
+        """
+        Check the string from employer if it matches an UK university
+        provided by the file self.uk_uni_list using difflib
+        """
+        if hasattr(self, 'employer'):
+            # Break the employer string and lower it while removinge white spac
+
+            employer = self.employer.split('-')[0].split('–')[0].strip().lower()
+            # Parse the entry from the self.uk_uni_list
+
+            ratio_list = list()
+            for s in self.uk_uni_list:
+                to_match = s.lower().strip()
+
+                # Get the ratio for each entry and the self.employer value
+                ratio = difflib.SequenceMatcher(None, employer, to_match).ratio()
+                ratio_list.append((s, ratio))
+                # If ratio is == 1 it means it is a perfect match
+                if ratio == 1:
+                    break
+
+            # get the maximum ratio[1] in the list and return the associated tuple
+            best_match = max(ratio_list, key=itemgetter(1))
+            # Arbitrary limit of confidence for considering the two strings as a match
+            if best_match[1] >= 0.90:
+                self.uk_university = best_match[0]
+
     def clean_row(self):
         self.clean_description()
         self.clean_jobid()
@@ -339,6 +383,7 @@ class OutputRow:
         self.clean_closes()
         self.clean_contract()
         self.add_duration()
+        self.add_uk_university()
         self.clean_salary(self.salary, 'salary')
         self.clean_salary(self.funding_amount, 'funding_amount')
         if hasattr(self, 'funding_amount') and 'contract' in self.invalid_code:
