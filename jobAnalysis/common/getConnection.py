@@ -16,18 +16,18 @@ def connectDB(config_file):
     # set up access credentials
     config_value = configParser()
     config_value.read(config_file)
-    DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
-    access_value = configParser()
-    access_value.read(DB_ACC_FILE)
     args_to_connect = list()
-    args_to_connect.append(config_value['MongoDB'].get('DB_NAME'.lower(), None))
+    args_to_connect.append(config_value['MongoDB'].get('DB_NAME', None))
     # # MongoDB ACCESS # #
     try:
-        args_to_connect.append(access_value['MongoDB'].get('db_username'.lower(), None))
-        args_to_connect.append(access_value['MongoDB'].get('DB_PASSWORD'.lower(), None))
+        DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE', None)
+        access_value = configParser()
+        access_value.read(DB_ACC_FILE)
+        args_to_connect.append(access_value['MongoDB'].get('db_username', None))
+        args_to_connect.append(access_value['MongoDB'].get('DB_PASSWORD', None))
 
-        args_to_connect.append(access_value['MongoDB'].get('DB_AUTH_DB'.lower(), None))
-        args_to_connect.append(access_value['MongoDB'].get('DB_AUTH_METHOD'.lower(), None))
+        args_to_connect.append(access_value['MongoDB'].get('DB_AUTH_DB', None))
+        args_to_connect.append(access_value['MongoDB'].get('DB_AUTH_METHOD', None))
     except KeyError:
         pass
 
