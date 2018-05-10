@@ -69,7 +69,7 @@ class OutputRow:
         and create a set of strings
         """
         set_uni_list = set()
-        with open('./uk_uni_list.txt', 'r') as f:
+        with open('./data/uk_uni_list.txt', 'r') as f:
             for l in f:
                 set_uni_list.add(l)
         return set_uni_list
