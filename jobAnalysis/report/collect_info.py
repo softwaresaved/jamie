@@ -452,6 +452,28 @@ class generateReport:
                                 data['count']])
         self.write_csv(header, data_for_csv, 'sum_uk-university', 'dataAnalysis')
 
+    def get_subject_area(self):
+        """
+        """
+        pipeline = [{'$match': {'prediction': {'$exists': True},
+                                'extra_subject_area': {'$exists': True}
+                               }
+                    },
+                    {'$unwind': '$extra_subject_area'},
+                    {'$group': {'_id': {'subject_area': '$extra_subject_area',
+                                        'prediction': '$prediction'},
+                                'count': {'$sum': 1}
+                               }
+                    }
+                   ]
+
+        header = ['Subject Area', 'prediction', 'total']
+        data_for_csv = list()
+        for data in self.aggregate(pipeline):
+            data_for_csv.append([data['_id']['subject_area'], data['_id']['prediction'], data['count']])
+
+        self.write_csv(header, data_for_csv, 'sum_subject_area', 'dataAnalysis')
+
 
 def main():
     """
@@ -462,6 +484,7 @@ def main():
     db_tag = db_conn['tags']
     db_prediction  = db_conn['predictions']
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
+    generate_report.get_subject_area()
     generate_report.get_employer_uni()
     generate_report.get_keys_per_day()
     for key in ['duration_ad_days']:
