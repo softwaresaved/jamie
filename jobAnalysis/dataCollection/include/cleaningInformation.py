@@ -71,7 +71,7 @@ class OutputRow:
         set_uni_list = set()
         with open('./data/uk_uni_list.txt', 'r') as f:
             for l in f:
-                set_uni_list.add(l)
+                set_uni_list.add(l.strip())
         return set_uni_list
 
     def matching_key(self, key):
