@@ -6,10 +6,8 @@ Generate data for all the different operations
 """
 import os
 import csv
-import itertools
 from datetime import date, timedelta
 
-import pymongo
 from bson import Code
 
 import sys
@@ -19,17 +17,6 @@ sys.path.append(str(Path('.').absolute().parent))
 from common.logger import logger
 from common.getConnection import connectDB
 
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
 
 logger = logger(name='collect info', stream_level='DEBUG')
 
