@@ -59,8 +59,10 @@ def write_csv(header, results, filename):
 def get_all_documents(db_conn):
     results = {}
     rsj_set = set()
+    rsj_set_admin = set()
     rsj = 0
     nrsj_set = set()
+    nrsj_set_admin = set()
     nrsj = 0
     no_pred = 0
     for doc in db_conn['jobs'].find({'description': {'$exists': True},
@@ -70,11 +72,21 @@ def get_all_documents(db_conn):
                                      'uk_university': {'$exists': True}}):
         if len(doc['description']) > 150:
             if doc['prediction'] == 1:
-                rsj +=1
-                rsj_set.add(doc['jobid'])
+                if 'Administrative' not in doc['extra_subject_area_s']:
+                    rsj +=1
+                    rsj_set.add(doc['jobid'])
+                else:
+                    rsj +=1
+                    rsj_set_admin.add(doc['jobid'])
+
             elif doc['prediction'] == 0:
-                nrsj +=1
-                nrsj_set.add(doc['jobid'])
+                if 'Administrative' not in doc['extra_subject_area_s']:
+                    nrsj +=1
+                    nrsj_set.add(doc['jobid'])
+                else:
+                    nrsj +=1
+                    nrsj_set_admin.add(doc['jobid'])
+
             else:
                 no_pred +=1
     print('Software Job: {}'.format(rsj))
@@ -95,7 +107,7 @@ def get_all_documents(db_conn):
         #     # results['invalid'] = results.get('invalid', 0) +1
         #     pass
         #
-    return rsj_set, nrsj_set
+    return rsj_set,rsj_set_admin,  nrsj_set, nrsj_set_admin
 
 def get_sample(*args, **kwargs):
     """
@@ -107,8 +119,9 @@ def get_sample(*args, **kwargs):
     print('Size nrsj: {}'.format(size_nrsj))
 
 
-    list_rsj = random.sample(args[0], size_rsj)
-    list_nrsj = random.sample(args[1], size_nrsj)
+    list_rsj = random.sample(args[0], int(size_rsj*0.9)) + random.sample(args[1], int(size_rsj*0.1))
+    list_nrsj = random.sample(args[2], int(size_nrsj*0.9)) + random.sample(args[3], int(size_nrsj*0.1))
+
     return list_rsj, list_nrsj
 
 
@@ -127,9 +140,9 @@ if __name__ == "__main__":
     out_folder = '../../outputs/jobs_training-set-collector/'
     filename =  '../../outputs/uniqueValue/id_list_new_sample.csv'
 
-    set_research_soft, set_not_research_soft = get_all_documents(db_conn)
+    set_research_soft, set_research_soft_admin, set_not_research_soft, set_not_research_soft_admin = get_all_documents(db_conn)
 
-    sampled_rsj, sample_not_rsj = get_sample(set_research_soft, set_not_research_soft, percentage_rsj=0.7, nbr_job=500)
+    sampled_rsj, sample_not_rsj = get_sample(set_research_soft, set_research_soft_admin, set_not_research_soft, set_not_research_soft_admin,  percentage_rsj=0.7, nbr_job=500)
 
     for i in sampled_rsj + sample_not_rsj:
         print(i)
