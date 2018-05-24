@@ -428,6 +428,8 @@ def main():
 
     args = parser.parse_args()
     config_file = '../config/' + args.config
+    if config_file[-3:] != 'ini':
+        config_file += '.ini'
     # Connect to the database
     db_conn = connectDB(config_file)
     db_jobs = db_conn['jobs']
