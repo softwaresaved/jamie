@@ -6,6 +6,7 @@ Generate data for all the different operations
 """
 import os
 import csv
+import argparse
 from datetime import timedelta
 
 from bson import Code
@@ -418,8 +419,17 @@ class generateReport:
 def main():
     """
     """
+
+    parser = argparse.ArgumentParser(description='Collect information from all the dataset and create csv file for being used in jupyter notebook without access to the databases')
+
+    parser.add_argument('-c', '--config',
+                        type=str,
+                        default='config_dev.ini')
+
+    args = parser.parse_args()
+    config_file = '../config/' + args.config
     # Connect to the database
-    db_conn = connectDB(CONFIG_FILE)
+    db_conn = connectDB(config_file)
     db_jobs = db_conn['jobs']
     db_tag = db_conn['tags']
     db_prediction = db_conn['predictions']
