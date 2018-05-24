@@ -6,16 +6,16 @@ Generate data for all the different operations
 """
 import os
 import csv
-from datetime import date, timedelta
+from datetime import timedelta
 
 from bson import Code
+
+from common.logger import logger
+from common.getConnection import connectDB
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
-
-from common.logger import logger
-from common.getConnection import connectDB
 
 
 logger = logger(name='collect info', stream_level='DEBUG')
@@ -136,10 +136,10 @@ class generateReport:
             """
             get_enhanced_invalid_code = [{'$project': {'enhanced': 1,
                                                        'placed_on': 1,
-                                                    'invalid_code': {'$cond': [{'$gt': ['$invalid_code', None]}, 'invalid_code', 'clean_entry']}}},
-                                        {'$group': {'_id': {'enhanced': '$enhanced', 'invalid_code': '$invalid_code'},
-                                                    'count': {'$sum':1}}}
-                                        ]
+                                                       'invalid_code': {'$cond': [{'$gt': ['$invalid_code', None]}, 'invalid_code', 'clean_entry']}}},
+                                         {'$group': {'_id': {'enhanced': '$enhanced', 'invalid_code': '$invalid_code'},
+                                                     'count': {'$sum': 1}}}
+                                         ]
             return get_enhanced_invalid_code
 
         def pipleline_invalid_code_without_salary():
@@ -149,32 +149,31 @@ class generateReport:
             these categories
             """
             get_enhanced_invalid_code = [{'$project': {'enhanced': 1,
-                                                       'invalid_code': 1,}},
+                                                       'invalid_code': 1}},
                                          {'$project': {'enhanced': 1, 'invalid_code': 1,
                                                        "size_invalid_code": {'$cond': {'if': {'$gt': ['$invalid_code', None]},
                                                                                        'then': {'$size': '$invalid_code'},
                                                                                        'else': 0}
-                                                                            }
-                                                      }
-                                         },
-                                         {'$project':{'enhanced': 1, 'size_invalid_code': 1,
-                                                      'invalid_code_salary': {'$cond': {"if": {'$or': [
-                                                                                                       {'$gte': ['$size_invalid_code', 2]},
-                                                                                                       {'$and': [{'$eq': ['$size_invalid_code', 1]},
-                                                                                                                 {'$eq': ['$invalid_code', 'salary']}
-                                                                                                                ]
-                                                                                                       }
-                                                                                                      ]
-                                                                                              },
-                                                                              "then": 'invalid_code',
-                                                                              "else": 'clean_entry'
-                                                                                       }
                                                                              }
-                                                     }
-                                         },
+                                                       }
+                                          },
+                                         {'$project': {'enhanced': 1, 'size_invalid_code': 1,
+                                                       'invalid_code_salary': {'$cond': {"if": {'$or': [{'$gte': ['$size_invalid_code', 2]},
+                                                                                                        {'$and': [{'$eq': ['$size_invalid_code', 1]},
+                                                                                                                  {'$eq': ['$invalid_code', 'salary']}
+                                                                                                                  ]
+                                                                                                         }
+                                                                                                        ]
+                                                                                                },
+                                                                                         "then": 'invalid_code',
+                                                                                         "else": 'clean_entry'
+                                                                                         }
+                                                                               }
+                                                       }
+                                          },
                                          {'$group': {'_id': {'enhanced': '$enhanced', 'invalid_code': '$invalid_code_salary'},
-                                                    'count': {'$sum':1}}}
-                                        ]
+                                                     'count': {'$sum': 1}}}
+                                         ]
 
             return get_enhanced_invalid_code
 
@@ -182,7 +181,7 @@ class generateReport:
             pipeline = pipeline_invalid_code()
             type_data = 'invalid_code_with_salary'
         else:
-            pipeline =  pipleline_invalid_code_without_salary()
+            pipeline = pipleline_invalid_code_without_salary()
             type_data = 'invalid_code_without_salary'
         if from_begginning:
             pass
@@ -196,7 +195,7 @@ class generateReport:
         for data in output:
             for item in output[data]:
                 data_for_csv.append([data, item, output[data][item]])
-        self.write_csv(['type of job html', 'type of code',  'count'], data_for_csv, type_data)
+        self.write_csv(['type of job html', 'type of code', 'count'], data_for_csv, type_data)
 
         return output
 
@@ -209,7 +208,7 @@ class generateReport:
                     {'$match': {'count': {'$gte': 1}}},
                     {'$sort': {'count': -1}},
                     {'$limit': 100}
-                   ]
+                    ]
         data_for_csv = list()
         for data in self.aggregate(pipeline):
             data_for_csv.append([data['_id'], data['count']])
@@ -255,17 +254,17 @@ class generateReport:
                                  'localField': 'jobid',
                                  'foreignField': 'jobid',
                                  'as': 'results'
-                                }},
+                                 }},
                     {'$unwind': '$results'},
                     {'$project': {'model': 1,
                                   'prediction': 1,
                                   'date': '$results.placed_on'
-                                 }},
+                                  }},
                     {'$group': {'_id': {'prediction': '$prediction',
                                         'model': '$model',
                                         'date': '$date'},
-                               'count': {'$sum': 1}
-                               }}
+                                'count': {'$sum': 1}
+                                }}
                     ]
         data_for_csv = list()
         name_file = 'predictions'
@@ -274,7 +273,7 @@ class generateReport:
         for d in self.db_predictions.aggregate(pipeline):
             to_add = d['_id']
             to_add['count'] = d['count']
-            #Tranform the list of date (containing only one element) to a string
+            # Tranform the list of date (containing only one element) to a string
             try:
                 to_add['date'] = d['_id']['date']
             except KeyError:
@@ -299,7 +298,7 @@ class generateReport:
         # list_to_parse.remove('prediction')
 
         # Create a dictionary with all the days and set up an empty dict
-        dict_key_with_date  = {date: dict() for date in self.days_range}
+        dict_key_with_date = {date_: dict() for date_ in self.days_range}
 
         # Populate each entry with
         for k in dict_key_with_date:
@@ -315,19 +314,19 @@ class generateReport:
         # Parse the db and return all the results
         for record in self.db_jobs.find({}):
             try:
-                date = record['placed_on'].date()
+                date_ = record['placed_on'].date()
             except KeyError:
-                date = 'NaN'
+                date_ = 'NaN'
             # Inc the total
-            dict_key_with_date[date][record['prediction']]['total'] +=1
+            dict_key_with_date[date_][record['prediction']]['total'] +=1
             # Inc any keys that are present
             for k in record:
                 try:
                     try:
                         if k not in record['invalid_code']:
-                            dict_key_with_date[date][record['prediction']][k] +=1
+                            dict_key_with_date[date_][record['prediction']][k] +=1
                     except KeyError:
-                        dict_key_with_date[date][record['prediction']][k]+=1
+                        dict_key_with_date[date_][record['prediction']][k]+=1
                 except KeyError:
                     pass
 
@@ -338,11 +337,11 @@ class generateReport:
             fields = group + list_to_parse
             w = csv.DictWriter(f, fields)
             w.writeheader()
-            for date in dict_key_with_date:
-                date_record = dict_key_with_date[date]
+            for date_ in dict_key_with_date:
+                date_record = dict_key_with_date[date_]
                 for prediction in date_record:
                     row = date_record[prediction]
-                    row['date'] = date
+                    row['date'] = date_
                     row['prediction'] = prediction
                     w.writerow(row)
 
@@ -351,14 +350,14 @@ class generateReport:
         pipeline = [{'$match': {'placed_on': {'$exists': True},
                                 key: {'$exists': True},
                                 'prediction': {'$exists': True},
-                               }
-                    },
+                                }
+                     },
                     {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction'},
                                 key: {'$avg': '${}'.format(key)}
-                               }
-                    }
-                   ]
+                                }
+                     }
+                    ]
 
         for d in self.db_jobs.aggregate(pipeline):
             yield d
@@ -385,8 +384,8 @@ class generateReport:
         pipeline = [{'$match': {'placed_on': {'$exists': True},
                                 'prediction': {'$exists': True},
                                 key: {'$exists': True}
-                              }
-                    },
+                                }
+                     },
 
                     {'$unwind': '${}'.format(key)},
 
@@ -395,8 +394,8 @@ class generateReport:
                                         key: '${}'.format(key)},
                                 # 'total': {'$sum': '${}'.format(key)}
                                 'count': {'$sum': 1}
-                               }
-                    }
+                                }
+                     }
                     ]
         for d in self.db_jobs.aggregate(pipeline):
             yield d
@@ -415,31 +414,6 @@ class generateReport:
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
-    # def que get_employer_uni(self):
-    #     """
-    #     """
-    #     pipeline = [{'$match': {
-    #                             'prediction': {'$exists': True},
-    #                             'uk_university': {'$exists': True}
-    #                           }
-    #                 },
-    #
-    #                 {'$group': {'_id': {'prediction': '$prediction',
-    #                                     'uk_university': '$uk_university'},
-    #                             # 'total': {'$sum': '${}'.format(key)}
-    #                             'count': {'$sum': 1}
-    #                            }
-    #                 }
-    #                 ]
-    #     header = ['UK University', 'prediction', 'total']
-    #     data_for_csv = list()
-    #     for data in self.db_jobs.aggregate(pipeline):
-    #         data_for_csv.append([data['_id']['uk_university'],
-    #                             data['_id']['prediction'],
-    #                             data['count']])
-    #     self.write_csv(header, data_for_csv, 'sum_uk-university', 'dataAnalysis')
-
-
 
 def main():
     """
@@ -448,7 +422,7 @@ def main():
     db_conn = connectDB(CONFIG_FILE)
     db_jobs = db_conn['jobs']
     db_tag = db_conn['tags']
-    db_prediction  = db_conn['predictions']
+    db_prediction = db_conn['predictions']
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
     generate_report.get_keys_per_day()
     logger.info('Get the different sum')
@@ -470,6 +444,7 @@ def main():
     generate_report.get_unique_values('job_title', research_soft_only=True)
     logger.info('Get the classifications')
     generate_report.get_classification()
+
 
 if __name__ == '__main__':
     main()
