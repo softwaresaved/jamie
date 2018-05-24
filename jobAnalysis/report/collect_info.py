@@ -196,7 +196,10 @@ class generateReport:
         for data in output:
             for item in output[data]:
                 data_for_csv.append([data, item, output[data][item]])
-        self.write_csv(['type of job html', 'type of code', 'count'], data_for_csv, type_data)
+        self.write_csv(header=['type of job html', 'type of code', 'count'],
+                       result=data_for_csv,
+                       name=type_data,
+                       type_info='dataCollection')
 
         return output
 
@@ -213,7 +216,11 @@ class generateReport:
         data_for_csv = list()
         for data in self.aggregate(pipeline):
             data_for_csv.append([data['_id'], data['count']])
-        self.write_csv(['Type of invalid_code', 'count'], data_for_csv, 'count of invalid_code')
+        self.write_csv(header=['Type of invalid_code', 'count'],
+                       result=data_for_csv,
+                       name='count of invalid_code',
+                       type_info='dataCollection')
+
 
     def get_unique_values(self, key, research_soft_only=False):
         """
@@ -350,6 +357,7 @@ class generateReport:
 
         pipeline = [{'$match': {'placed_on': {'$exists': True},
                                 key: {'$exists': True},
+                                'uk_university': {'$exists': True}
                                 'prediction': {'$exists': True},
                                 }
                      },
@@ -384,6 +392,7 @@ class generateReport:
 
         pipeline = [{'$match': {'placed_on': {'$exists': True},
                                 'prediction': {'$exists': True},
+                                'uk_university': {'$exists': True}
                                 key: {'$exists': True}
                                 }
                      },
@@ -419,41 +428,53 @@ class generateReport:
 def main():
     """
     """
-
+    # Parsing the config file name
     parser = argparse.ArgumentParser(description='Collect information from all the dataset and create csv file for being used in jupyter notebook without access to the databases')
-
     parser.add_argument('-c', '--config',
                         type=str,
                         default='config_dev.ini')
-
     args = parser.parse_args()
     config_file = '../config/' + args.config
     if config_file[-3:] != 'ini':
         config_file += '.ini'
+
     # Connect to the database
     db_conn = connectDB(config_file)
     db_jobs = db_conn['jobs']
     db_tag = db_conn['tags']
     db_prediction = db_conn['predictions']
+
+    # Collect the different data
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
-    generate_report.get_keys_per_day()
-    logger.info('Get the different sum')
-    for key in ['duration_ad_days']:
-        generate_report.get_average_per_day(key)
-    key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s', 'extra_subject_area_s', 'uk_university', 'extra_type___role']
-    generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
+
     logger.info('Invalid code with salary')
     logger.info(generate_report.get_invalid_code())
+
     logger.info('Invalid code without salary')
     generate_report.get_invalid_code(with_salary=False)
+
     logger.info('Count invalid code without salary')
     generate_report.count_invalid_codes()
+
+    generate_report.get_keys_per_day()
+
+    logger.info('Get the different average')
+    for key in ['duration_ad_days']:
+        generate_report.get_average_per_day(key)
+
+    logger.info('Get the different sum')
+    key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s', 'extra_subject_area_s', 'uk_university', 'extra_type___role']
+    generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
+
     logger.info('Get the training set')
     generate_report.get_training_set()
+
     logger.info('Get the salary unique')
     generate_report.get_unique_values('salary')
+
     logger.info('Get the unique job title')
     generate_report.get_unique_values('job_title', research_soft_only=True)
+
     logger.info('Get the classifications')
     generate_report.get_classification()
 
