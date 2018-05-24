@@ -11,13 +11,13 @@ from datetime import timedelta
 
 from bson import Code
 
-from common.logger import logger
-from common.getConnection import connectDB
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
+from common.logger import logger
+from common.getConnection import connectDB
 
 logger = logger(name='collect info', stream_level='DEBUG')
 
