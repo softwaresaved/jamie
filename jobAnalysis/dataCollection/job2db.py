@@ -107,10 +107,7 @@ def get_db_ids(db):
     Connect to the db and parse all the documents
     return a list with the jobIds
     """
-    outlist = list()
-    for document in db.find({}, {'jobid': True, '_id': False}):
-        outlist.append(document['jobid'])
-    return outlist
+    return db.distinct('jobid')
 
 
 def main():
