@@ -221,7 +221,6 @@ class generateReport:
                        name='count of invalid_code',
                        type_info='dataCollection')
 
-
     def get_unique_values(self, key, research_soft_only=False):
         """
         return unique value for the field specified by the key
@@ -392,7 +391,7 @@ class generateReport:
 
         pipeline = [{'$match': {'placed_on': {'$exists': True},
                                 'prediction': {'$exists': True},
-                                'uk_university': {'$exists': True}
+                                'uk_university': {'$exists': True},
                                 key: {'$exists': True}
                                 }
                      },
