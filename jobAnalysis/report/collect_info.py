@@ -357,7 +357,7 @@ class generateReport:
 
         pipeline = [{'$match': {'placed_on': {'$exists': True},
                                 key: {'$exists': True},
-                                'uk_university': {'$exists': True}
+                                'uk_university': {'$exists': True},
                                 'prediction': {'$exists': True},
                                 }
                      },
