@@ -24,7 +24,7 @@ For any deployment, a config file needs to be filled with the location of the jo
 ### Python requirements
 
 **Python 3.6 and dependencies**:
-It is suggested to run a virtualenvironment and installing all the required dependencies in it (requires Python3.6):
+It is suggested to run a virtual environment and installing all the required dependencies in it (requires Python3.6):
 
 ```bash
     pip install virtualenv --user && virtualenv venv && source venv/bin/activate
