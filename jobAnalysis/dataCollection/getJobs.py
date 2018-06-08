@@ -203,7 +203,8 @@ def main():
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = extract_ads_info(job_data)
-            record_data(input_folder, job_id, data_to_record)
+            print(data_to_record)
+            # record_data(input_folder, job_id, data_to_record)
             n+=1
     logger.info('Downloaded {} jobs'.format(n))
 
