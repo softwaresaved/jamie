@@ -25,7 +25,7 @@ logger = logger(name="getJobs", stream_level="DEBUG")
 # Setting the URL.
 BASE_URL = "http://www.jobs.ac.uk"
 # Number of jobs fetch for one query
-NUM_JOBS = 10
+NUM_JOBS = 6000
 FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
 
 
@@ -161,8 +161,10 @@ def record_data(input_folder, job_id, data):
         None: record a file
     """
     filename = os.path.join(input_folder, job_id)
-    with open(filename, "w") as f:
-        f.write(data)
+    print(data)
+    raise
+    # with open(filename, "w") as f:
+    #     f.write(data)
 
 
 def main():
@@ -173,6 +175,7 @@ def main():
     parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
 
     args = parser.parse_args()
+    logger.info('Read config file')
     config_file = "../config/" + args.config
 
     # set up access credentials
@@ -182,12 +185,16 @@ def main():
     # Get the folder or the file where the input data are stored
     input_folder = config_value["input"].get("INPUT_FOLDER".lower(), None)
     # Check if the folder exists
+    logger.info('Check if the input folder exists: {}'.format(input_folder))
     make_sure_path_exists(input_folder)
 
     # Start the job collection
+    logger.info('Getting the search page')
     page = get_page(FULL_URL)
     data = transform_txt_in_bs4(page)
     jobs_list = split_by_results(data)
+    logger.info('Start to download new jobs')
+    n = 0
     for job in jobs_list:
         job_rel_url = extract_job_url(job)
         job_id, job_name, job_full_url = split_info_from_job_url(job_rel_url)
@@ -197,6 +204,8 @@ def main():
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = extract_ads_info(job_data)
             record_data(input_folder, job_id, data_to_record)
+            n+=1
+    logger.info('Downloaded {} jobs'.format(n))
 
 
 if __name__ == "__main__":
