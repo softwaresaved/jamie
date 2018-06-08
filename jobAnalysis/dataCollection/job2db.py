@@ -19,7 +19,8 @@ import pymongo
 
 import sys
 from pathlib import Path
-sys.path.append(str(Path('.').absolute().parent))
+
+sys.path.append(str(Path(".").absolute().parent))
 
 from common.logger import logger
 from common.getConnection import connectDB
@@ -30,7 +31,7 @@ from dataCollection.include.cleaningInformation import OutputRow
 from dataCollection.include.summary_day_operation import generateReport
 
 
-logger = logger(name='jobs2db', stream_level='DEBUG')
+logger = logger(name="jobs2db", stream_level="DEBUG")
 
 
 def make_sure_path_exists(path):
@@ -82,65 +83,45 @@ def create_index(coll, key, unique=False):
     coll.create_index(key, unique=unique)
 
 
-def get_connection(*args):
-    """
-    Parse the argument to Pymongo Client
-    and return a collection object to connect to the db
-    """
-    db = args[0]
-    coll = args[1]
-    c = pymongo.MongoClient()
-    try:
-        user = args[2]
-        passw = args[3]
-        db_auth = args[4]
-        db_mech = args[5]
-        confirmation = c[db].authenticate(user, passw, source=db_auth, mechanism=db_mech)
-        logger.info('Authenticated: {}'.format(confirmation))
-    except (IndexError, ValueError, TypeError):
-        logger.info('Connection to the database without password and authentication')
-    return c[db][coll]
-
-
 def get_db_ids(db):
     """
     Connect to the db and parse all the documents
     return a list with the jobIds
     """
-    return db.distinct('jobid')
+    return db.distinct("jobid")
 
 
 def main():
     """
     Wrapper around for the data parser from html to mongodb
     """
-    parser = argparse.ArgumentParser(description='Transform jobs ads stored in html file into the mongodb')
+    parser = argparse.ArgumentParser(
+        description="Transform jobs ads stored in html file into the mongodb"
+    )
 
-    parser.add_argument('-c', '--config',
-                        type=str,
-                        default='config_dev.ini')
+    parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
 
     args = parser.parse_args()
-    config_file = '../config/'+args.config
+    config_file = "../config/" + args.config
     # set up access credentials
     config_value = configParser()
     config_value.read(config_file)
     db_conn = connectDB(config_file)
     # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_value['input'].get('INPUT_FOLDER'.lower(), None)
+    INPUT_FOLDER = config_value["input"].get("INPUT_FOLDER".lower(), None)
     # ### Init the processes #####
 
     # Connect to the database
-    logger.info('Connection to the database')
-    db_jobs = db_conn['jobs']
+    logger.info("Connection to the database")
+    db_jobs = db_conn["jobs"]
     # Ensure the indexes are created
-    create_index(db_jobs, 'jobid', unique=True)
+    create_index(db_jobs, "jobid", unique=True)
     # create_index(db_jobs, 'IncludeInStudy', unique=False)
-    create_index(db_jobs, 'predicted')
+    create_index(db_jobs, "predicted")
 
-    logger.info('Collecting the already recorded jobsIds')
+    logger.info("Collecting the already recorded jobsIds")
     recorded_jobs_list = get_db_ids(db_jobs)
-    logger.info('Nb of already recorded jobs: {}'.format(len(recorded_jobs_list)))
+    logger.info("Nb of already recorded jobs: {}".format(len(recorded_jobs_list)))
 
     # Init the report generator
     report = generateReport(db_jobs)
@@ -148,53 +129,57 @@ def main():
     # Get the list of all files in the folders and only get the ones
     # that are not in the two lists passed in argument
     # That list is the list of jobs that are going to be proceeded
-    logger.info('Getting the list of jobsIds to process')
+    logger.info("Getting the list of jobsIds to process")
     new_jobs_list = get_filename(INPUT_FOLDER, recorded_jobs_list)
 
     # ### Start the record ####
     m = 0
     n = 0
     for data in get_data(INPUT_FOLDER, new_jobs_list):
-        m +=1
+        m += 1
         original_content = data
         # print(original_content.keys())
-        report.nb_processed_job +=1
+        report.nb_processed_job += 1
         if report.nb_processed_job % 500 == 0:
-            logger.debug('Nb of job processed: {} - recorded: {} - duplicate: {}'.format(report.nb_processed_job,
-                                                                                        report.nb_inserted_job,
-                                                                                        report.nb_duplicated_job))
+            logger.debug(
+                "Nb of job processed: {} - recorded: {} - duplicate: {}".format(
+                    report.nb_processed_job,
+                    report.nb_inserted_job,
+                    report.nb_duplicated_job,
+                )
+            )
         clean_data = OutputRow(data)
         clean_data.clean_row()
         data = clean_data.to_dictionary()
         try:
-            if data['invalid_code']:
-                n +=1
-                print('JobID: {}'.format(data['jobid']))
+            if data["invalid_code"]:
+                n += 1
+                print("JobID: {}".format(data["jobid"]))
                 try:
-                    print('Enhanced: {}'.format(data['enhanced']))
+                    print("Enhanced: {}".format(data["enhanced"]))
                 except KeyError:
-                    print('Enhanced: False')
-                print('List of InvalidCodes: {}'.format(data['invalid_code']))
-                print('List of Keys: {}'.format(original_content.keys()))
+                    print("Enhanced: False")
+                print("List of InvalidCodes: {}".format(data["invalid_code"]))
+                print("List of Keys: {}".format(original_content.keys()))
 
         except KeyError:
             pass
         try:
             db_jobs.insert(data)
-            report.nb_inserted_job +=1
+            report.nb_inserted_job += 1
         except pymongo.errors.DuplicateKeyError:
-            report.nb_duplicated_job +=1
+            report.nb_duplicated_job += 1
         except pymongo.errors:
-            report.nb_mongo_error_job +=1
+            report.nb_mongo_error_job += 1
 
     # #### Writing report for the cronjob to send by email ####
-    print('Number of enhanced jobs: {}'.format(m))
-    print('Number of enhanced jobs with one invalid code: {}'.format(n))
+    print("Number of enhanced jobs: {}".format(m))
+    print("Number of enhanced jobs with one invalid code: {}".format(n))
     logger.info(report.get_summary())
     logger.info(report.get_current())
     logger.info(report.get_total())
     report.write_csv()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
