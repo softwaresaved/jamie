@@ -28,6 +28,10 @@ BASE_URL = "http://www.jobs.ac.uk"
 NUM_JOBS = 6000
 FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
 
+# Set up counter for different types of jobs
+normal_jobs = 0
+enhanced_jobs = 0
+different_jobs = 0
 
 def make_sure_path_exists(path):
     try:
@@ -128,24 +132,35 @@ def to_download(input_folder, job_id):
         return True
 
 
-def extract_ads_info(data, div_class="content"):
+# def extract_ads_info(data, attrs_id='class', attrs_content="content"):
+def extract_ads_info(data, attrs_id='class', attrs_content="content"):
     """
-    Extract the div that contains the data in the
-    beautiful object ads. Try if the data is under the div class
+    Extract the div that contains the data in the beautiful object ads. Try if the data is under the div class
     'content'. If it is not, it returns itself with the div_class set
     up with 'enhanced-content'
     :params:
         data str: bs4 object of the job ads
-        div_class str: the data is either within the div_class 'content'
-        or 'enhanced-content'. By default it check the 'content'
+        attrs_id str: the type of tag for div. by default it is class
+        attrs_content str: the data is either within the div_class 'content'
+        or div id='enhanced-content'. By default it check the 'content'
     :returns:
         str: only the div that contain the information
     """
-    for content in data.find_all("div", attrs={"class": div_class}):
-        if content is None and div_class == "content":
-            return extract_ads_info(data, div_class="enhanced-content")
+    global normal_jobs, enhanced_jobs, different_jobs
+    content = data.find_all("div", attrs={attrs_id: attrs_content})
+    # In case it does not find the content, the len will be zero and then check
+    # for enhanced-content
+    if len(content) == 0:
+        if attrs_id == 'class' and attrs_content == 'content':
+            return extract_ads_info(data, attrs_id='id', attrs_content="enhanced-content")
         else:
-            return content
+            different_jobs +=1
+            return None
+    if attrs_id == 'class':
+        normal_jobs +=1
+    elif attrs_id == 'id':
+        enhanced_jobs +=1
+    return content
 
 
 def record_data(input_folder, job_id, data):
@@ -161,10 +176,10 @@ def record_data(input_folder, job_id, data):
         None: record a file
     """
     filename = os.path.join(input_folder, job_id)
-    print(data)
-    raise
-    # with open(filename, "w") as f:
-    #     f.write(data)
+    str_data = str(data)
+    if len(str_data) > 0:
+        with open(filename, "w") as f:
+            f.write(str_data)
 
 
 def main():
@@ -203,10 +218,12 @@ def main():
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = extract_ads_info(job_data)
-            print(data_to_record)
-            # record_data(input_folder, job_id, data_to_record)
+            record_data(input_folder, job_id, data_to_record)
             n+=1
-    logger.info('Downloaded {} jobs'.format(n))
+        logger.info('Jobs downloaded: {}'.format(n))
+        logger.info('Normal jobs: {}'.format(normal_jobs))
+        logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
+        logger.info('Not dealt jobs: {}'.format(different_jobs))
 
 
 if __name__ == "__main__":
