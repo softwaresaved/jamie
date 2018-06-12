@@ -220,10 +220,10 @@ def main():
             data_to_record = extract_ads_info(job_data)
             record_data(input_folder, job_id, data_to_record)
             n+=1
-        logger.info('Jobs downloaded: {}'.format(n))
-        logger.info('Normal jobs: {}'.format(normal_jobs))
-        logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
-        logger.info('Not dealt jobs: {}'.format(different_jobs))
+    logger.info('Jobs downloaded: {}'.format(n))
+    logger.info('Normal jobs: {}'.format(normal_jobs))
+    logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
+    logger.info('Not dealt jobs: {}'.format(different_jobs))
 
 
 if __name__ == "__main__":
