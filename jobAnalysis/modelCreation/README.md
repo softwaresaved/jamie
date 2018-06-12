@@ -86,3 +86,12 @@ This is needed because the way the records are store in mysql is one record per 
 * Visualise which words are the most correlated to each categories
   * https://towardsdatascience.com/multi-class-text-classification-with-scikit-learn-12f1e60e0a9f
   * https://buhrmann.github.io/tfidf-analysis.html
+
+-Here listed the different sources used to implement and understand the text transformation and text analysis. It is not necessarily exhaustive. In case of you find some material that you are the original author, please contact the owner of the repository and we will solve it.
+-
+-* [NLKT documentation](http://www.nltk.org/book/)
+-* [Regex used to remove URL found](http://stackoverflow.com/a/14081180/3193951): Used in [include/textClean.py](include/textClean.py)
+-* [Tutorial to implement text analysis in python using nltk](https://marcobonzanini.com/2015/03/02/mining-twitter-data-with-python-part-1/)
+-* [Another tutorial on how to use NLTK](http://textminingonline.com/dive-into-nltk-part-i-getting-started-with-nltk)
+-* [Tutorial to vectorize a text](https://radimrehurek.com/gensim/tut1.html)
+-* [Grid Search vs Random Search Article](http://www.jmlr.org/papers/v13/bergstra12a.html)
