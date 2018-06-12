@@ -25,7 +25,7 @@ logger = logger(name="getJobs", stream_level="DEBUG")
 # Setting the URL.
 BASE_URL = "http://www.jobs.ac.uk"
 # Number of jobs fetch for one query
-NUM_JOBS = 6000
+NUM_JOBS = 10000
 FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
 
 # Set up counter for different types of jobs
