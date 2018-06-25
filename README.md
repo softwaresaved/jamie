@@ -97,7 +97,7 @@ create DATABASE $DATABASE_NAME;
 3. And finally, dumping it into the mysql database
 
 ```bash
-docker exec -i $CONTAINER_NAME mysql $DATABASE_NAME -uroot -pdev < $DUMPFILE.sql
+docker exec -i $CONTAINER_NAME mysql $DATABASE_NAME -uroot -p$ROOT_PASSWORD < $DUMPFILE.sql
 ```
 
 To access to the mariadb from outside docker if the -p option is not set up, the docker ip is needed.
