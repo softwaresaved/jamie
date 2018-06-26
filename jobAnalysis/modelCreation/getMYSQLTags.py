@@ -12,13 +12,16 @@ import argparse
 import pymongo
 import pymysql as mdb
 
-from include.logger import logger
-from include.configParser import ConfigParserPerso as configParser
-# from configparser import ConfigParser as configParser
+import sys
+from pathlib import Path
+sys.path.append(str(Path('.').absolute().parent))
+
+from common.logger import logger
+from common.getConnection import connectDB
+from common.configParser import configParserPerso as configParser
 
 
-
-logger = logger(name='dbPreparation', stream_level=DEBUGGING)
+logger = logger(name='dbPreparation')
 
 
 class mySQL:
@@ -153,12 +156,12 @@ def main():
 
     # Get the information about the db and the collections
     mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
+
     mongoDB_JOB_COLL = config_value['MongoDB'].get('DB_JOB_COLLECTION'.lower(), None)
     mongoDB_TAG_COLL = config_value['MongoDB'].get('DB_TAG_COLLECTION'.lower(), None)
 
     # connect to the mongoDB
-    mongoTag = mongoDB(mongoDB_NAME, mongoDB_JOB_COLL, mongoDB_USER,
-                       mongoDB_PASS, mongoDB_AUTH_DB, mongoDB_AUTH_METH)
+    mongoTag = mongoDB(mongoDB_NAME, mongoDB_JOB_COLL)
 
     # Create unique index on the JobId to avoid duplicating the records after launching the script
     # several time
