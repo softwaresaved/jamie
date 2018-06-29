@@ -30,30 +30,6 @@ elif RUNNING == 'prod':
     CONFIG_FILE = '../config/config.ini'
 
 
-def write_csv(results, filename):
-    """
-    """
-    with open(filename, 'w') as f:
-        writer = csv.DictWriter(f, fieldnames=results.keys())
-        writer.writeheader()
-        for k in results:
-            print(results[k])
-            # try:
-            #     rse_number = results[date]['research_soft_eng']
-            # except KeyError:
-            #     results[date]['research_soft_eng'] = 0
-            #
-            # try:
-            #     rs_number = results[date]['research_soft']
-            # except KeyError:
-            #     results[date]['research_soft'] = 0
-            # row = {'Date': date,
-            #        'Number of Research Software Jobs': results[date]['research_soft'],
-            #        'Number of RSEs': results[date]['research_soft_eng'],
-            #        'Total ads': results[date]['total ads']}
-            # writer.writerow(row)
-
-
 if __name__ == "__main__":
 
     config_value = configParser()
