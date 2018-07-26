@@ -89,7 +89,7 @@ def extract_job_url(job):
             return link["href"]
 
 
-def split_info_from_job_url(job_rel_url):
+def split_info_from_job_url(BASE_URL, job_rel_url):
     """
     Split the job_rel_url to get the separated info and
     create a full URL by combining the BASE_URL and the job_rel_url
@@ -214,7 +214,7 @@ def main():
     n = 0
     for job in jobs_list:
         job_rel_url = extract_job_url(job)
-        job_id, job_name, job_full_url = split_info_from_job_url(job_rel_url)
+        job_id, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
         # Check if the job_id is not parsed yet
         if to_download(input_folder, job_id) is True:
             job_page = get_page(job_full_url)
