@@ -22,11 +22,6 @@ from common.configParser import configParserPerso as configParser
 logger = logger(name="getJobs", stream_level="DEBUG")
 
 
-# Setting the URL.
-BASE_URL = "http://www.jobs.ac.uk"
-# Number of jobs fetch for one query
-NUM_JOBS = 10000
-FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
 
 # Set up counter for different types of jobs
 normal_jobs = 0
@@ -184,6 +179,7 @@ def record_data(input_folder, job_id, data):
 def main():
     """
     """
+
     parser = argparse.ArgumentParser(description="Collect jobs from jobs.ac.uk")
 
     parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
@@ -201,6 +197,13 @@ def main():
     # Check if the folder exists
     logger.info('Check if the input folder exists: {}'.format(input_folder))
     make_sure_path_exists(input_folder)
+
+
+    # Setting the URL.
+    # Number of jobs fetch for one query
+    NUM_JOBS = config_value['input'].get('NUM_JOBS'.lower(), 6000)
+    BASE_URL = "http://www.jobs.ac.uk"
+    FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
 
     # Start the job collection
     logger.info('Getting the search page')
