@@ -4,18 +4,18 @@ author: Olivier Philippe
 
 ## Description
 
-This branch is used to build the parser that input the HTML excerpt files, cleaning them and insert them into a MongoDB
-All the operation are done within the `job2db.py` script
+This branch is used to build the parser that input the HTML excerpt files, cleaning them and insert them into a MongoDB.
+All the operation are done within the `job2db.py` script.
 
 
 ### Parsing
 
 The script parses the folder containing the html file and create a list of JobId (the name of the file). Then it compare this list with the already recorded list into the database by querying the same key.
-The difference is then send to `fileProcess.py` for the transformation of the file
+The difference is then send to `fileProcess.py` for the transformation of the file.
 
 It compares the name of the file with two list: SKIPPED_ID and RECORDED_ID. If the name of the file is present in one of these lists it is skipped.
 The file is opened and the he content is passed to the `fileProcess.py` and transformed with bs4.
-A first cleaning transformation is done on the key and return a dictionary
+A first cleaning transformation is done on the key and return a dictionary.
 
 
 ### Cleaning
