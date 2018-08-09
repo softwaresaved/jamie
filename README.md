@@ -1,18 +1,18 @@
 # jobs-analysis
 
-This project collects everyday the jobs posted on the website [job.ac.uk](https://www.jobs.ac.uk/) and stores them as files.  These files are then pushed into a database and a prediction is made to know if they are Software Research Job or not. These predictions are made after using the [training-set-collector](https://github.com/softwaresaved/training-set-collector) to obtain a training set and building a model using the [modelCreation](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation) scripts.
+This project scrapes the jobs posted on the website [job.ac.uk](https://www.jobs.ac.uk/) (academic jobs) every day and stores them as file fragments.  These files are then pushed into a database and a prediction is made as to whether they are Software Research Job or not. These predictions are made after using the [training-set-collector](https://github.com/softwaresaved/training-set-collector) to obtain a training set for building a model using the [modelCreation](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation) scripts.
 
-The project is composed of three different elements that are interdependents.
-1. [dataCollection](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataCollection): This is the element responsible to download the different jobs, cleaning them and stored them in a database as well as applying a prediction.
+The project is composed of three different parts that are interdependents, mainly:
+
+1. [dataCollection](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataCollection): This is the part of the workflow responsible for downloading the different jobs, cleaning them and storing them in a database as well as applying a prediction.
 
 2. [modelCreation](https//github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation): This is the element that generate a model based on the training set. This model is then used during the dataCollection phase to predict if the job ads is a Research Software job or not.
 
 3. [report](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/report): this is a collection of scripts that parse the database to output different csv files containing all the information needed ([here](https://github.com/softwaresaved/jobs-analysis/tree/master/outputs)) for the [jupyter notebooks](https://github.com/softwaresaved/jobs-analysis/tree/master/notebooks) to display the statistiques and information about the project.
 
-
 ## Deployment
 
-Deploying the project requires at minima the installation of a mongodb database.
+Deploying the project requires at minima the installation of a [mongodb database](https://www.mongodb.com/).
 To fully deploy the project and being able to build the predictions model, a MySQL database is also needed with a dump of the trainig-set-collector and the jobs ads files contained in that training set. These information will be then pushed into the mongodb and the MYSQL database would not be longer needed.
 
 
