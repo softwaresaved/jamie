@@ -4,8 +4,9 @@ author: Olivier Philippe
 
 ## Description
 
-This branch is used to build the parser that input the HTML excerpt files, cleaning them and insert them into a MongoDB.
-All the operation are done within the `job2db.py` script.
+This directory is used to build the parser that input HTML excerpt files containing the job data, cleans them and inserts them into a MongoDB instance.
+
+All the operation are done by the `job2db.py` script.
 
 
 ### Parsing
