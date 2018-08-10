@@ -1,10 +1,24 @@
 # jobs-analysis
 
-This project scrapes the jobs posted on the website [job.ac.uk](https://www.jobs.ac.uk/) (academic jobs) every day and stores them as file fragments.  These files are then pushed into a database and a prediction is made as to whether they are Software Research Job or not. These predictions are made after using the [training-set-collector](https://github.com/softwaresaved/training-set-collector) to obtain a training set for building a model using the [modelCreation](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation) scripts.
+This project aims to monitor and analyse the number of academic
+jobs, mainly in the UK, that require software skills. It does this
+by scraping jobs posted on the [job.ac.uk](https://www.jobs.ac.uk/)
+(academic jobs) website every day and stores these as file fragments.
+These files are then pushed into a database. A classifier is then run
+to determine whether each job is a Software Research Job or not.
+By a Software Research Job we mean a job that requires some level of
+software development. A job that uses software as an end-user is not 
+a Software Research job.
 
-The project is composed of three different parts that are interdependents, mainly:
+These classifications are made after using the
+[training-set-collector](https://github.com/softwaresaved/training-set-collector)
+to obtain a training set for building a model using the
+[modelCreation](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation)
+scripts.
 
-1. [dataCollection](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataCollection): This is the part of the workflow responsible for downloading the different jobs, cleaning them and storing them in a database as well as applying a prediction.
+The project is divided into three different stages that are interdependent, mainly:
+
+1. [dataCollection](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataCollection): This is the part of the workflow responsible for downloading the jobs, cleaning them and storing them in a database as well as applying a prediction.
 
 2. [modelCreation](https//github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation): This is the element that generate a model based on the training set. This model is then used during the dataCollection phase to predict if the job ads is a Research Software job or not.
 
