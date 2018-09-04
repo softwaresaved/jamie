@@ -22,16 +22,12 @@ from common.configParser import configParserPerso as configParser
 logger = logger(name="getJobs", stream_level="DEBUG")
 
 
-# Setting the URL.
-BASE_URL = "http://www.jobs.ac.uk"
-# Number of jobs fetch for one query
-NUM_JOBS = 6000
-FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
 
 # Set up counter for different types of jobs
 normal_jobs = 0
 enhanced_jobs = 0
 different_jobs = 0
+
 
 def make_sure_path_exists(path):
     try:
@@ -93,7 +89,7 @@ def extract_job_url(job):
             return link["href"]
 
 
-def split_info_from_job_url(job_rel_url):
+def split_info_from_job_url(BASE_URL, job_rel_url):
     """
     Split the job_rel_url to get the separated info and
     create a full URL by combining the BASE_URL and the job_rel_url
@@ -123,7 +119,6 @@ def to_download(input_folder, job_id):
     :params:
         input_folder str: absolute path of directory where files are stored
         job_id str: unique id that is used by job.ac.uk for their job
-        and in the mongodb to ensure that all ads are unique
     :returns:
         bool: True if not present, False if present
     """
@@ -132,19 +127,18 @@ def to_download(input_folder, job_id):
         return True
 
 
-# def extract_ads_info(data, attrs_id='class', attrs_content="content"):
 def extract_ads_info(data, attrs_id='class', attrs_content="content"):
     """
     Extract the div that contains the data in the beautiful object ads. Try if the data is under the div class
     'content'. If it is not, it returns itself with the div_class set
     up with 'enhanced-content'
     :params:
-        data str: bs4 object of the job ads
+        data bs4 obj: job ads
         attrs_id str: the type of tag for div. by default it is class
         attrs_content str: the data is either within the div_class 'content'
         or div id='enhanced-content'. By default it check the 'content'
     :returns:
-        str: only the div that contain the information
+        bs4 object : only the div that contain the information
     """
     global normal_jobs, enhanced_jobs, different_jobs
     content = data.find_all("div", attrs={attrs_id: attrs_content})
@@ -185,6 +179,7 @@ def record_data(input_folder, job_id, data):
 def main():
     """
     """
+
     parser = argparse.ArgumentParser(description="Collect jobs from jobs.ac.uk")
 
     parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
@@ -203,6 +198,13 @@ def main():
     logger.info('Check if the input folder exists: {}'.format(input_folder))
     make_sure_path_exists(input_folder)
 
+
+    # Setting the URL.
+    # Number of jobs fetch for one query
+    NUM_JOBS = config_value['input'].get('NUM_JOBS'.lower(), 6000)
+    BASE_URL = "http://www.jobs.ac.uk"
+    FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
+
     # Start the job collection
     logger.info('Getting the search page')
     page = get_page(FULL_URL)
@@ -212,7 +214,7 @@ def main():
     n = 0
     for job in jobs_list:
         job_rel_url = extract_job_url(job)
-        job_id, job_name, job_full_url = split_info_from_job_url(job_rel_url)
+        job_id, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
         # Check if the job_id is not parsed yet
         if to_download(input_folder, job_id) is True:
             job_page = get_page(job_full_url)
