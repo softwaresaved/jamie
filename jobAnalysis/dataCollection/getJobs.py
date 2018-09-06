@@ -61,7 +61,7 @@ def transform_txt_in_bs4(data):
     return BeautifulSoup(data, "html.parser")
 
 
-def split_by_results(data, divider="result"):
+def split_by_results(data, divider="j-search-result__text"):
     """
     Get an bs4 object and return a generator that split
     the text with the balise <div class="result"> by defautl
@@ -73,7 +73,7 @@ def split_by_results(data, divider="result"):
         generator of the same data but split with the divider
     """
     for job in data.find_all("div", attrs={"class": divider}):
-        yield job
+        yield job.a['href']
 
 
 def extract_job_url(job):
@@ -84,9 +84,10 @@ def extract_job_url(job):
     returns:
         url str: relative URL path of the job ad
     """
-    for i in job.find_all("div", attrs={"class": "text"}):
-        for link in i.find_all("a", href=True):
-            return link["href"]
+    return job
+    # for i in job.find_all("div", attrs={"class": "text"}):
+    #     for link in i.find_all("a", href=True):
+    #         return link["href"]
 
 
 def split_info_from_job_url(BASE_URL, job_rel_url):
@@ -127,7 +128,7 @@ def to_download(input_folder, job_id):
         return True
 
 
-def extract_ads_info(data, attrs_id='class', attrs_content="content"):
+def _extract_ads(data, attrs_id='class', attrs_content="content"):
     """
     Extract the div that contains the data in the beautiful object ads. Try if the data is under the div class
     'content'. If it is not, it returns itself with the div_class set
@@ -138,7 +139,7 @@ def extract_ads_info(data, attrs_id='class', attrs_content="content"):
         attrs_content str: the data is either within the div_class 'content'
         or div id='enhanced-content'. By default it check the 'content'
     :returns:
-        bs4 object : only the div that contain the information
+        bs4 object : only the div that contains the information
     """
     global normal_jobs, enhanced_jobs, different_jobs
     content = data.find_all("div", attrs={attrs_id: attrs_content})
@@ -146,7 +147,7 @@ def extract_ads_info(data, attrs_id='class', attrs_content="content"):
     # for enhanced-content
     if len(content) == 0:
         if attrs_id == 'class' and attrs_content == 'content':
-            return extract_ads_info(data, attrs_id='id', attrs_content="enhanced-content")
+            return _extract_ads(data, attrs_id='id', attrs_content="enhanced-content")
         else:
             different_jobs +=1
             return None
@@ -155,6 +156,12 @@ def extract_ads_info(data, attrs_id='class', attrs_content="content"):
     elif attrs_id == 'id':
         enhanced_jobs +=1
     return content
+
+
+def extract_ads_info(data):
+    """
+    """
+    return _extract_ads(data)
 
 
 def record_data(input_folder, job_id, data):
@@ -203,18 +210,20 @@ def main():
     # Number of jobs fetch for one query
     NUM_JOBS = config_value['input'].get('NUM_JOBS'.lower(), 6000)
     BASE_URL = "http://www.jobs.ac.uk"
-    FULL_URL = "{}/search/?keywords=*&sort=re&s=1&show={}".format(BASE_URL, NUM_JOBS)
+    FULL_URL = "{}/search/?keywords=*&sort=re&s=1&pageSize={}".format(BASE_URL, NUM_JOBS)
 
     # Start the job collection
     logger.info('Getting the search page')
     page = get_page(FULL_URL)
     data = transform_txt_in_bs4(page)
+
     jobs_list = split_by_results(data)
     logger.info('Start to download new jobs')
     n = 0
     for job in jobs_list:
         job_rel_url = extract_job_url(job)
         job_id, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
+        logger.debug(job_full_url)
         # Check if the job_id is not parsed yet
         if to_download(input_folder, job_id) is True:
             job_page = get_page(job_full_url)
@@ -222,10 +231,10 @@ def main():
             data_to_record = extract_ads_info(job_data)
             record_data(input_folder, job_id, data_to_record)
             n+=1
-    logger.info('Jobs downloaded: {}'.format(n))
-    logger.info('Normal jobs: {}'.format(normal_jobs))
-    logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
-    logger.info('Not dealt jobs: {}'.format(different_jobs))
+        logger.info('Jobs downloaded: {}'.format(n))
+        logger.info('Normal jobs: {}'.format(normal_jobs))
+        logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
+        logger.info('Not dealt jobs: {}'.format(different_jobs))
 
 
 if __name__ == "__main__":
