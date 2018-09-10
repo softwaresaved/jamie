@@ -99,6 +99,7 @@ def get_training_set(db, collection, *args, **kwargs):
     """
     """
     df = pd.DataFrame.from_dict(list(get_documents(db, collection, *args, **kwargs)))
+    df.to_csv('./data/model_data.csv')
     path_to_df = './data/model_data.pk1'
     df.to_pickle(path_to_df)
     return df
@@ -106,6 +107,7 @@ def get_training_set(db, collection, *args, **kwargs):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description='Launch prediction modelling of jobs ads')
     parser.add_argument('-c', '--config',
                         type=str,
                         default='config_dev.ini')
