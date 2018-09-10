@@ -7,10 +7,11 @@ Clean the files and insert them into a mongodb
 Requirement:
     * config.ini file to collect information for the mongoDB connection
 Input:
-    * Folder containing html files
+    * Folder containing html and json files
 """
 
 import os
+import json
 import itertools
 import argparse
 import errno
@@ -51,25 +52,14 @@ def get_filename(root_folder, *args):
             if file_ not in itertools.chain(*args):
                 yield file_
 
-
-def get_data(data, infiles):
-    """
-    Process the data to return a dictionary with the data parsed
-    """
-    for result in data_from_file(data, infiles):
-
-        yield result
-
-
-def data_from_file(data, infiles):
+def data_from_file(input_folder, infiles):
     """
     Function to get data from the different files within a folder
     and yield a dictionary containing the parsed information
     """
-    fileProc = fileProcess(data)
+    fileProc = fileProcess(input_folder)
     for filename in infiles:
         yield fileProc.run(filename)
-
 
 def create_index(coll, key, unique=False):
     """
@@ -135,43 +125,47 @@ def main():
     # ### Start the record ####
     m = 0
     n = 0
-    for data in get_data(INPUT_FOLDER, new_jobs_list):
+    o = 0
+    p = 0
+    for data in data_from_file(INPUT_FOLDER, new_jobs_list):
         m += 1
-        original_content = data
-        # print(original_content.keys())
-        report.nb_processed_job += 1
-        if report.nb_processed_job % 500 == 0:
-            logger.debug(
-                "Nb of job processed: {} - recorded: {} - duplicate: {}".format(
-                    report.nb_processed_job,
-                    report.nb_inserted_job,
-                    report.nb_duplicated_job,
-                )
-            )
-        clean_data = OutputRow(data)
-        clean_data.clean_row()
-        data = clean_data.to_dictionary()
-        try:
-            if data["invalid_code"]:
-                n += 1
-                print("JobID: {}".format(data["jobid"]))
-                try:
-                    print("Enhanced: {}".format(data["enhanced"]))
-                except KeyError:
-                    print("Enhanced: False")
-                print("List of InvalidCodes: {}".format(data["invalid_code"]))
-                print("List of Keys: {}".format(original_content.keys()))
-
-        except KeyError:
-            pass
-        try:
-            db_jobs.insert(data)
-            report.nb_inserted_job += 1
-        except pymongo.errors.DuplicateKeyError:
-            report.nb_duplicated_job += 1
-        except pymongo.errors:
-            report.nb_mongo_error_job += 1
-
+        print('Total jobs checked: {}'.format(m))
+        print('Total jobs JSON: {}'.format(n))
+        print('Total jobs with normal data: {}'.format(o))
+        print('Total jobs without: {}'.format(p))
+        # report.nb_processed_job += 1
+        # if report.nb_processed_job % 500 == 0:
+        #     logger.debug(
+        #         "Nb of job processed: {} - recorded: {} - duplicate: {}".format(
+        #             report.nb_processed_job,
+        #             report.nb_inserted_job,
+        #             report.nb_duplicated_job,
+        #         )
+        #     )
+        # clean_data = OutputRow(data)
+        # clean_data.clean_row()
+        # data = clean_data.to_dictionary()
+        # try:
+        #     if data["invalid_code"]:
+        #         n += 1
+        #         print("JobID: {}".format(data["jobid"]))
+        #         try:
+        #             print("Enhanced: {}".format(data["enhanced"]))
+        #         except KeyError:
+        #             print("Enhanced: False")
+        #         print("List of InvalidCodes: {}".format(data["invalid_code"]))
+        #         print("List of Keys: {}".format(original_content.keys()))
+        #
+        # except KeyError:
+        #     pass
+        # try:
+        #     db_jobs.insert(data)
+        #     report.nb_inserted_job += 1
+        # except pymongo.errors.DuplicateKeyError:
+        #     report.nb_duplicated_job += 1
+        # except pymongo.errors:
+        #     report.nb_mongo_error_job += 1
+        #
     # #### Writing report for the cronjob to send by email ####
     print("Number of enhanced jobs: {}".format(m))
     print("Number of enhanced jobs with one invalid code: {}".format(n))

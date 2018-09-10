@@ -5,6 +5,7 @@
 Script to scrap the different jobs on https://www.jobs.ac.uk
 """
 import os
+import json
 import errno
 import argparse
 
@@ -23,10 +24,13 @@ logger = logger(name="getJobs", stream_level="DEBUG")
 
 
 
+
+content_attrs = [{'attrs_id': 'class', 'attrs_content': 'content'},
+                 {'attrs_id': 'id', 'attrs_content' :'enhanced-content'}]
 # Set up counter for different types of jobs
 normal_jobs = 0
 enhanced_jobs = 0
-different_jobs = 0
+json_jobs = 0
 
 
 def make_sure_path_exists(path):
@@ -73,7 +77,7 @@ def split_by_results(data, divider="j-search-result__text"):
         generator of the same data but split with the divider
     """
     for job in data.find_all("div", attrs={"class": divider}):
-        yield job.a['href']
+        yield job
 
 
 def extract_job_url(job):
@@ -84,10 +88,7 @@ def extract_job_url(job):
     returns:
         url str: relative URL path of the job ad
     """
-    return job
-    # for i in job.find_all("div", attrs={"class": "text"}):
-    #     for link in i.find_all("a", href=True):
-    #         return link["href"]
+    return job.a['href']
 
 
 def split_info_from_job_url(BASE_URL, job_rel_url):
@@ -127,8 +128,20 @@ def to_download(input_folder, job_id):
     if not os.path.isfile(filename):
         return True
 
+def _extract_json_ads(data):
+    """
+    Get the json content from the page and return a dictionary from it
+    """
+    content_json = data.find('script', attrs={'type': 'application/ld+json'})
+    try:
+        content_json = content_json.contents[0]
+        d = json.loads(content_json)
+        return d
+    except AttributeError:
+        return None
 
-def _extract_ads(data, attrs_id='class', attrs_content="content"):
+
+def _extract_ads(data, attrs_id, attrs_content):
     """
     Extract the div that contains the data in the beautiful object ads. Try if the data is under the div class
     'content'. If it is not, it returns itself with the div_class set
@@ -139,30 +152,28 @@ def _extract_ads(data, attrs_id='class', attrs_content="content"):
         attrs_content str: the data is either within the div_class 'content'
         or div id='enhanced-content'. By default it check the 'content'
     :returns:
-        bs4 object : only the div that contains the information
+        bs4 object : only the div that contains the information. Empty document if not found anything
     """
-    global normal_jobs, enhanced_jobs, different_jobs
-    content = data.find_all("div", attrs={attrs_id: attrs_content})
-    # In case it does not find the content, the len will be zero and then check
-    # for enhanced-content
-    if len(content) == 0:
-        if attrs_id == 'class' and attrs_content == 'content':
-            return _extract_ads(data, attrs_id='id', attrs_content="enhanced-content")
-        else:
-            different_jobs +=1
-            return None
-    if attrs_id == 'class':
-        normal_jobs +=1
-    elif attrs_id == 'id':
-        enhanced_jobs +=1
-    return content
+    return data.find_all("div", attrs={attrs_id: attrs_content})
 
 
 def extract_ads_info(data):
     """
     """
-    return _extract_ads(data)
+    global normal_jobs, json_jobs
 
+    content = _extract_json_ads(data)
+    # print('JSON_content: {}'.format(content))
+    if content:
+        json_jobs +=1
+        return content
+    else:
+        for attrs in content_attrs:
+            content = _extract_ads(data, attrs['attrs_id'], attrs['attrs_content'])
+            if len(content) > 0:
+                normal_jobs +=1
+                return content
+    print(data)
 
 def record_data(input_folder, job_id, data):
     """
@@ -177,16 +188,20 @@ def record_data(input_folder, job_id, data):
         None: record a file
     """
     filename = os.path.join(input_folder, job_id)
-    str_data = str(data)
-    if len(str_data) > 0:
+    if isinstance(data, dict):
         with open(filename, "w") as f:
-            f.write(str_data)
+            json.dump(data, f)
+    else:
+        str_data = str(data)
+        print(str_data)
+        if len(str_data) > 0:
+            with open(filename, "w") as f:
+                f.write(str_data)
 
 
 def main():
     """
     """
-
     parser = argparse.ArgumentParser(description="Collect jobs from jobs.ac.uk")
 
     parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
@@ -229,12 +244,13 @@ def main():
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = extract_ads_info(job_data)
+            # logger.debug(data_to_record)
             record_data(input_folder, job_id, data_to_record)
             n+=1
-        logger.info('Jobs downloaded: {}'.format(n))
-        logger.info('Normal jobs: {}'.format(normal_jobs))
-        logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
-        logger.info('Not dealt jobs: {}'.format(different_jobs))
+            logger.info('Jobs downloaded: {}'.format(n))
+            logger.info('Normal jobs: {}'.format(normal_jobs))
+            logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
+            logger.info('JSON jobs: {}'.format(json_jobs))
 
 
 if __name__ == "__main__":

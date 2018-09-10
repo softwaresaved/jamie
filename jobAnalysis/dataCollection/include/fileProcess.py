@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import os
+import json
 import itertools
 import bs4
 import string
@@ -22,7 +23,7 @@ class fileProcess(object):
 
         self.matching_key = ['jobid', 'name', 'employer', 'location', 'salary',
                              'hours', 'contract', 'placed_on', 'closes',
-                             'job_ref', 'description',
+                             'description',
                              'extra_type_role', 'extra_subject_area',
                              'extra_location']
 
@@ -148,24 +149,103 @@ class fileProcess(object):
     def get_extra_details_enhanced(self, soup):
         """
         """
-        # all_details = soup.findAll('div', {'class': 'advert-details-box'})
-        # for box in all_details :
-        #     for element in box.findAll('tr'):
-        #         # for element in soup.findAll('table', {'class': 'advert-details'}):
-        #         key = element.find('td', {'class': 'detail-heading'})
-        #         transformed_key = self.transform_key(key.text)
-        #         content = key.find_next_siblings()
-        #         # content = element.find_next_siblings('td')
-        #         print(transformed_key)
-        #         content = content[0].text
-        #         print(content)
-        #         yield {transformed_key: content}
         for element in soup.findAll('td', {'class': 'detail-heading'}):
             key = element.text
             key = self.transform_key(key)
             content = element.findNext('td')
             content = content.text
             yield {key: content}
+
+    def parse_html(self, dict_output, soup):
+        """
+        """
+        if soup.find('div', {'id': 'enhanced-content'}):
+            enhanced = 'enhanced'
+        else:
+            enhanced = 'normal'
+
+        dict_output['enhanced'] = enhanced
+        key = 'employer'
+        result = self.get_employer(soup, enhanced)
+        dict_output = self.process_result(dict_output, result, key)
+
+        key = 'name'
+        result = self.get_title(soup, enhanced)
+        dict_output = self.process_result(dict_output, result, key)
+
+        key = 'location'
+        result = self.get_place(soup, enhanced)
+        dict_output = self.process_result(dict_output, result, key)
+
+        for details in self.get_details(soup, enhanced):
+            dict_output.update(details)
+
+        key = 'description'
+        result = self.get_description(soup, enhanced)
+
+        dict_output = self.process_result(dict_output, result, key)
+        # Only present if not enhanced-content
+        if enhanced is True:
+            for extra_details in self.get_extra_details_enhanced(soup):
+                dict_output.update(extra_details)
+        else:
+            for extra_details in self.get_extra_details(soup, enhanced):
+                dict_output.update(extra_details)
+        return dict_output
+
+
+    def parse_json(self, dict_output, soup):
+        """
+        """
+        try:
+            dict_output['enhanced'] = 'json'
+        except KeyError:
+            pass
+        try:
+            dict_output['job_title'] = soup['title']
+        except KeyError:
+            pass
+        try:
+            dict_output['employer'] = soup['hiringOrganization']['name']
+        except KeyError:
+            pass
+        try:
+            dict_output['department'] = soup['hiringOrganization']['department']['name']
+        except KeyError:
+            pass
+        try:
+            dict_output['location'] = soup['jobLocation']['address']['addressLocality']
+        except KeyError:
+            pass
+        try:
+            dict_output['salary'] = soup['baseSalary']['value']
+        except KeyError:
+            pass
+        try:
+            dict_output['contract'] = soup['employmentType']
+        except KeyError:
+            pass
+        try:
+            dict_output['placed_on'] = soup['datePosted']
+        except KeyError:
+            pass
+        try:
+            dict_output['closes'] = soup['validThrough']
+        except KeyError:
+            pass
+        try:
+            dict_output['description'] = soup['description']
+        except KeyError:
+            pass
+        try:
+            dict_output['extra_location'] = soup['jobLocation']['address']['addressRegion']
+        except KeyError:
+            pass
+        # dict_output['hours'] =
+        # dict_output['extra_type_role'] =
+        # dict_output['extra_subject_area'] =
+        return dict_output
+
 
     def run(self, document):
         """
@@ -175,47 +255,17 @@ class fileProcess(object):
         dict_output['enhanced'] = 'Not dealt with'
         dict_output['raw_content'] = self.get_raw_content(document)
         if dict_output['raw_content']:
-            soup = bs4.BeautifulSoup(dict_output['raw_content'], 'html.parser')
+            # Check if the raw content can be converted in json format
+            # in that case all information is stored in keys:value
+            # if not, parse the html
+            try:
+                soup = json.loads(dict_output['raw_content'])
+                dict_output = self.parse_json(dict_output, soup)
 
-            if soup.find('div', {'id': 'enhanced-content'}):
-                enhanced = 'enhanced'
-            else:
-                enhanced = 'normal'
+            except json.decoder.JSONDecodeError:
 
-            dict_output['enhanced'] = enhanced
-            key = 'employer'
-            result = self.get_employer(soup, enhanced)
-            dict_output = self.process_result(dict_output, result, key)
-
-            key = 'name'
-            result = self.get_title(soup, enhanced)
-            dict_output = self.process_result(dict_output, result, key)
-
-            key = 'location'
-            result = self.get_place(soup, enhanced)
-            dict_output = self.process_result(dict_output, result, key)
-
-            for details in self.get_details(soup, enhanced):
-                dict_output.update(details)
-
-            key = 'description'
-            result = self.get_description(soup, enhanced)
-
-            dict_output = self.process_result(dict_output, result, key)
-            # Only present if not enhanced-content
-            if enhanced is True:
-                for extra_details in self.get_extra_details_enhanced(soup):
-                    dict_output.update(extra_details)
-            else:
-                for extra_details in self.get_extra_details(soup, enhanced):
-                    dict_output.update(extra_details)
-            return dict_output
-
-        else:
-            # record as error, empty file
-            # still output ta dict with the name only
-            # self.count_fail += 1
-            return dict_output
+                soup = bs4.BeautifulSoup(dict_output['raw_content'], 'html.parser')
+                dict_output = self.parse_html(dict_output, soup)
 
 
 def main():
@@ -238,14 +288,6 @@ def main():
             result['description']
         except KeyError:
             pass
-
-        # try:
-        #     print('{} - {}'.format(result['extra_type_role'], n))
-        #     n +=1
-        # except KeyError:
-        #     m+=1
-        # if isinstance(result['extra_type_role'], list):
-        # print(filename)
 
 
 if __name__ == '__main__':

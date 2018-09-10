@@ -80,8 +80,6 @@ class OutputRow:
         """
         if key == 'contract_type' or key == 'contract' or key == 'contract type':
             key = 'contract'
-        elif key == 'reference' or key == 'job_ref':
-            key = 'job_ref'
         elif key == 'expires' or key == 'closes':
             key = 'closes'
         elif key == 'placed on':
