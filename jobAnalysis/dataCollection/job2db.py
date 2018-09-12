@@ -59,7 +59,9 @@ def data_from_file(input_folder, infiles):
     """
     fileProc = fileProcess(input_folder)
     for filename in infiles:
-        yield fileProc.run(filename)
+        data = fileProc.run(filename)
+        if data:
+            yield data
 
 def create_index(coll, key, unique=False):
     """
