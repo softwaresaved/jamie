@@ -291,7 +291,7 @@ class OutputRow:
                 salary_values.sort()
                 # Is the smallest number < £11k?
                 salary_min = salary_values[0]
-                if salary_min < 11000:
+                if salary_min < 8000:
                     self.add_invalid_code(fieldname)
                 else:
                     # One number or two numbers?
@@ -299,6 +299,11 @@ class OutputRow:
                         self.SalaryMin = salary_values[0]
                         self.SalaryMax = salary_values[0]
                     elif len(salary_values) == 2:
+                        self.SalaryMin = salary_values[0]
+                        self.SalaryMax = salary_values[1]
+                    # When there is three records is because the third salary
+                    # is for potential progression in the future
+                    elif len(salary_values) == 3:
                         self.SalaryMin = salary_values[0]
                         self.SalaryMax = salary_values[1]
                     else:
