@@ -30,11 +30,23 @@ class generateReport:
         """
         """
         self.db = db
+        # Nbr of job that has been downloaded
         self.nb_processed_job = 0
+        # Nbr of job that have been inserted in the db
         self.nb_inserted_job = 0
+        # Nbr of jobs that already existed in the db (same jobid)
         self.nb_duplicated_job = 0
-        self.report_csv_filename = '../../outputs/dataCollection/data_collected.csv'
+        # Nbr of jobs that have the traditional html structure
+        self.nb_normal_job = 0
+        # Nbr of job that have the 'enhanced' html structure
+        self.nb_enhanced_job = 0
+        # Nbr of jobs that have a json field in the html structure
+        self.nb_json_job = 0
+        # Nbr of job with at least one invalid code
+        self.invalid_code_job = 0
+        # Nbr of job that raised an unexpected mongod error
         self.nb_mongo_error_job = 0
+        self.report_csv_filename = '../../outputs/dataCollection/data_collected.csv'
         self.last_id = self.get_last_id()
         self.pipeline = self.build_pipeline()
         self.limited_pipeline = self.limited_pipeline()

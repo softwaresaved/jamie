@@ -197,10 +197,7 @@ class fileProcess(object):
     def parse_json(self, dict_output, soup):
         """
         """
-        try:
-            dict_output['enhanced'] = 'json'
-        except KeyError:
-            pass
+        dict_output['enhanced'] = 'json'
         try:
             dict_output['job_title'] = soup['title']
         except KeyError:
