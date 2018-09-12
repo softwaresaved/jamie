@@ -180,8 +180,6 @@ def main():
             report.nb_mongo_error_job += 1
         #
     # #### Writing report for the cronjob to send by email ####
-    print("Number of enhanced jobs: {}".format(m))
-    print("Number of enhanced jobs with one invalid code: {}".format(n))
     logger.info(report.get_summary())
     logger.info(report.get_current())
     logger.info(report.get_total())
