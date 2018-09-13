@@ -18,7 +18,6 @@ class fileProcess(object):
         """
         self.table_punc = bytes.maketrans(str.encode(string.punctuation), b' '* len(string.punctuation))
         self.table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
-        # self.count_fail = 0
         self.root_folder = root_folder
 
         self.matching_key = ['jobid', 'name', 'employer', 'location', 'salary',
@@ -193,54 +192,112 @@ class fileProcess(object):
                 dict_output.update(extra_details)
         return dict_output
 
+    def _extract_json_ads(self, data):
+        """
+        Get the json content from the page and return a dictionary from it
+        """
+        content_json = data.find('script', attrs={'type': 'application/ld+json'})
+        try:
+            content_json = content_json.contents[0]
+            d = json.loads(content_json)
+            return d
+        except AttributeError:
+            return None
+
+    def get_new_subject_area(self, soup):
+
+        subject = soup.find(lambda tag:tag.name=="b" and "Subject Area(s):" in tag.text)
+        if subject is not None:
+            list_subject = list()
+            while True:
+                # find the next subject which not contain the value but it is just before
+                # the input that does have the value
+                subject = subject.findNext('input', attrs={'name': 'categoryId[]'})
+                try:
+                    list_subject.append(subject.findNext('input')['value'])
+                except AttributeError:  # means it is the end of the list
+                    break
+            return list_subject
+
+    def get_new_extra_location(self, soup):
+
+        for tag in soup.find_all('input', attrs={'class': 'j-form-input__location'}):
+            return tag['value']
+
+    def get_new_type_role(self, soup):
+
+        type_role = soup.find(lambda tag:tag.name=="b" and "Type / Role:" in tag.text)
+        if type_role is not None:
+            list_type_role = list()
+            while True:
+                # find the next type_role which not contain the value but it is just before
+                # the input that does have the value
+                type_role = type_role.findNext('input', attrs={'name': 'jobTypeId[]'})
+                try:
+                    list_type_role.append(type_role.findNext('input')['value'])
+                except AttributeError:  # means it is the end of the list
+                    break
+            return list_type_role
+
+    def get_new_hours(self, soup):
+
+        for tag in soup.find_all('div'):
+            print(tag)
+        raise
 
     def parse_json(self, dict_output, soup):
         """
         """
-        dict_output['enhanced'] = 'json'
         try:
-            dict_output['job_title'] = soup['title']
+            dict_output['job_title'] = dict_output['json']['title']
         except KeyError:
             pass
         try:
-            dict_output['employer'] = soup['hiringOrganization']['name']
+            dict_output['employer'] = dict_output['json']['hiringOrganization']['name']
         except KeyError:
             pass
         try:
-            dict_output['department'] = soup['hiringOrganization']['department']['name']
+            dict_output['department'] = dict_output['json']['hiringOrganization']['department']['name']
         except KeyError:
             pass
         try:
-            dict_output['location'] = soup['jobLocation']['address']['addressLocality']
+            dict_output['location'] = dict_output['json']['jobLocation']['address']['addressLocality']
         except KeyError:
             pass
         try:
-            dict_output['salary'] = soup['baseSalary']['value']
+            dict_output['salary'] = dict_output['json']['baseSalary']['value']
         except KeyError:
             pass
         try:
-            dict_output['contract'] = soup['employmentType']
+            hours_contract = dict_output['json']['employmentType']
+            splitted = hours_contract.split(',')
+            # The hours and the contract are stored in the same k:v
+            # Sometime when part time and full time are both available, the first
+            # two elements are them. The last one is always the contract
+            dict_output['hours'] = splitted[:-1]
+            dict_output['contract'] =  splitted[-1]
         except KeyError:
             pass
         try:
-            dict_output['placed_on'] = soup['datePosted']
+            dict_output['placed_on'] = dict_output['json']['datePosted']
         except KeyError:
             pass
         try:
-            dict_output['closes'] = soup['validThrough']
+            dict_output['closes'] = dict_output['json']['validThrough']
         except KeyError:
             pass
         try:
-            dict_output['description'] = soup['description']
+            dict_output['description'] = dict_output['json']['description']
         except KeyError:
             pass
         try:
-            dict_output['extra_location'] = soup['jobLocation']['address']['addressRegion']
+            dict_output['region'] = dict_output['json']['jobLocation']['address']['addressRegion']
         except KeyError:
             pass
-        # dict_output['hours'] =
-        # dict_output['extra_type_role'] =
-        # dict_output['extra_subject_area'] =
+
+        dict_output['subject_area'] = self.get_new_subject_area(soup)
+        dict_output['extra_location'] = self.get_new_extra_location(soup)
+        dict_output['type_role'] = self.get_new_type_role(soup)
         return dict_output
 
 
@@ -249,19 +306,19 @@ class fileProcess(object):
         """
         dict_output = dict()
         dict_output['jobid'] = document
-        dict_output['enhanced'] = 'Not dealt with'
         dict_output['raw_content'] = self.get_raw_content(document)
+
         if dict_output['raw_content']:
-            # Check if the raw content can be converted in json format
-            # in that case all information is stored in keys:value
-            # if not, parse the html
-            try:
-                soup = json.loads(dict_output['raw_content'])
+            soup = bs4.BeautifulSoup(dict_output['raw_content'], 'html.parser')
+            # Check if there is a presence of a json dictionary which means
+            # the new type of jobs
+            raw_json = self._extract_json_ads(soup)
+            if raw_json:
+                dict_output['json'] = raw_json
                 dict_output = self.parse_json(dict_output, soup)
-
-            except json.decoder.JSONDecodeError:
-
-                soup = bs4.BeautifulSoup(dict_output['raw_content'], 'html.parser')
+            # Keep that version for old type of content and compatibility for
+            # Previous version
+            else:
                 dict_output = self.parse_html(dict_output, soup)
 
 
@@ -277,8 +334,6 @@ def main():
 
     INPUT_FOLDER = '/home/olivier/data/job_analysis/dev-bob/jobs'
     fileProc = fileProcess(INPUT_FOLDER)
-    n =1
-    m =0
     for filename in get_filename(INPUT_FOLDER):
         result = fileProc.run(filename)
         try:
