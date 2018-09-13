@@ -104,7 +104,8 @@ class fileProcess(object):
             # Some ads have the first div as <div id='enhanced-content'> which
             # change the structure of the html
             if enhanced is True:
-                section = soup.findAll('div', {'class': 'section', 'id': None})[0]
+                # section = soup.findAll('div', {'class': 'section', 'id': None})[0]
+                section = soup.findAll('div', {'class': 'section', 'id': None})
             else:
                 section = soup.findAll('div', {'class': 'section', 'id': None})[1]
 
@@ -160,8 +161,6 @@ class fileProcess(object):
         """
         if soup.find('div', {'id': 'enhanced-content'}):
             enhanced = 'enhanced'
-        else:
-            enhanced = 'normal'
 
         dict_output['enhanced'] = enhanced
         key = 'employer'
@@ -306,10 +305,10 @@ class fileProcess(object):
         """
         dict_output = dict()
         dict_output['jobid'] = document
-        dict_output['raw_content'] = self.get_raw_content(document)
+        raw_content = self.get_raw_content(document)
 
-        if dict_output['raw_content']:
-            soup = bs4.BeautifulSoup(dict_output['raw_content'], 'html.parser')
+        if raw_content:
+            soup = bs4.BeautifulSoup(raw_content, 'html.parser')
             # Check if there is a presence of a json dictionary which means
             # the new type of jobs
             raw_json = self._extract_json_ads(soup)
@@ -320,6 +319,7 @@ class fileProcess(object):
             # Previous version
             else:
                 dict_output = self.parse_html(dict_output, soup)
+        return dict_output
 
 
 def main():

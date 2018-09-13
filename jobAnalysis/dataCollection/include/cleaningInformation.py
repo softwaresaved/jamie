@@ -102,8 +102,6 @@ class OutputRow:
         that are not present to empty string
         for the invalid_code
         """
-        # Create the attribute based on input_row dict()
-        del self.input_row['raw_content']
         for key in self.input_row:
             cleaned_key = self.matching_key(key)
             try:
@@ -138,6 +136,8 @@ class OutputRow:
         Suppose to receive a string in two formats:
                 - 17th July 2018
                 - 2018-07-17
+                - 2018-10-07T00:00:00+00:00
+
 
         :params:
             s str(): containing the string representation of
@@ -152,7 +152,10 @@ class OutputRow:
             try:
                 return datetime.strptime(s.replace(' ', '').strip(), "%Y-%m-%d")
             except ValueError:
-                return s
+                try:
+                    return datetime.strptime(s.split('+')[0], '%Y-%m-%dT%H:%M:%S')
+                except ValueError:
+                    return s
 
     def clean_description(self):
         """

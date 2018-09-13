@@ -23,14 +23,8 @@ from common.configParser import configParserPerso as configParser
 logger = logger(name="getJobs", stream_level="DEBUG")
 
 
-
-
 content_attrs = [{'attrs_id': 'class', 'attrs_content': 'content'},
                  {'attrs_id': 'id', 'attrs_content' :'enhanced-content'}]
-# Set up counter for different types of jobs
-normal_jobs = 0
-enhanced_jobs = 0
-json_jobs = 0
 
 
 def make_sure_path_exists(path):
@@ -127,18 +121,12 @@ def to_download(input_folder, job_id):
     filename = os.path.join(input_folder, job_id)
     if not os.path.isfile(filename):
         return True
-
-def _extract_json_ads(data):
-    """
-    Get the json content from the page and return a dictionary from it
-    """
-    content_json = data.find('script', attrs={'type': 'application/ld+json'})
-    try:
-        content_json = content_json.contents[0]
-        d = json.loads(content_json)
-        return d
-    except AttributeError:
-        return None
+    else:
+        with open(filename, 'r') as f:
+            check_content = f.read()
+            if check_content is None:
+                print('{}: No data recorded'.format(filename))
+                return True
 
 
 def _extract_ads(data, attrs_id, attrs_content):
@@ -156,24 +144,19 @@ def _extract_ads(data, attrs_id, attrs_content):
     """
     return data.find_all("div", attrs={attrs_id: attrs_content})
 
-
 def extract_ads_info(data):
-    """
-    """
-    global normal_jobs, json_jobs
+    for attrs in content_attrs:
+        content = _extract_ads(data, attrs['attrs_id'], attrs['attrs_content'])
+        if len(content) > 0:
+            return content
 
-    content = _extract_json_ads(data)
-    # print('JSON_content: {}'.format(content))
-    if content:
-        json_jobs +=1
-        return content
-    else:
-        for attrs in content_attrs:
-            content = _extract_ads(data, attrs['attrs_id'], attrs['attrs_content'])
-            if len(content) > 0:
-                normal_jobs +=1
-                return content
-    print(data)
+
+def new_extract_ads_info(data):
+    """
+    Return the body of the html page
+    """
+    return data.find_all('body')
+
 
 def record_data(input_folder, job_id, data):
     """
@@ -188,15 +171,10 @@ def record_data(input_folder, job_id, data):
         None: record a file
     """
     filename = os.path.join(input_folder, job_id)
-    if isinstance(data, dict):
+    str_data = str(data)
+    if len(str_data) > 0:
         with open(filename, "w") as f:
-            json.dump(data, f)
-    else:
-        str_data = str(data)
-        print(str_data)
-        if len(str_data) > 0:
-            with open(filename, "w") as f:
-                f.write(str_data)
+            f.write(str_data)
 
 
 def main():
@@ -238,19 +216,19 @@ def main():
     for job in jobs_list:
         job_rel_url = extract_job_url(job)
         job_id, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
-        logger.debug(job_full_url)
         # Check if the job_id is not parsed yet
         if to_download(input_folder, job_id) is True:
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
-            data_to_record = extract_ads_info(job_data)
+            data_to_record = new_extract_ads_info(job_data)
+            if data_to_record is None:
+                data_to_record = extra_ads_info(jobs_data)
+            if data_to_record is None:
+                raise
             # logger.debug(data_to_record)
-            record_data(input_folder, job_id, data_to_record)
+            record_data(input_folder, job_id, job_data)
             n+=1
             logger.info('Jobs downloaded: {}'.format(n))
-            logger.info('Normal jobs: {}'.format(normal_jobs))
-            logger.info('Enhanced_jobs: {}'.format(enhanced_jobs))
-            logger.info('JSON jobs: {}'.format(json_jobs))
 
 
 if __name__ == "__main__":
