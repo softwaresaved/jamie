@@ -88,7 +88,7 @@ class OutputRow:
             key = 'job_title'
         if key == 'type___role':
             key = 'type_role'
-        elif key == 'subject_area_s' or key == 'subject_area':
+        elif key == 'subject_area_s' or key == 'subject_area' or key == 'extra_subject_area or key' == 'extra_subject_area_s':
             key = 'subject_area'
         elif key == 'location_s' or key == 'location':
             key = 'location'
