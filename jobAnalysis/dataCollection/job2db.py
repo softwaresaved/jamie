@@ -125,6 +125,7 @@ def main():
     new_jobs_list = get_filename(INPUT_FOLDER, recorded_jobs_list)
 
     # ### Start the record ####
+    m = 0
     for data in data_from_file(INPUT_FOLDER, new_jobs_list):
         report.nb_processed_job += 1
         if report.nb_processed_job % 500 == 0:
@@ -138,15 +139,16 @@ def main():
         clean_data = OutputRow(data)
         clean_data.clean_row()
         data = clean_data.to_dictionary()
-        m = 0
         try:
             if len(data['invalid_code']) > 2:
                 m+=1
+                print(m)
                 print(data)
-                print(INPUT_FOLDER)
-                print(os.path.exists('{}/{}'.format(INPUT_FOLDER, data['jobid'])))
-                with open('{}/{}'.format(INPUT_FOLDER, data['jobid'], 'r')) as f:
-                    print(f.read())
+                # print(INPUT_FOLDER)
+                # print(os.path.exists('{}/{}'.format(INPUT_FOLDER, data['jobid'])))
+                # os.remove('{}/{}'.format(INPUT_FOLDER, data['jobid']))
+                # with open('{}/{}'.format(INPUT_FOLDER, data['jobid'], 'r')) as f:
+                #     print(f.read())
 
         except KeyError:
                 pass

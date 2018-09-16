@@ -103,13 +103,17 @@ class fileProcess(object):
             # attached
             # Some ads have the first div as <div id='enhanced-content'> which
             # change the structure of the html
-            if enhanced is True:
-                # section = soup.findAll('div', {'class': 'section', 'id': None})[0]
-                section = soup.findAll('div', {'class': 'section', 'id': None})
+            if enhanced == 'enhanced':
+                section = soup.findAll('div', {'class': 'section', 'id': None})[0]
+                # section = soup.findAll('div', {'class': 'section', 'id': None})
             else:
                 section = soup.findAll('div', {'class': 'section', 'id': None})[1]
 
-            return section.get_text(separator=u' ')
+            try:
+                return section.get_text(separator=u' ')
+            except AttributeError:
+                print(soup)
+                raise
         except IndexError:
             pass
 
@@ -161,6 +165,8 @@ class fileProcess(object):
         """
         if soup.find('div', {'id': 'enhanced-content'}):
             enhanced = 'enhanced'
+        else:
+            enhanced = 'normal'
 
         dict_output['enhanced'] = enhanced
         key = 'employer'
@@ -313,6 +319,7 @@ class fileProcess(object):
             # the new type of jobs
             raw_json = self._extract_json_ads(soup)
             if raw_json:
+                dict_output['enhanced'] = 'json'
                 dict_output['json'] = raw_json
                 dict_output = self.parse_json(dict_output, soup)
             # Keep that version for old type of content and compatibility for
