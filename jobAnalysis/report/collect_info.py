@@ -314,8 +314,8 @@ class generateReport:
 
         # Add the Nan key
 
+        dict_key_with_date['NaN'] = dict()
         for i in [0, 1, 'None']:
-            dict_key_with_date['NaN'] = dict()
             dict_key_with_date['NaN'][i] = {key: 0 for key in list_to_parse}
 
         # Parse the db and return all the results
