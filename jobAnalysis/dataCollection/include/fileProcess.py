@@ -13,7 +13,7 @@ class fileProcess(object):
     To get access to files
     """
 
-    def __init__(self, root_folder):
+    def __init__(self, root_folder=None):
         """
         """
         self.table_punc = bytes.maketrans(str.encode(string.punctuation), b' '* len(string.punctuation))
@@ -55,15 +55,17 @@ class fileProcess(object):
     def get_employer(self, soup, enhanced):
         """
         """
+        employer = None
         try:
-            return soup.find('h3').text
+            employer = soup.find('h3').text
         except AttributeError:
             try:
-                for employer in soup.find('a').get('href'):
-                    if employer[:10] == '/employer/':
-                        return employer[:10]
+                for emp in soup.find('a').get('href'):
+                    if emp[:10] == '/employer/':
+                        employer = emp[:10]
             except (AttributeError, TypeError):
-                return None
+                pass
+        return employer
 
     def get_title(self, soup, enhanced):
         """
@@ -98,24 +100,33 @@ class fileProcess(object):
         """
         Get the description, aka main text from the file
         """
-        try:
-            # To add space when encounter <p> and <br> tags otherwise words are
-            # attached
-            # Some ads have the first div as <div id='enhanced-content'> which
-            # change the structure of the html
-            if enhanced == 'enhanced':
-                section = soup.findAll('div', {'class': 'section', 'id': None})[0]
-                # section = soup.findAll('div', {'class': 'section', 'id': None})
-            else:
-                section = soup.findAll('div', {'class': 'section', 'id': None})[1]
-
+        # To add space when encounter <p> and <br> tags otherwise words are
+        # attached
+        # Some ads have the first div as <div id='enhanced-content'> which
+        # change the structure of the html
+        if enhanced == 'enhanced':
+            section = soup.findAll('div', {'class': 'section', 'id': None})[0]
+            return section.get_text(separator=u' ')
+        else:
             try:
+                section = soup.findAll('div', {'class': 'section', 'id': None})[1]
                 return section.get_text(separator=u' ')
+            except IndexError:
+                pass
+            description_text = []
+            section = soup.find('div', {'class': 'col-lg-12'})
+            # Need to find the first <p>. The description is under that one
+            # but also contains differents tags
+            text_desc = False
+            try:
+                for description in section.findAll():
+                    if description.name == 'p' and text_desc is False:
+                        text_desc = True
+                    if text_desc is True:
+                        description_text.append(description.text)
+                return ' '.join(description_text)
             except AttributeError:
-                print(soup)
-                raise
-        except IndexError:
-            pass
+                pass
 
     def get_extra_details(self, soup, enhanced):
         """
@@ -142,13 +153,8 @@ class fileProcess(object):
                         result.append(element.text)
                     if len(result) == 0:
                         result = original_content.text
-                if len(result) == 0:
-                    print('Key: {}'.format(key))
-                    print('Result: {}'.format(result))
-                    print('Section: {}'.format(section))
-                    print('Content: {}'.format(original_content.text))
-
                 yield {'extra_{}'.format(key): result}
+
 
     def get_extra_details_enhanced(self, soup):
         """
@@ -169,6 +175,11 @@ class fileProcess(object):
             enhanced = 'normal'
 
         dict_output['enhanced'] = enhanced
+
+        key = 'description'
+        result = self.get_description(soup, enhanced)
+        dict_output = self.process_result(dict_output, result, key)
+
         key = 'employer'
         result = self.get_employer(soup, enhanced)
         dict_output = self.process_result(dict_output, result, key)
@@ -184,10 +195,7 @@ class fileProcess(object):
         for details in self.get_details(soup, enhanced):
             dict_output.update(details)
 
-        key = 'description'
-        result = self.get_description(soup, enhanced)
 
-        dict_output = self.process_result(dict_output, result, key)
         # Only present if not enhanced-content
         if enhanced is True:
             for extra_details in self.get_extra_details_enhanced(soup):
@@ -243,12 +251,6 @@ class fileProcess(object):
                 except AttributeError:  # means it is the end of the list
                     break
             return list_type_role
-
-    def get_new_hours(self, soup):
-
-        for tag in soup.find_all('div'):
-            print(tag)
-        raise
 
     def parse_json(self, dict_output, soup):
         """
@@ -306,12 +308,16 @@ class fileProcess(object):
         return dict_output
 
 
-    def run(self, document):
+    def run(self, jobid, document=None):
         """
         """
         dict_output = dict()
-        dict_output['jobid'] = document
-        raw_content = self.get_raw_content(document)
+        if document is None:
+            dict_output['jobid'] = jobid
+            raw_content = self.get_raw_content(jobid)
+        else:
+            dict_output['jobid'] = jobid
+            raw_content = document
 
         if raw_content:
             soup = bs4.BeautifulSoup(raw_content, 'html.parser')

@@ -11,6 +11,7 @@ Input:
 """
 
 import os
+import csv
 import json
 import itertools
 import argparse
@@ -124,8 +125,15 @@ def main():
     logger.info("Getting the list of jobsIds to process")
     new_jobs_list = get_filename(INPUT_FOLDER, recorded_jobs_list)
 
-    # ### Start the record ####
     m = 0
+    wrong_enhanced = []
+    wrong_normal = []
+    wrong_json = []
+    # ### Start the record ####
+    n = 0
+    right_normal = []
+    right_enhanced = []
+    right_json = []
     for data in data_from_file(INPUT_FOLDER, new_jobs_list):
         report.nb_processed_job += 1
         if report.nb_processed_job % 500 == 0:
@@ -136,35 +144,70 @@ def main():
                     report.nb_duplicated_job
                 )
             )
+            logger.debug('Total jobs: {}'.format(report.nb_processed_job))
+            logger.debug('\tRight normal: {}'.format(len(right_normal)))
+            logger.debug('\tRight enhanced: {}'.format(len(right_enhanced)))
+            logger.debug('\tRight json: {}'.format(len(right_json)))
+            logger.debug('Wrong jobs: {}'.format(m))
+            logger.debug('\tWrong normal: {}'.format(len(wrong_normal)))
+            logger.debug('\tWrong enhanced: {}'.format(len(wrong_enhanced)))
+            logger.debug('\tWrong json: {}'.format(len(wrong_json)))
         clean_data = OutputRow(data)
         clean_data.clean_row()
         data = clean_data.to_dictionary()
         try:
-            if len(data['invalid_code']) > 2:
+            if len(data['invalid_code']) >= 3:
                 m+=1
-                print(m)
-                print(data)
-                # print(INPUT_FOLDER)
-                # print(os.path.exists('{}/{}'.format(INPUT_FOLDER, data['jobid'])))
-                # os.remove('{}/{}'.format(INPUT_FOLDER, data['jobid']))
-                # with open('{}/{}'.format(INPUT_FOLDER, data['jobid'], 'r')) as f:
-                #     print(f.read())
+                if data['enhanced'] == 'normal':
+                    wrong_normal.append(data['jobid'])
+                elif data['enhanced'] == 'enhanced':
+                    wrong_enhanced.append(data['jobid'])
+                elif data['enhanced'] == 'json':
+                    wrong_json.append(data['jobid'])
 
+            else:
+                n +=1
+                if data['enhanced'] == 'normal':
+                    right_normal.append(data['jobid'])
+                elif data['enhanced'] == 'enhanced':
+                    right_enhanced.append(data['jobid'])
+                elif data['enhanced'] == 'json':
+                    right_json.append(data['jobid'])
         except KeyError:
-                pass
-    print('{} empty jobs'.format(m))
-        # try:
-        #     db_jobs.insert(data)
-        #     report.nb_inserted_job += 1
-        # except pymongo.errors.DuplicateKeyError:
-        #     report.nb_duplicated_job += 1
-        # except pymongo.errors:
-        #     report.nb_mongo_error_job += 1
+            n +=1
+            if data['enhanced'] == 'normal':
+                right_normal.append(data['jobid'])
+            elif data['enhanced'] == 'enhanced':
+                right_enhanced.append(data['jobid'])
+            elif data['enhanced'] == 'json':
+                right_json.append(data['jobid'])
+        try:
+            db_jobs.insert(data)
+            report.nb_inserted_job += 1
+        except pymongo.errors.DuplicateKeyError:
+            report.nb_duplicated_job += 1
+        except pymongo.errors:
+            report.nb_mongo_error_job += 1
     # #### Writing report for the cronjob to send by email ####
     logger.info(report.get_summary())
     logger.info(report.get_current())
     logger.info(report.get_total())
-    report.write_csv()
+    logger.debug('Total jobs: {}'.format(report.nb_processed_job))
+    logger.debug('\tRight normal: {}'.format(len(right_normal)))
+    logger.debug('\tRight enhanced: {}'.format(len(right_enhanced)))
+    logger.debug('\tRight json: {}'.format(len(right_json)))
+    logger.debug('Wrong jobs: {}'.format(m))
+    logger.debug('\tWrong normal: {}'.format(len(wrong_normal)))
+    logger.debug('\tWrong enhanced: {}'.format(len(wrong_enhanced)))
+    logger.debug('\tWrong json: {}'.format(len(wrong_json)))
+
+    for type_wrong, inlist in [('wrong_normal.csv', wrong_normal), ('wrong_enhanced', wrong_enhanced),
+                               ('wrong_json', wrong_json)]:
+
+        with open(type_wrong, 'w') as f:
+            csvwriter = csv.writer(f)
+            for i in inlist:
+                csvwriter.writerow([i])
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@ sys.path.append(str(Path(".").absolute().parent))
 
 from common.logger import logger
 from common.configParser import configParserPerso as configParser
+from include.fileProcess import fileProcess
+from dataCollection.include.cleaningInformation import OutputRow
 
 logger = logger(name="getJobs", stream_level="DEBUG")
 
@@ -144,9 +146,11 @@ def _extract_ads(data, attrs_id, attrs_content):
     """
     return data.find_all("div", attrs={attrs_id: attrs_content})
 
+
 def extract_ads_info(data):
     for attrs in content_attrs:
         content = _extract_ads(data, attrs['attrs_id'], attrs['attrs_content'])
+        raise
         if len(content) > 0:
             return content
 
@@ -172,9 +176,11 @@ def record_data(input_folder, job_id, data):
     """
     filename = os.path.join(input_folder, job_id)
     str_data = str(data)
-    if len(str_data) > 0:
+    if len(str_data) > 100:
         with open(filename, "w") as f:
             f.write(str_data)
+    else:
+        raise
 
 
 def main():
@@ -213,20 +219,42 @@ def main():
     jobs_list = split_by_results(data)
     logger.info('Start to download new jobs')
     n = 0
+    file_process = fileProcess()
     for job in jobs_list:
+
         job_rel_url = extract_job_url(job)
-        job_id, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
-        # Check if the job_id is not parsed yet
-        if to_download(input_folder, job_id) is True:
+        jobid, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
+        # Check if the jobid is not parsed yet
+        if to_download(input_folder, jobid) is True:
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = new_extract_ads_info(job_data)
             if data_to_record is None:
-                data_to_record = extra_ads_info(jobs_data)
+                data_to_record = extract_ads_info(jobs_data)
             if data_to_record is None:
                 raise
+            # process_data = file_process.run(jobid, str(data_to_record))
+            # if process_data['enhanced'] == 'normal':
+            #
+            #     clean_data = OutputRow(process_data)
+            #     clean_data.clean_row()
+            #     data = clean_data.to_dictionary()
+            #     try:
+            #         # process_data['description']
+            #         print(data['jobid'])
+            #         print(data['enhanced'])
+            #         print(data['invalid_code'])
+            #         # if len(data['invalid_code']) > 3:
+            #             # print(data_to_record)
+            #             # raise
+            #         print(process_data['description'])
+            #     except KeyError:
+            #         pass
+            #         # print(process_data)
+            #         # print(data_to_record)
+            #          # raise
             # logger.debug(data_to_record)
-            record_data(input_folder, job_id, job_data)
+            record_data(input_folder, jobid, data_to_record)
             n+=1
             logger.info('Jobs downloaded: {}'.format(n))
 
