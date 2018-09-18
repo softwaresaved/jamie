@@ -105,20 +105,35 @@ class fileProcess(object):
         # Some ads have the first div as <div id='enhanced-content'> which
         # change the structure of the html
         if enhanced == 'enhanced':
-            section = soup.findAll('div', {'class': 'section', 'id': None})[0]
-            return section.get_text(separator=u' ')
+            try:
+                section = soup.findAll('div', {'class': 'section', 'id': None})[0]
+                return section.get_text(separator=u' ')
+            except IndexError:
+                pass
+            try:
+                section = soup.findAll('div', {'id': 'enhanced-right'})[0]
+                return section.get_text(separator=u' ')
+            except IndexError:
+                pass
+            try:
+                section = soup.findAll('div', {'id': 'enhanced-content'})[0]
+                return section.get_text(separator=u' ')
+            except IndexError:
+                print(soup)
+                raise
+
         else:
             try:
                 section = soup.findAll('div', {'class': 'section', 'id': None})[1]
                 return section.get_text(separator=u' ')
             except IndexError:
                 pass
-            description_text = []
-            section = soup.find('div', {'class': 'col-lg-12'})
-            # Need to find the first <p>. The description is under that one
-            # but also contains differents tags
-            text_desc = False
             try:
+                description_text = []
+                section = soup.find('div', {'class': 'col-lg-12'})
+                # Need to find the first <p>. The description is under that one
+                # but also contains differents tags
+                text_desc = False
                 for description in section.findAll():
                     if description.name == 'p' and text_desc is False:
                         text_desc = True
