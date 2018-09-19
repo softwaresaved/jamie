@@ -78,21 +78,26 @@ class OutputRow:
         """
         Check if a key match a better name
         """
+        key = key.rstrip().lower()
         if key == 'contract_type' or key == 'contract' or key == 'contract type':
-            key = 'contract'
+            clean_key = 'contract'
         elif key == 'expires' or key == 'closes':
-            key = 'closes'
+            clean_key = 'closes'
         elif key == 'placed on':
-            key = 'placed_on'
+            clean_key = 'placed_on'
         elif key == 'name':
-            key = 'job_title'
-        if key == 'type___role':
-            key = 'type_role'
-        elif key == 'subject_area_s' or key == 'subject_area' or key == 'extra_subject_area or key' == 'extra_subject_area_s':
-            key = 'subject_area'
+            clean_key = 'job_title'
+        if key == 'type___role' or key == 'extra_type___role':
+            clean_key = 'type_role'
+        elif key == 'subject_area_s' or key == 'subject_area' or key == 'extra_subject_area' or key == 'extra_subject_area_s':
+            clean_key = 'subject_area'
         elif key == 'location_s' or key == 'location':
-            key = 'location'
-        return key
+            clean_key = 'location'
+        elif key == 'extra_location_s':
+            clean_key = 'extra_location'
+        else:
+            clean_key = key
+        return clean_key
 
     def create_dictionary(self):
         """

@@ -155,35 +155,35 @@ def main():
             logger.debug('\t\tWrong json: {}'.format(len(wrong_json)))
         clean_data = OutputRow(data)
         clean_data.clean_row()
-        data = clean_data.to_dictionary()
+        data_to_record = clean_data.to_dictionary()
         try:
-            if len(data['invalid_code']) >= 3:
+            if len(data_to_record['invalid_code']) >= 3:
                 m+=1
-                if data['enhanced'] == 'normal':
-                    wrong_normal.append(data['jobid'])
-                elif data['enhanced'] == 'enhanced':
-                    wrong_enhanced.append(data['jobid'])
-                elif data['enhanced'] == 'json':
-                    wrong_json.append(data['jobid'])
+                if data_to_record['enhanced'] == 'normal':
+                    wrong_normal.append(data_to_record['jobid'])
+                elif data_to_record['enhanced'] == 'enhanced':
+                    wrong_enhanced.append(data_to_record['jobid'])
+                elif data_to_record['enhanced'] == 'json':
+                    wrong_json.append(data_to_record['jobid'])
 
             else:
                 n +=1
-                if data['enhanced'] == 'normal':
-                    right_normal.append(data['jobid'])
-                elif data['enhanced'] == 'enhanced':
-                    right_enhanced.append(data['jobid'])
-                elif data['enhanced'] == 'json':
-                    right_json.append(data['jobid'])
+                if data_to_record['enhanced'] == 'normal':
+                    right_normal.append(data_to_record['jobid'])
+                elif data_to_record['enhanced'] == 'enhanced':
+                    right_enhanced.append(data_to_record['jobid'])
+                elif data_to_record['enhanced'] == 'json':
+                    right_json.append(data_to_record['jobid'])
         except KeyError:
             n +=1
-            if data['enhanced'] == 'normal':
-                right_normal.append(data['jobid'])
-            elif data['enhanced'] == 'enhanced':
-                right_enhanced.append(data['jobid'])
-            elif data['enhanced'] == 'json':
-                right_json.append(data['jobid'])
+            if data_to_record['enhanced'] == 'normal':
+                right_normal.append(data_to_record['jobid'])
+            elif data_to_record['enhanced'] == 'enhanced':
+                right_enhanced.append(data_to_record['jobid'])
+            elif data_to_record['enhanced'] == 'json':
+                right_json.append(data_to_record['jobid'])
         try:
-            db_jobs.insert(data)
+            db_jobs.insert(data_to_record)
             report.nb_inserted_job += 1
         except pymongo.errors.DuplicateKeyError:
             report.nb_duplicated_job += 1
