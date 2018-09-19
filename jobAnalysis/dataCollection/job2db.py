@@ -156,6 +156,12 @@ def main():
         clean_data = OutputRow(data)
         clean_data.clean_row()
         data_to_record = clean_data.to_dictionary()
+        # try:
+        #     logger.debug('Employer: {}'.format(data_to_record['employer']))
+        #     logger.debug('Uk Uni: {}'.format(data_to_record['uk_university']))
+        #     logger.debug('Postcode: {}'.format(data_to_record['uk_postcode']))
+        # except KeyError:
+        #     pass
         try:
             if len(data_to_record['invalid_code']) >= 3:
                 m+=1

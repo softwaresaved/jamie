@@ -50,7 +50,8 @@ class OutputRow:
                          'salary_min',
                          'salary_max',
                          'duration_ad_days',
-                         'uk_university']
+                         'uk_university',
+                         'uk_postcode']
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
@@ -87,7 +88,6 @@ class OutputRow:
                 dict_uk_uni_postcode[row['PROVIDER_NAME']] = row['POSTCODE']
 
         return dict_uk_uni_postcode
-
 
     def matching_key(self, key):
         """
@@ -367,33 +367,53 @@ class OutputRow:
             self.invalid_code = [key]
         self.include_in_study = False
 
+    def check_match(self, element_to_compare, list_to_use, limit_ratio=0.90):
+        """
+        Check if the element to compare is close enough to an element
+        in the list provided
+        """
+        element_to_compare = element_to_compare.strip().lower()
+        ratio_list = list()
+        for s in list_to_use:
+            to_match = s.lower().strip()
+
+            # Get the ratio for each entry and the self.employer value
+            ratio = difflib.SequenceMatcher(None, element_to_compare, to_match).ratio()
+            ratio_list.append((s, ratio))
+            # If ratio is == 1 it means it is a perfect match
+            if ratio == 1:
+                break
+
+        # get the maximum ratio[1] in the list and return the associated tuple
+        best_match = max(ratio_list, key=itemgetter(1))
+        if best_match[1] >= limit_ratio:
+            return best_match[0]
+        else:
+            return None
+
     def add_uk_university(self):
         """
         Check the string from employer if it matches an UK university
         provided by the file self.uk_uni_list using difflib
         """
         if hasattr(self, 'employer'):
-            # Break the employer string and lower it while removinge white spac
+            # Break the employer string and lower it while removinge white space
 
-            employer = self.employer.split('-')[0].split('–')[0].strip().lower()
-            # Parse the entry from the self.uk_uni_list
+            employer = self.employer.split('-')[0]
 
-            ratio_list = list()
-            for s in self.uk_uni_list:
-                to_match = s.lower().strip()
+            best_match = self.check_match(employer, self.uk_uni_list)
+            if best_match:
+                self.uk_university = best_match
+    def add_postcode(self):
+        """
+        If there is a uk_university, try to match it with the code
+        provided by self.dict_uk_uni_postcode
+        """
+        if hasattr(self, 'uk_university'):
+            best_match= self.check_match(self.uk_university, self.uk_postcode.keys())
+            if best_match:
+                self.uk_postcode = self.uk_postcode[best_match]
 
-                # Get the ratio for each entry and the self.employer value
-                ratio = difflib.SequenceMatcher(None, employer, to_match).ratio()
-                ratio_list.append((s, ratio))
-                # If ratio is == 1 it means it is a perfect match
-                if ratio == 1:
-                    break
-
-            # get the maximum ratio[1] in the list and return the associated tuple
-            best_match = max(ratio_list, key=itemgetter(1))
-            # Arbitrary limit of confidence for considering the two strings as a match
-            if best_match[1] >= 0.90:
-                self.uk_university = best_match[0]
 
     def clean_row(self):
         self.clean_description()
@@ -410,6 +430,7 @@ class OutputRow:
         self.clean_contract()
         self.add_duration()
         self.add_uk_university()
+        self.add_postcode()
         self.clean_salary(self.salary, 'salary')
         self.clean_salary(self.funding_amount, 'funding_amount')
         if hasattr(self, 'funding_amount') and 'contract' in self.invalid_code:
@@ -465,26 +486,8 @@ class OutputRow:
 
 def main():
     """
-    Running for test purpose
     """
-    file_to_parse = '../../../outputs/uniqueValue/salary.csv'
-    print('Reading: {}'.format(file_to_parse))
-    result = dict()
-    with open(file_to_parse, 'r') as f:
-        for l in f:
-
-            l = ' '.join(l.split())
-            # salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9](?: |$)', l,
-            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9]', l,
-                                                flags=re.MULTILINE)
-            result[len(salary_fields)] = result.get(len(salary_fields), 0)+1
-            size = len(salary_fields)
-            if size == 1:
-                print(l)
-                print(salary_fields)
-    for k in result:
-        print(k, result[k])
-
+    pass
 
 if __name__ == '__main__':
     main()
