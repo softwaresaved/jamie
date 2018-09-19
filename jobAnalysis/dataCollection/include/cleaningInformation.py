@@ -6,6 +6,7 @@ This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs 
 """
 
 import re
+import csv
 import difflib
 from operator import itemgetter
 from datetime import datetime
@@ -62,6 +63,7 @@ class OutputRow:
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
         self.uk_uni_list = self.read_uni_list_file()
+        self.uk_postcode = self.read_postcode()
 
     def read_uni_list_file(self):
         """
@@ -73,6 +75,19 @@ class OutputRow:
             for l in f:
                 set_uni_list.add(l.strip())
         return set_uni_list
+
+    def read_postcode(self):
+        """
+        Read the csv file containing university and postcode for UK only
+        """
+        dict_uk_uni_postcode = dict()
+        with open ('./data/uk_uni_postcode.csv', 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                dict_uk_uni_postcode[row['PROVIDER_NAME']] = row['POSTCODE']
+
+        return dict_uk_uni_postcode
+
 
     def matching_key(self, key):
         """
