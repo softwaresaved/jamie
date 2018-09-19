@@ -462,7 +462,7 @@ def main():
         generate_report.get_average_per_day(key)
 
     logger.info('Get the different sum')
-    key_to_parse_for_sum_per_day = ['contract', 'hours', 'extra_location_s', 'extra_subject_area_s', 'uk_university', 'extra_type___role']
+    key_to_parse_for_sum_per_day = ['contract', 'hours', 'location' 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
     generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
 
     logger.info('Get the training set')
