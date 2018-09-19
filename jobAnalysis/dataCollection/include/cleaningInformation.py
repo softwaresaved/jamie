@@ -94,15 +94,19 @@ class OutputRow:
         Check if a key match a better name
         """
         key = key.rstrip().lower()
+
         if key == 'contract_type' or key == 'contract' or key == 'contract type':
             clean_key = 'contract'
+
         elif key == 'expires' or key == 'closes':
             clean_key = 'closes'
+
         elif key == 'placed on':
             clean_key = 'placed_on'
+
         elif key == 'name':
             clean_key = 'job_title'
-        if key == 'type___role' or key == 'extra_type___role':
+        elif key == 'type___role' or key == 'extra_type___role':
             clean_key = 'type_role'
         elif key == 'subject_area_s' or key == 'subject_area' or key == 'extra_subject_area' or key == 'extra_subject_area_s':
             clean_key = 'subject_area'
@@ -475,11 +479,13 @@ class OutputRow:
         # the keys created during the analysis
         # for k in [k for k in self.input_row.keys()] + self.new_keys:
         for k in self.keys_to_record:
+            print(k)
             try:
                 result[k] = getattr(self, k)
             except AttributeError:
                 pass
 
+        print(result['job_title'])
         return result
 
 

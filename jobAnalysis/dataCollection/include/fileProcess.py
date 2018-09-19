@@ -67,7 +67,7 @@ class fileProcess(object):
                 pass
         return employer
 
-    def get_title(self, soup, enhanced):
+    def get_job_title(self, soup, enhanced):
         """
         """
         try:
@@ -200,7 +200,7 @@ class fileProcess(object):
         dict_output = self.process_result(dict_output, result, key)
 
         key = 'name'
-        result = self.get_title(soup, enhanced)
+        result = self.get_job_title(soup, enhanced)
         dict_output = self.process_result(dict_output, result, key)
 
         key = 'location'
@@ -271,7 +271,7 @@ class fileProcess(object):
         """
         """
         try:
-            dict_output['job_title'] = dict_output['json']['title']
+            dict_output['name'] = dict_output['json']['title']
         except KeyError:
             pass
         try:
