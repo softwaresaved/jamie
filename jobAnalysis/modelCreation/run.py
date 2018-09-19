@@ -144,7 +144,7 @@ def main():
     parser.add_argument('-r', '--relaunch',
                         type=str,
                         default='False',
-                        help='Decide if rerun the modelling or pickle the existing one if exists. Default value is true')
+                        help='Decide if rerun the modelling or pickle the existing one if exists. Default value is false')
     parser.add_argument('-c', '--config',
                         type=str,
                         default='config_dev.ini')
