@@ -479,13 +479,11 @@ class OutputRow:
         # the keys created during the analysis
         # for k in [k for k in self.input_row.keys()] + self.new_keys:
         for k in self.keys_to_record:
-            print(k)
             try:
                 result[k] = getattr(self, k)
             except AttributeError:
                 pass
 
-        print(result['job_title'])
         return result
 
 
