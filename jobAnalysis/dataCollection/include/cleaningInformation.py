@@ -64,7 +64,7 @@ class OutputRow:
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
         self.uk_uni_list = self.read_uni_list_file()
-        self.uk_postcode = self.read_postcode()
+        self.uk_postcode_dict = self.read_postcode()
 
     def read_uni_list_file(self):
         """
@@ -410,9 +410,9 @@ class OutputRow:
         provided by self.dict_uk_uni_postcode
         """
         if hasattr(self, 'uk_university'):
-            best_match= self.check_match(self.uk_university, self.uk_postcode.keys())
+            best_match= self.check_match(self.uk_university, self.uk_postcode_dict.keys())
             if best_match:
-                self.uk_postcode = self.uk_postcode[best_match]
+                self.uk_postcode = self.uk_postcode_dict[best_match]
 
 
     def clean_row(self):
