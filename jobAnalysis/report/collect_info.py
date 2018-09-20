@@ -51,6 +51,7 @@ class generateReport:
         self.last_date = self.get_record_ord(key='placed_on', order=-1)
 
         self.days_range = self.create_days_range(self.first_date, self.last_date)
+        self.all_keys = self.get_all_keys('jobs')
 
     def get_all_keys(self, collection):
         """
@@ -61,9 +62,9 @@ class generateReport:
 
         :return: list(): all the keys as str()
         """
-        map = Code("function() { for (var key in this) { emit(key, null); } }")
-        reduce = Code("function(key, stuff) { return null; }")
-        result = self.db[collection].map_reduce(map, reduce, "myresults")
+        map_func = Code("function() { for (var key in this) { emit(key, null); } }")
+        reduce_func = Code("function(key, stuff) { return null; }")
+        result = self.db[collection].map_reduce(map_func, reduce_func, "myresults")
         return sorted(result.distinct('_id'))
 
     def get_record_ord(self, key, order):
@@ -296,7 +297,7 @@ class generateReport:
         """
         # Add a key total to get all the entry for one day
         list_to_parse = ['total']
-        list_to_parse.extend(sorted(self.get_all_keys('jobs')))
+        list_to_parse.extend(self.all_keys)
 
         # Remove the empty entry, jobid and _id
         list_to_parse.remove('')
@@ -423,6 +424,23 @@ class generateReport:
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
+    def get_all_records(self):
+        """
+        """
+        key_to_avoid = ['description', '_id', 'job_title']
+        dict_key_to_avoid = {k: False for k in key_to_avoid}
+        header = [i for i in self.all_keys if i not in key_to_avoid]
+        data_for_csv = []
+        for data in self.db_jobs.find({}, dict_key_to_avoid):
+            data_for_csv.append(data)
+
+
+        filename = os.path.join(self.report_csv_folder, 'dataCollection', 'all_records.csv')
+        with open(filename, 'w') as f:
+            w = csv.DictWriter(f, header)
+            w.writeheader()
+            for indict in data_for_csv:
+                w.writerow(indict)
 
 def main():
     """
@@ -462,7 +480,7 @@ def main():
         generate_report.get_average_per_day(key)
 
     logger.info('Get the different sum')
-    key_to_parse_for_sum_per_day = ['contract', 'hours', 'location' 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
+    key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
     generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
 
     logger.info('Get the training set')
@@ -476,6 +494,7 @@ def main():
 
     logger.info('Get the classifications')
     generate_report.get_classification()
+    generate_report.get_all_records()
 
 
 if __name__ == '__main__':
