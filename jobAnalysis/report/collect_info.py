@@ -219,7 +219,7 @@ class generateReport:
             data_for_csv.append([data['_id'], data['count']])
         self.write_csv(header=['Type of invalid_code', 'count'],
                        result=data_for_csv,
-                       name='count of invalid_code',
+                       name='count_invalid_code',
                        type_info='dataCollection')
 
     def get_unique_values(self, key, cleaned_set, clean_txt,research_soft_only=False):
