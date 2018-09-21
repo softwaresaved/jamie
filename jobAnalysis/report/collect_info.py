@@ -472,6 +472,7 @@ def main():
             clean_keys = {'placed_on': {'$exists': True},
                           'prediction': {'$exists': True},
                           'prediction': {'$ne': 'None'},
+                          'type_role': {'$ne': 'PhD'},
                           'uk_university': {'$exists': True}}
         else:
             clean_keys = {}
