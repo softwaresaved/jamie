@@ -222,17 +222,18 @@ class generateReport:
                        name='count of invalid_code',
                        type_info='dataCollection')
 
-    def get_unique_values(self, key, research_soft_only=False):
+    def get_unique_values(self, key, cleaned_set, clean_txt,research_soft_only=False):
         """
         return unique value for the field specified by the key
         """
         set_unique = set()
-        search = {key: {'$exists': True}}
+        search = cleaned_set
+        search.update({key: {'$exists': True}})
         if research_soft_only is True:
             search['prediction'] = 1
         for data in self.db_jobs.find(search, {key: 1, '_id': 0}):
             set_unique.add(data[key].replace('\n', '\t').strip())
-        with open('../../outputs/uniqueValue/{}.csv'.format(key), 'w') as f:
+        with open('../../outputs/uniqueValue/{}_{}.csv'.format(key, clean_txt), 'w') as f:
             for record in set_unique:
                 try:
                     f.write('{}'.format(record))
@@ -291,7 +292,7 @@ class generateReport:
             data_for_csv.append(list_to_append)
         self.write_csv(header_csv, data_for_csv, name_file, type_info='dataPrediction')
 
-    def get_keys_per_day(self):
+    def get_keys_per_day(self, cleaned_set, clean_txt):
         """
         Output a csv file with the count for each keys
         """
@@ -320,7 +321,7 @@ class generateReport:
             dict_key_with_date['NaN'][i] = {key: 0 for key in list_to_parse}
 
         # Parse the db and return all the results
-        for record in self.db_jobs.find({}):
+        for record in self.db_jobs.find(cleaned_set):
             try:
                 date_ = record['placed_on'].date()
             except KeyError:
@@ -339,7 +340,7 @@ class generateReport:
                     pass
 
         # Record the results
-        filename = '{}dataCollection/presence_keys.csv'.format(self.report_csv_folder)
+        filename = '{}dataCollection/{}_presence_keys.csv'.format(self.report_csv_folder, clean_txt)
         with open(filename, "w") as f:
             group = ['date', 'prediction']
             fields = group + list_to_parse
@@ -353,14 +354,10 @@ class generateReport:
                     row['prediction'] = prediction
                     w.writerow(row)
 
-    def _get_average_per_day(self, key):
+    def _get_average_per_day(self, key, cleaned_set):
 
-        pipeline = [{'$match': {'placed_on': {'$exists': True},
-                                key: {'$exists': True},
-                                'uk_university': {'$exists': True},
-                                'prediction': {'$exists': True},
-                                }
-                     },
+        cleaned_set.update({key: {'$exists': True}})
+        pipeline = [{'$match': cleaned_set},
                     {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction'},
                                 key: {'$avg': '${}'.format(key)}
@@ -371,7 +368,7 @@ class generateReport:
         for d in self.db_jobs.aggregate(pipeline):
             yield d
 
-    def get_average_per_day(self, list_to_parse):
+    def get_average_per_day(self, list_to_parse, cleaned_set, clean_txt):
         """
         """
         if isinstance(list_to_parse, str):
@@ -380,21 +377,25 @@ class generateReport:
         for key in list_to_parse:
             header_csv = ['date', 'prediction', key]
             data_for_csv = list()
-            name_file = 'average_{}'.format(key)
-            for data in self._get_average_per_day(key):
+            name_file = '{}_average_{}'.format(clean_txt, key)
+            for data in self._get_average_per_day(key, cleaned_set):
                 to_add = data['_id']
                 to_add[key] = data[key]
 
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key]])
             self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
-    def _get_sum_per_day(self, key):
+    def _get_sum_per_day(self, key, cleaned_set):
 
-        pipeline = [{'$match': {'placed_on': {'$exists': True},
-                                'prediction': {'$exists': True},
-                                'uk_university': {'$exists': True},
-                                key: {'$exists': True}
-                                }
+        #     match_keys = {'placed_on': {'$exists': True},
+        #                   'prediction': {'$not': 'None'},
+        #                   'uk_university': {'$exists': True},
+        #                   key: {'$exists': True}}
+        #
+        #
+        # else:
+        cleaned_set.update({key: {'$exists': True}})
+        pipeline = [{'$match': cleaned_set
                      },
 
                     {'$unwind': '${}'.format(key)},
@@ -410,7 +411,7 @@ class generateReport:
         for d in self.db_jobs.aggregate(pipeline):
             yield d
 
-    def get_sum_per_day(self, list_to_parse):
+    def get_sum_per_day(self, list_to_parse, cleaned_set, clean_txt):
         """
         """
         if isinstance(list_to_parse, str):
@@ -418,29 +419,12 @@ class generateReport:
         for key in list_to_parse:
             data_for_csv = list()
             header_csv = ['date', 'prediction', key, 'total']
-            name_file = 'sum_{}'.format(key)
-            for data in self._get_sum_per_day(key):
+            name_file = '{}_sum_{}'.format(clean_txt, key)
+            for data in self._get_sum_per_day(key, cleaned_set):
                 to_add = data['_id']
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
-    def get_all_records(self):
-        """
-        """
-        key_to_avoid = ['description', '_id', 'job_title']
-        dict_key_to_avoid = {k: False for k in key_to_avoid}
-        header = [i for i in self.all_keys if i not in key_to_avoid]
-        data_for_csv = []
-        for data in self.db_jobs.find({}, dict_key_to_avoid):
-            data_for_csv.append(data)
-
-
-        filename = os.path.join(self.report_csv_folder, 'dataCollection', 'all_records.csv')
-        with open(filename, 'w') as f:
-            w = csv.DictWriter(f, header)
-            w.writeheader()
-            for indict in data_for_csv:
-                w.writerow(indict)
 
 def main():
     """
@@ -467,35 +451,46 @@ def main():
     logger.info('Invalid code with salary')
     logger.info(generate_report.get_invalid_code())
 
-    logger.info('Invalid code without salary')
-    generate_report.get_invalid_code(with_salary=False)
+    # logger.info('Invalid code without salary')
+    # generate_report.get_invalid_code(with_salary=False)
 
     logger.info('Count invalid code without salary')
     generate_report.count_invalid_codes()
 
-    generate_report.get_keys_per_day()
-
-    logger.info('Get the different average')
-    for key in ['duration_ad_days']:
-        generate_report.get_average_per_day(key)
-
-    logger.info('Get the different sum')
-    key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
-    generate_report.get_sum_per_day(key_to_parse_for_sum_per_day)
+    logger.info('Get the classifications')
+    generate_report.get_classification()
 
     logger.info('Get the training set')
     generate_report.get_training_set()
 
-    logger.info('Get the salary unique')
-    generate_report.get_unique_values('salary')
+    # Need to creat a dataset for raw data (used to describe the overall dataset) i
+    # and one that is cleaned (used for actual analysis).
+    for clean_or_not in ['raw', 'clean']:
+        if clean_or_not == 'clean':
 
-    logger.info('Get the unique job title')
-    generate_report.get_unique_values('job_title', research_soft_only=True)
+            # FIXME : Put theses rules outside that loop for more visibility
+            clean_keys = {'placed_on': {'$exists': True},
+                          'prediction': {'$exists': True},
+                          'prediction': {'$ne': 'None'},
+                          'uk_university': {'$exists': True}}
+        else:
+            clean_keys = {}
+        logger.info('Get all the keys per day for: {}'.format(clean_or_not))
+        generate_report.get_keys_per_day(cleaned_set=clean_keys, clean_txt=clean_or_not)
 
-    logger.info('Get the classifications')
-    generate_report.get_classification()
-    generate_report.get_all_records()
+        logger.info('Get the different average for: {}'.format(clean_or_not))
+        for key in ['duration_ad_days']:
+            generate_report.get_average_per_day(key, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
+        logger.info('Get the different sum for: {}'.format(clean_or_not))
+        key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
+        generate_report.get_sum_per_day(key_to_parse_for_sum_per_day, cleaned_set=clean_keys, clean_txt=clean_or_not)
+
+        # logger.info('Get the salary unique for: {}'.format(clean_or_not))
+        # generate_report.get_unique_values('salary', cleaned_set=clean_keys, clean_txt=clean_or_not)
+
+        logger.info('Get the unique job title for: {}'.format(clean_or_not))
+        generate_report.get_unique_values('job_title', cleaned_set=clean_keys, clean_txt=clean_or_not, research_soft_only=True)
 
 if __name__ == '__main__':
     main()
