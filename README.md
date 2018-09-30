@@ -25,12 +25,12 @@ Collecting the jobs ads in a naive way and store then into a file for further an
 
 #### Data collection
 
-It is an html scraper build with python and [beautifulSoup]() to parse the html content. It uses the search feature on the website to collect the link of all jobs posted on the website. With that information, it recreates the URL to download the html content of all the new job ads into a separated file. Each file is supposed to have an unique ID parsed from that website. It ensures we do not store twice the same jobs. That file is preprocessed only to store the valuable sections (remove the header and footer).
+It is an html scraper built with python and [beautifulSoup]() to parse the html content. It uses the search feature on the website to collect the link of all jobs posted on the website. With that information, it recreates the URL to download the html content of all the new job ads into a separated file. Each file is supposed to have an unique ID parsed from that website. It ensures we do not store twice the same jobs. That file is preprocessed only to store the valuable sections (remove the header and footer).
 
 
 #### Data cleansing
 
-Cleaning the dataset to see which of them are usable. Sometimes the ads does not contains the information we want or the formatting of the field is not following the rules we expect. This data cleaning focus on different keys as describe below. Once the job ads is cleaned it is stored into a MongoDB to facilitate further steps.
+Cleaning the dataset to see which of them are usable. Sometimes the ads does not contains the information we want or the formatting of the field is not following the rules we expect. This data cleaning focus on different keys as described below. Once the job ads is cleaned it is stored into a MongoDB to facilitate further steps.
 
 * **Description**: This key contains the description of the job. It is essential to classify the job. In case of absence, the job ads is discarded.
 
@@ -45,12 +45,14 @@ Cleaning the dataset to see which of them are usable. Sometimes the ads does not
 
 ### [Predicting the type of job](https//github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataPrediction)
 
-This step applies a predictive model that predicts if the job ads is about a Software Development position or not. This step is done for each new job ads added to the database. However to build the predictive model, two `one-shot` operations were needed. We needed to collect a training set and building the model itself.
+This step applies a predictive model that predicts if the job ads is about a Software Development position or not. This step is done for each new job ads added to the database. However to build the predictive model, two one-shot operations were needed. We needed to collect a training set and building the model itself.
 
 * **Training set**: To classify the jobs in two categories we needed to have a training dataset. We asked expert to read a subset of Job Ads to tell us if the jobs seems to contain Software Development aspect, if it does not contain any, if it was ambiguous (not sure) or if the ads did not contain enough information. Each jobs ads were shown several times to different experts until a consensus emerged (see [] about the rules).
 
 * **Training the model**: To build a model, the package sklearn was used. This modeling steps contains 2 steps itself. The feature selection and the model training.
 
+At the end, the model chosen was the Gradient Boosting after applying nested cross validation. The confusion matrix applied to the 20% of all dataset shown that the model predict accurately 75% of the Research Software Job correctly. It only mislabel non Software Job as Software job in 2% of the cases. Here a picture of this confusion matrix. For further details on the process of model creation and selection, please refer to the [dataPrediction notebook](./notebooks/dataPrediction.ipynb)
+![Confusion matrix with normalisation](./outputs/dataPrediction/confusion_matrix_normalised.png?raw=true "Title")
 
 ### [Analysis of the dataset](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataAnalysis)
 
