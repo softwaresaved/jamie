@@ -41,7 +41,7 @@ def record_result_csv(df, name_folds, folder):
     else:
         df.to_csv(filename)
 
-def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/modelCreation/'):
+def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPrediction/'):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856

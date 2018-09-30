@@ -32,7 +32,7 @@ logger = logger(name='prediction_run', stream_level='DEBUG')
 def record_information(best_model_name, best_model_params,
                        final_model, feature_model,
                        y_test, y_pred, y_proba,
-                       folder='../../outputs/modelCreation/'):
+                       folder='../../outputs/dataPrediction/'):
 
     print(y_test)
     np.save('{}{}'.format(folder, 'y_test'), y_test)
@@ -43,20 +43,20 @@ def record_information(best_model_name, best_model_params,
     print(best_model_params)
 
 
-def record_model(model, features, folder='../../outputs/modelCreation/'):
+def record_model(model, features, folder='../../outputs/dataPrediction'):
     """
     """
     joblib.dump(features, '{}{}'.format(folder, 'features.pkl'))
     joblib.dump(model, '{}{}'.format(folder, 'model.pkl'))
 
 
-def load_model(folder='../../outputs/modelCreation/'):
+def load_model(folder='../../outputs/dataPrediction/'):
     features = joblib.load('{}{}'.format(folder, 'features.pkl'))
     model = joblib.load('{}{}'.format(folder, 'model.pkl'))
     return features, model
 
 
-def load_info_model(folder='../../outputs/modelCreation/'):
+def load_info_model(folder='../../outputs/dataPrediction/'):
     with open('{}{}'.format(folder, 'best_model_params.json')) as handle:
         best_model_params = json.loads(handle.read())
     with open('{}{}'.format(folder, 'best_model_name.txt', 'r')) as f:
