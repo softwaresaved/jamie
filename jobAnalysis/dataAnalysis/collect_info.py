@@ -473,7 +473,10 @@ def main():
                           'prediction': {'$exists': True},
                           'prediction': {'$ne': 'None'},
                           '$and':[
-                              {'type_role': {'$not': {'$elemMatch':{'$in': ['PhD', 'Master']}}}}],
+                              {'type_role': {'$not': {'$elemMatch':{'$in': ['PhD']}}}}],
+
+                          '$and':[
+                              {'type_role': {'$not': {'$elemMatch':{'$in': ['Master']}}}}],
                           # 'type_role': {'$ne': ['PhD', 'Master']},
                           'uk_university': {'$exists': True}}
         else:
