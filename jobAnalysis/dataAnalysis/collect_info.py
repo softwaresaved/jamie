@@ -472,7 +472,9 @@ def main():
             clean_keys = {'placed_on': {'$exists': True},
                           'prediction': {'$exists': True},
                           'prediction': {'$ne': 'None'},
-                          'type_role': {'$ne': ['PhD', 'Master']},
+                          '$and':[
+                              {'type_role': {'$not': {'$elemMatch':{'$in': ['PhD', 'Master']}}}}],
+                          # 'type_role': {'$ne': ['PhD', 'Master']},
                           'uk_university': {'$exists': True}}
         else:
             clean_keys = {}
