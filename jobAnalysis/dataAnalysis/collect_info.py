@@ -251,7 +251,7 @@ class generateReport:
         data_for_csv = list()
         for data in self.db_tag.aggregate(pipeline):
             data_for_csv.append([data['_id'], data['count']])
-        self.write_csv(['Type of classification', 'count'], data_for_csv, 'type_classification_bob', 'modelCreation')
+        self.write_csv(['Type of classification', 'count'], data_for_csv, 'type_classification_bob', 'dataPrediction')
 
     def get_classification(self, key_to_get=None):
         """
