@@ -15,7 +15,7 @@ sys.path.append(str(Path('.').absolute().parent))
 
 from common.getConnection import connectDB
 from common.textClean import textClean
-from common.date_transformation import get_month
+# from common.date_transformation import get_month
 
 
 # ## GLOBAL VARIABLES  ###
@@ -69,6 +69,24 @@ def check_if_rse(cleaner, txt):
                     to_return = 'research_soft'
                     if txt[pos+2] in ['engineer', 'e']:
                         to_return = 'research_soft_eng'
+            except IndexError:
+                pass
+    return to_return
+
+def check_if_rsd(cleaner, txt):
+
+    txt = cleaner.clean_text(txt)
+    to_return = False
+    for pos, word in enumerate(txt):
+        if word == 'rsd':
+            to_return = 'research_soft_dev'
+            return to_return
+        elif word in ['research', 'r']:
+            try:
+                if txt[pos+1]  in ['software', 's']:
+                    to_return = 'research_soft'
+                    if txt[pos+2] in ['developer', 'd']:
+                        to_return = 'research_soft_dev'
             except IndexError:
                 pass
     return to_return

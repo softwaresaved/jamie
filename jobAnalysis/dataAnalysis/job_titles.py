@@ -3,6 +3,7 @@
 
 import os
 import csv
+import json
 import sys
 from pathlib import Path
 
@@ -14,6 +15,9 @@ import numpy as np
 sys.path.append(str(Path('.').absolute().parent))
 
 from common.getConnection import connectDB
+from common.textClean import textClean
+
+from get_RSE_per_month import check_if_rse, check_if_rsd
 
 
 # ## GLOBAL VARIABLES  ###
@@ -29,50 +33,48 @@ elif RUNNING == 'prod':
     DEBUGGING='INFO'
 
 
-def write_csv(header, results, filename):
-    """
-    """
-    with open(filename, 'w') as f:
-        writer = csv.DictWriter(f, fieldnames=header)
+def write_csv(data, filename):
+    header = set()
+    list_dict_result = list()
+    for result in data:
+        print(result['job_title'])
+        list_dict_result.append(result)
+        for k in result.keys():
+            header.add(k)
+
+    with open(filename, 'w') as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=list(header))
         writer.writeheader()
-        for date in sorted(results.keys()):
-            try:
-                rse_number = results[date]['research_soft_eng']
-            except KeyError:
-                results[date]['research_soft_eng'] = 0
+        writer.writerows(list_dict_result)
 
-            try:
-                rs_number = results[date]['research_soft']
-            except KeyError:
-                results[date]['research_soft'] = 0
-            row = {'Date': date,
-                   'Number of Research Software Jobs': results[date]['research_soft'],
-                   'Number of RSEs': results[date]['research_soft_eng'],
-                   'Total ads': results[date]['total ads']}
-            print(row)
-            writer.writerow(row)
+        json.dump(list(data), outfile)
 
+def get_all_documents(db_conn):
 
-def get_all_documents(db_conn, filename):
-
-    with open(filename, 'w') as f:
-        for doc in db_conn['jobs'].find({'prediction': 1}, {'job_title': 1}):
+    for doc in db_conn['jobs'].find({'description': {'$exists': True},
+                                     'placed_on': {'$exists': True},
+                                     'job_title': {'$exists': True},
+                                     'uk_university': {'$exists': True},
+                                     'prediction': {'$exists': True}}, {'_id': False}):
+        try:
             job_title = doc['job_title']
-            job_title = job_title.rstrip()
-            f.write(job_title)
-            f.write('\n')
-            print(job_title)
+            if check_if_rse(cleaner, job_title) or check_if_rsd(cleaner, job_title):
+                yield doc
+        except KeyError:
+            pass
 
 if __name__ == "__main__":
 
-    filename = '../../outputs/job_title.csv'
-    # header = ['Date', 'Number of Research Software Jobs', 'Number of RSEs', 'Total ads']
+    filename = '../../outputs/job_rse_in_title.csv'
 
     # Connect to the database
     db_conn = connectDB(CONFIG_FILE)
 
+    # init text_cleaner
+    cleaner = textClean(remove_stop=True)
+
     # Parse the db and get the number of RSE per months
-    results = get_all_documents(db_conn, filename)
+    results = get_all_documents(db_conn)
 
     # record the results
-    # write_csv(header, results, filename)
+    write_csv(results, filename)
