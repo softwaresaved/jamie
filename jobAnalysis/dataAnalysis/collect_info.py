@@ -472,10 +472,8 @@ def main():
             clean_keys = {'placed_on': {'$exists': True},
                           'prediction': {'$exists': True},
                           'prediction': {'$ne': 'None'},
-                          '$and':[
-                              {'type_role': {'$not': {'$elemMatch':{'$in': ['PhD']}}}}],
-
-                          '$and':[
+                          '$or':[
+                              {'type_role': {'$not': {'$elemMatch':{'$in': ['PhD']}}}},
                               {'type_role': {'$not': {'$elemMatch':{'$in': ['Master']}}}}],
                           # 'type_role': {'$ne': ['PhD', 'Master']},
                           'uk_university': {'$exists': True}}
