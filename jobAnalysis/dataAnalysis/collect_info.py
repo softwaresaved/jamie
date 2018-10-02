@@ -13,6 +13,8 @@ from bson import Code
 
 
 import sys
+
+import argparse
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
