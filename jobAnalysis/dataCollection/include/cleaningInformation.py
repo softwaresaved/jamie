@@ -41,7 +41,8 @@ class OutputRow:
                             'hours',
                             'contract',
                             'placed_on',
-                            'closes']
+                            'closes',
+                            'subject_area']
 
 
         # Create a list of keys that are added during the cleaning process
@@ -51,7 +52,9 @@ class OutputRow:
                          'salary_max',
                          'duration_ad_days',
                          'uk_university',
-                         'uk_postcode']
+                         'uk_postcode',
+                         'salary_median',
+                         'not_student']
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
@@ -323,16 +326,16 @@ class OutputRow:
                 else:
                     # One number or two numbers?
                     if len(salary_values) == 1:
-                        self.SalaryMin = salary_values[0]
-                        self.SalaryMax = salary_values[0]
+                        self.salary_min = salary_values[0]
+                        self.salary_max = salary_values[0]
                     elif len(salary_values) == 2:
-                        self.SalaryMin = salary_values[0]
-                        self.SalaryMax = salary_values[1]
+                        self.salary_min = salary_values[0]
+                        self.salary_max = salary_values[1]
                     # When there is three records is because the third salary
                     # is for potential progression in the future
                     elif len(salary_values) == 3:
-                        self.SalaryMin = salary_values[0]
-                        self.SalaryMax = salary_values[1]
+                        self.salary_min = salary_values[0]
+                        self.salary_max = salary_values[1]
                     else:
                         self.add_invalid_code(fieldname)
         except TypeError:
@@ -408,6 +411,7 @@ class OutputRow:
             best_match = self.check_match(employer, self.uk_uni_list)
             if best_match:
                 self.uk_university = best_match
+
     def add_postcode(self):
         """
         If there is a uk_university, try to match it with the code
@@ -418,6 +422,32 @@ class OutputRow:
             if best_match:
                 self.uk_postcode = self.uk_postcode_dict[best_match]
 
+    def add_median_salary(self):
+        """
+        If there is a salary_min and salary_max, create a SalaryMedian which is the middle
+        between the two salary. to get an average
+        """
+        if hasattr(self, 'salary_min') and hasattr(self, 'salary_max'):
+            self.salary_median = self.salary_min + ((self.salary_max - self.salary_min)/2)
+
+    def add_not_student(self):
+        """
+        Check if the jobs ads does not contain `PhD` or `Master` in the type role
+        If it does, return false
+        """
+        if hasattr(self, 'type_role'):
+            try:
+                for i in self.type_role:
+                    if i.lower().rstrip() in ['phd', 'master']:
+                        self.not_student = False
+                        return
+                self.not_student = True
+                return
+            except TypeError:  # Empty type_role
+                self.not_student = False
+                return
+
+        self.not_student = False
 
     def clean_row(self):
         self.clean_description()
@@ -441,7 +471,7 @@ class OutputRow:
             self.invalid_code.remove('contract')
             self.contract = 'funding'
 
-        if hasattr(self, 'SalaryMax') or hasattr(self, 'SalaryMin'):
+        if hasattr(self, 'salary_max') or hasattr(self, 'salary_min'):
             try:
                 self.invalid_code.remove('salary')
             except ValueError:
@@ -467,7 +497,9 @@ class OutputRow:
         # Which was a reference to the employer (in form of MED203221)
         # commented
         # self.clean_employRef()
-        # self.clean_subject_area()
+        self.clean_subject_area()
+        self.add_median_salary()
+        self.add_not_student()
 
     def to_dictionary(self):
         """

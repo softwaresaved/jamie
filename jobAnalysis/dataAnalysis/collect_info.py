@@ -474,10 +474,7 @@ def main():
             clean_keys = {'placed_on': {'$exists': True},
                           'prediction': {'$exists': True},
                           'prediction': {'$ne': 'None'},
-                          '$or':[
-                              {'type_role': {'$not': {'$elemMatch':{'$in': ['PhD']}}}},
-                              {'type_role': {'$not': {'$elemMatch':{'$in': ['Master']}}}}],
-                          # 'type_role': {'$ne': ['PhD', 'Master']},
+                          'not_student': True,
                           'uk_university': {'$exists': True}}
         else:
             clean_keys = {}
@@ -485,7 +482,7 @@ def main():
         generate_report.get_keys_per_day(cleaned_set=clean_keys, clean_txt=clean_or_not)
 
         logger.info('Get the different average for: {}'.format(clean_or_not))
-        for key in ['duration_ad_days']:
+        for key in ['duration_ad_days', 'salary_max', 'salary_min', 'salary_median']:
             generate_report.get_average_per_day(key, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
         logger.info('Get the different sum for: {}'.format(clean_or_not))
