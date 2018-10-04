@@ -438,7 +438,7 @@ class OutputRow:
         if hasattr(self, 'type_role'):
             try:
                 for i in self.type_role:
-                    if i.lower().rstrip() in ['phd', 'master']:
+                    if i.lower().rstrip() in ['phd', 'masters']:
                         self.not_student = False
                         return
                 self.not_student = True
