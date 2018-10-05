@@ -427,6 +427,25 @@ class generateReport:
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
+    def _get_all_metric(self, key, cleaned_set):
+        """
+        """
+        cleaned_set.update({key: {'$exists': True}})
+        for record in self.db_jobs.find(cleaned_set):
+            yield record['placed_on'], record['prediction'], record[key]
+
+
+    def get_all_metric(self, key, cleaned_set, clean_txt):
+        """
+        Get a csv file with all the different metrics without grouping them
+        it is used to have better detailed analysis later in the dataAnalysis notebook
+        """
+        header_csv = ['date', 'prediction', key]
+        data_for_csv = list()
+        name_file = '{}_all_{}'.format(clean_txt, key)
+        for date, prediction, info_key in self._get_all_metric(key, cleaned_set):
+            data_for_csv.append([date, prediction, info_key])
+        self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
 def main():
     """
@@ -489,7 +508,10 @@ def main():
         key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
         generate_report.get_sum_per_day(key_to_parse_for_sum_per_day, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
-        # logger.info('Get the salary unique for: {}'.format(clean_or_not))
+
+        for key in ['duration_ad_days', 'salary_max', 'salary_min', 'salary_median']:
+            logger.info('Get all metrics for: {} - {}'.format(clean_or_not, key))
+            generate_report.get_all_metric(key, cleaned_set=clean_keys, clean_txt=clean_or_not)
         # generate_report.get_unique_values('salary', cleaned_set=clean_keys, clean_txt=clean_or_not)
 
         logger.info('Get the unique job title for: {}'.format(clean_or_not))
