@@ -432,7 +432,7 @@ class generateReport:
         """
         cleaned_set.update({key: {'$exists': True}})
         for record in self.db_jobs.find(cleaned_set):
-            yield record['placed_on'], record['prediction'], record[key]
+            yield record['placed_on'], record['prediction'], record['job_title'], record['type_role'], record['location'], record['uk_university'], record[key]
 
 
     def get_all_metric(self, key, cleaned_set, clean_txt):
@@ -440,11 +440,11 @@ class generateReport:
         Get a csv file with all the different metrics without grouping them
         it is used to have better detailed analysis later in the dataAnalysis notebook
         """
-        header_csv = ['date', 'prediction', key]
+        header_csv = ['date', 'prediction', 'job_title', 'type_role', 'location', 'uk_university', key]
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, key)
-        for date, prediction, info_key in self._get_all_metric(key, cleaned_set):
-            data_for_csv.append([date, prediction, info_key])
+        for record in self._get_all_metric(key, cleaned_set):
+            data_for_csv.append([*record])
         self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
 def main():

@@ -439,12 +439,10 @@ class OutputRow:
             try:
                 for i in self.type_role:
                     if i.lower().rstrip() in ['phd', 'masters']:
-                        self.not_student = False
                         return
                 self.not_student = True
                 return
             except TypeError:  # Empty type_role
-                self.not_student = False
                 return
 
         self.not_student = False
