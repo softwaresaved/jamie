@@ -67,11 +67,12 @@ def get_all_documents(db_conn):
     for doc in db_conn['jobs'].find({'description': {'$exists': True},
                                      'placed_on': {'$exists': True},
                                      'prediction': {'$exists': True},
-                                     'extra_location_s': {'$exists': True},
+                                     'prediction': {'$ne': 'None'},
+                                     'not_student': True,
                                      'uk_university': {'$exists': True}}):
         if len(doc['description']) > 150:
             if doc['prediction'] == 1:
-                if 'Administrative' not in doc['extra_subject_area_s']:
+                if 'Administrative' not in doc['subject_area']:
                     rsj +=1
                     rsj_set.add(doc['jobid'])
                 else:
@@ -79,7 +80,7 @@ def get_all_documents(db_conn):
                     rsj_set_admin.add(doc['jobid'])
 
             elif doc['prediction'] == 0:
-                if 'Administrative' not in doc['extra_subject_area_s']:
+                if 'Administrative' not in doc['subject_area']:
                     nrsj +=1
                     nrsj_set.add(doc['jobid'])
                 else:
@@ -136,12 +137,12 @@ if __name__ == "__main__":
     db_conn = connectDB(CONFIG_FILE)
 
     in_folder = config_value['input']['INPUT_FOLDER']
-    out_folder = '../../outputs/jobs_training-set-collector/'
+    out_folder = '../../outputs/jobs_checking_set/'
     filename =  '../../outputs/uniqueValue/id_list_new_sample.csv'
 
     set_research_soft, set_research_soft_admin, set_not_research_soft, set_not_research_soft_admin = get_all_documents(db_conn)
 
-    sampled_rsj, sample_not_rsj = get_sample(set_research_soft, set_research_soft_admin, set_not_research_soft, set_not_research_soft_admin,  percentage_rsj=0.7, nbr_job=500)
+    sampled_rsj, sample_not_rsj = get_sample(set_research_soft, set_research_soft_admin, set_not_research_soft, set_not_research_soft_admin,  percentage_rsj=0.7, nbr_job=200)
 
     for i in sampled_rsj + sample_not_rsj:
         print(i)
