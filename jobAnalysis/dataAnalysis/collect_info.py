@@ -435,7 +435,7 @@ class generateReport:
             yield record['placed_on'], record['prediction'], record['job_title'], record['subject_area'], record['location'], record['uk_university'], record[key]
 
 
-    def get_all_metric(self, key, cleaned_set, clean_txt):
+    def get_all_metric(self, key, cleaned_set, clean_txt, all_uk=True):
         """
         Get a csv file with all the different metrics without grouping them
         it is used to have better detailed analysis later in the dataAnalysis notebook
@@ -446,6 +446,36 @@ class generateReport:
         for record in self._get_all_metric(key, cleaned_set):
             data_for_csv.append([*record])
         self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
+
+    def get_uk_location(self, cleaned_set, clean_txt):
+        """
+        Get all location from uk to check if there are a lot of interesting
+        jobs ads that are from research centers
+        """
+        header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'extra_location', 'uk_university',  'employer']
+        del cleaned_set['uk_university']
+        cleaned_set['extra_location'] = {'$in' : ["Northern England",
+                                                              "London",
+                                                              "Midlands of England",
+                                                              "Scotland",
+                                                              "South West England",
+                                                              "South East England",
+                                                              "Wales",
+                                                              "Republic of Ireland",
+                                                              "Northern Ireland"]}
+        data_for_csv = list()
+        name_file = '{}_all_{}'.format(clean_txt, 'jobs_in_uk')
+        for record in self.db_jobs.find(cleaned_set):
+            selected_record = list()
+            for k in header_csv:
+                try:
+                    selected_record.append(record[k])
+                except KeyError:
+                    selected_record.append(None)
+            data_for_csv.append(selected_record)
+        self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
+
+
 
 def main():
     """
@@ -491,12 +521,13 @@ def main():
 
             # FIXME : Put theses rules outside that loop for more visibility
             clean_keys = {'placed_on': {'$exists': True},
-                          'prediction': {'$exists': True},
                           'prediction': {'$ne': 'None'},
                           'not_student': True,
                           'uk_university': {'$exists': True}}
         else:
             clean_keys = {}
+
+
         logger.info('Get all the keys per day for: {}'.format(clean_or_not))
         generate_report.get_keys_per_day(cleaned_set=clean_keys, clean_txt=clean_or_not)
 
@@ -516,6 +547,11 @@ def main():
 
         logger.info('Get the unique job title for: {}'.format(clean_or_not))
         generate_report.get_unique_values('job_title', cleaned_set=clean_keys, clean_txt=clean_or_not, research_soft_only=True)
+
+        if clean_or_not == 'clean':
+            logger.info('Get all the jobs from uk')
+            generate_report.get_uk_location(cleaned_set=clean_keys, clean_txt=clean_or_not)
+
 
 if __name__ == '__main__':
     main()
