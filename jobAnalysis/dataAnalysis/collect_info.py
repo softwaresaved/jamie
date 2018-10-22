@@ -444,7 +444,7 @@ class generateReport:
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, key)
         for record in self._get_all_metric(key, cleaned_set):
-            data_for_csv.append([*record])
+            data_for_csv.append(record)
         self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
     def get_uk_location(self, cleaned_set, clean_txt):

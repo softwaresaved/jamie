@@ -11,6 +11,11 @@ import difflib
 from operator import itemgetter
 from datetime import datetime
 
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(".").absolute().parent))
+from common.textClean import textClean
 
 class OutputRow:
     """
@@ -66,6 +71,7 @@ class OutputRow:
         self.invalid_code = list()
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
+        self.text_cleaner = textClean()
         self.uk_uni_list = self.read_uni_list_file()
         self.uk_postcode_dict = self.read_postcode()
 
@@ -77,7 +83,8 @@ class OutputRow:
         set_uni_list = set()
         with open('./data/uk_uni_list.txt', 'r') as f:
             for l in f:
-                set_uni_list.add(l.strip())
+                s = ' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
+                set_uni_list.add(s.strip())
         return set_uni_list
 
     def read_postcode(self):
@@ -374,18 +381,15 @@ class OutputRow:
             self.invalid_code = [key]
         self.include_in_study = False
 
-    def check_match(self, element_to_compare, list_to_use, limit_ratio=0.90):
+    def check_match(self, element_to_compare, list_to_use, limit_ratio=0.70):
         """
         Check if the element to compare is close enough to an element
         in the list provided
         """
-        element_to_compare = element_to_compare.strip().lower()
         ratio_list = list()
         for s in list_to_use:
-            to_match = s.lower().strip()
-
             # Get the ratio for each entry and the self.employer value
-            ratio = difflib.SequenceMatcher(None, element_to_compare, to_match).ratio()
+            ratio = difflib.SequenceMatcher(None, element_to_compare, s).ratio()
             ratio_list.append((s, ratio))
             # If ratio is == 1 it means it is a perfect match
             if ratio == 1:
@@ -404,13 +408,22 @@ class OutputRow:
         provided by the file self.uk_uni_list using difflib
         """
         if hasattr(self, 'employer'):
-            # Break the employer string and lower it while removinge white space
 
-            employer = self.employer.split('-')[0]
+            # clean the employer string to get only key word
+            employer = self.text_cleaner.clean_text(self.employer.split('-')[0])
+            # List of keyword that are associated to university
+            list_uni = ['university', 'school', 'college']
+            if len(set(employer).intersection(set(list_uni))) > 0:
+                self.uk_university = self.employer
+                return
 
+            # if did not match an university. Try to match with the list provided
+            employer = ' '.join(set([x for x in employer]))
             best_match = self.check_match(employer, self.uk_uni_list)
             if best_match:
                 self.uk_university = best_match
+
+
 
     def add_postcode(self):
         """
@@ -418,7 +431,7 @@ class OutputRow:
         provided by self.dict_uk_uni_postcode
         """
         if hasattr(self, 'uk_university'):
-            best_match= self.check_match(self.uk_university, self.uk_postcode_dict.keys())
+            best_match = self.check_match(self.uk_university, self.uk_postcode_dict.keys())
             if best_match:
                 self.uk_postcode = self.uk_postcode_dict[best_match]
 
