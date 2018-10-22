@@ -23,12 +23,6 @@ from nltk.corpus import stopwords
 
 # from include.update_nltk import init_nltk
 
-try:
-    from common.logger import logger
-except ImportError:
-    from logger import logger
-# from include.benchmark import timeit
-logger = logger(name='textProcess', stream_level='DEBUG')
 
 
 class textClean:
