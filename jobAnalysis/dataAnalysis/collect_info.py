@@ -229,7 +229,7 @@ class generateReport:
         return unique value for the field specified by the key
         """
         set_unique = set()
-        search = cleaned_set
+        search = cleaned_set.copy()
         search.update({key: {'$exists': True}})
         if research_soft_only is True:
             search['prediction'] = 1
@@ -358,8 +358,9 @@ class generateReport:
 
     def _get_average_per_day(self, key, cleaned_set):
 
-        cleaned_set.update({key: {'$exists': True}})
-        pipeline = [{'$match': cleaned_set},
+        to_search = cleaned_set.copy()
+        to_search.update({key: {'$exists': True}})
+        pipeline = [{'$match': to_search},
                     {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction'},
                                 key: {'$avg': '${}'.format(key)}
@@ -384,20 +385,19 @@ class generateReport:
                 to_add = data['_id']
                 to_add[key] = data[key]
 
+                try:
+                    to_add['date']
+                except KeyError:
+                    to_add['date'] = None
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key]])
             self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
     def _get_sum_per_day(self, key, cleaned_set):
-
-        #     match_keys = {'placed_on': {'$exists': True},
-        #                   'prediction': {'$not': 'None'},
-        #                   'uk_university': {'$exists': True},
-        #                   key: {'$exists': True}}
-        #
-        #
-        # else:
-        cleaned_set.update({key: {'$exists': True}})
-        pipeline = [{'$match': cleaned_set
+        """
+        """
+        to_search = cleaned_set.copy()
+        to_search.update({key: {'$exists': True}})
+        pipeline = [{'$match': to_search
                      },
 
                     {'$unwind': '${}'.format(key)},
@@ -405,7 +405,6 @@ class generateReport:
                     {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction',
                                         key: '${}'.format(key)},
-                                # 'total': {'$sum': '${}'.format(key)}
                                 'count': {'$sum': 1}
                                 }
                      }
@@ -424,17 +423,20 @@ class generateReport:
             name_file = '{}_sum_{}'.format(clean_txt, key)
             for data in self._get_sum_per_day(key, cleaned_set):
                 to_add = data['_id']
+                try:
+                    to_add['date']
+                except KeyError:
+                    to_add['date'] = None
                 data_for_csv.append([to_add['date'], to_add['prediction'], to_add[key], data['count']])
             self.write_csv(header_csv, data_for_csv, name_file, 'dataAnalysis')
 
     def _get_all_metric(self, key, cleaned_set):
         """
         """
-        cleaned_set.update({key: {'$exists': True}})
-        for record in self.db_jobs.find(cleaned_set):
-            yield record['placed_on'], record['prediction'], record['job_title'], record['subject_area'], record['location'], record['uk_university'], record[key]
-
-
+        key_to_search = cleaned_set
+        key_to_search.update({key: {'$exists': True}})
+        for record in self.db_jobs.find(key_to_search):
+            yield record
     def get_all_metric(self, key, cleaned_set, clean_txt, all_uk=True):
         """
         Get a csv file with all the different metrics without grouping them
@@ -444,7 +446,13 @@ class generateReport:
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, key)
         for record in self._get_all_metric(key, cleaned_set):
-            data_for_csv.append(record)
+            for i in header_csv:
+                if i not in record:
+                    record[i] = None
+            to_record = [record['placed_on'], record['prediction'], record['job_title'], record['subject_area'], record['location'], record['uk_university'], record[key]]
+
+
+            data_for_csv.append(to_record)
         self.write_csv(header_csv, data_for_csv, name_file, type_info='dataAnalysis')
 
     def get_uk_location(self, cleaned_set, clean_txt):
@@ -455,14 +463,14 @@ class generateReport:
         header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'extra_location', 'uk_university',  'employer']
         del cleaned_set['uk_university']
         cleaned_set['extra_location'] = {'$in' : ["Northern England",
-                                                              "London",
-                                                              "Midlands of England",
-                                                              "Scotland",
-                                                              "South West England",
-                                                              "South East England",
-                                                              "Wales",
-                                                              "Republic of Ireland",
-                                                              "Northern Ireland"]}
+                                                  "London",
+                                                  "Midlands of England",
+                                                  "Scotland",
+                                                  "South West England",
+                                                  "South East England",
+                                                  "Wales",
+                                                  "Republic of Ireland",
+                                                  "Northern Ireland"]}
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, 'jobs_in_uk')
         for record in self.db_jobs.find(cleaned_set):
