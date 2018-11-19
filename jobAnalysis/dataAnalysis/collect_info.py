@@ -461,7 +461,10 @@ class generateReport:
         jobs ads that are from research centers
         """
         header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'extra_location', 'uk_university',  'employer']
-        del cleaned_set['uk_university']
+        try:
+            del cleaned_set['uk_university']
+        except KeyError:
+            pass
         cleaned_set['extra_location'] = {'$in' : ["Northern England",
                                                   "London",
                                                   "Midlands of England",
@@ -531,7 +534,16 @@ def main():
             clean_keys = {'placed_on': {'$exists': True},
                           'prediction': {'$ne': 'None'},
                           'not_student': True,
-                          'uk_university': {'$exists': True}}
+                          'extra_location': {'$in' : ["Northern England",
+                                                  "London",
+                                                  "Midlands of England",
+                                                  "Scotland",
+                                                  "South West England",
+                                                  "South East England",
+                                                  "Wales",
+                                                  "Republic of Ireland",
+                                                  "Northern Ireland"]}
+                         }
         else:
             clean_keys = {}
 
