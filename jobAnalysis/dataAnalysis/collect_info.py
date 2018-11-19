@@ -442,14 +442,14 @@ class generateReport:
         Get a csv file with all the different metrics without grouping them
         it is used to have better detailed analysis later in the dataAnalysis notebook
         """
-        header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'location', 'uk_university', key]
+        header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'location', 'extra_location', key]
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, key)
         for record in self._get_all_metric(key, cleaned_set):
             for i in header_csv:
                 if i not in record:
                     record[i] = None
-            to_record = [record['placed_on'], record['prediction'], record['job_title'], record['subject_area'], record['location'], record['uk_university'], record[key]]
+            to_record = [record['placed_on'], record['prediction'], record['job_title'], record['subject_area'], record['location'], record['extra_location'], record[key]]
 
 
             data_for_csv.append(to_record)
