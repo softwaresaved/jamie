@@ -159,7 +159,10 @@ def new_extract_ads_info(data):
     """
     Return the body of the html page
     """
-    return data.find_all('body')
+    data_to_return = data.find_all('body')
+    if len(data_to_return) == 0:
+        data_to_return = data.find_all('html')
+    return data_to_return
 
 
 def record_data(input_folder, job_id, data):
@@ -180,6 +183,7 @@ def record_data(input_folder, job_id, data):
         with open(filename, "w") as f:
             f.write(str_data)
     else:
+        print(str_data)
         raise
 
 
@@ -226,6 +230,7 @@ def main():
         jobid, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
         # Check if the jobid is not parsed yet
         if to_download(input_folder, jobid) is True:
+            print('Job id: {}'.format(jobid))
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = new_extract_ads_info(job_data)
