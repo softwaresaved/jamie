@@ -226,6 +226,28 @@ class IncludeInStudy:
         logger.info('Documents to include in the study: {}'.format(self.count_to_include))
         logger.info('Document Not included in study: {}'.format(self.count_not_to_include))
 
+    def add_in_uk(self, document):
+        """
+        Add the in_uk key as True in the database if it is from a UK extra_location
+        """
+        try:
+            if document['extra_location'] in ["Northern England",
+                                              "London",
+                                              "Midlands of England",
+                                              "Scotland",
+                                              "South West England",
+                                              "South East England",
+                                              "Wales",
+                                              "Republic of Ireland",
+                                              "Northern Ireland"]:
+
+                self.db.update_one({'jobid': document['jobid']},
+                                   {'$set': {'in_uk': True}},
+                                   upsert=False)
+        except KeyError:
+            pass
+
+
     def run(self):
         """
         Run the class
@@ -236,6 +258,9 @@ class IncludeInStudy:
         for document in self._retrieve_doc(to_select):
             value_include = self._check_inclusion(document)
             self._update_record(document, value_include)
+            # FIXME it is not suppose to stay here, was there only when introduced the in_uk key
+            # should be done in the job2db.py script (in the include/cleaningInformation.py
+            self.add_in_uk(document)
 
         self._output_count()
 
