@@ -360,7 +360,8 @@ class generateReport:
 
         to_search = cleaned_set.copy()
         to_search.update({key: {'$exists': True}})
-        pipeline = [{'$match': to_search},
+        match_query = {'$match': {'$and': [{k:to_search[k]} for k in to_search]}}
+        pipeline = [match_query,
                     {'$group': {'_id': {'date': '$placed_on',
                                         'prediction': '$prediction'},
                                 key: {'$avg': '${}'.format(key)}
@@ -397,9 +398,12 @@ class generateReport:
         """
         to_search = cleaned_set.copy()
         to_search.update({key: {'$exists': True}})
-        pipeline = [{'$match': to_search
-                     },
-
+        print(to_search)
+        match_query = {'$match': {'$and': [{k:to_search[k]} for k in to_search]}}
+        print(match_query)
+        # pipeline = [{'$match': to_search
+        #              },
+        pipeline = [match_query,
                     {'$unwind': '${}'.format(key)},
 
                     {'$group': {'_id': {'date': '$placed_on',
@@ -435,6 +439,7 @@ class generateReport:
         """
         key_to_search = cleaned_set
         key_to_search.update({key: {'$exists': True}})
+        print(key_to_search)
         for record in self.db_jobs.find(key_to_search):
             yield record
     def get_all_metric(self, key, cleaned_set, clean_txt, all_uk=True):
@@ -461,19 +466,6 @@ class generateReport:
         jobs ads that are from research centers
         """
         header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'extra_location', 'uk_university',  'employer']
-        try:
-            del cleaned_set['uk_university']
-        except KeyError:
-            pass
-        cleaned_set['extra_location'] = {'$in' : ["Northern England",
-                                                  "London",
-                                                  "Midlands of England",
-                                                  "Scotland",
-                                                  "South West England",
-                                                  "South East England",
-                                                  "Wales",
-                                                  "Republic of Ireland",
-                                                  "Northern Ireland"]}
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, 'jobs_in_uk')
         for record in self.db_jobs.find(cleaned_set):
@@ -530,20 +522,7 @@ def main():
     for clean_or_not in ['raw', 'clean']:
         if clean_or_not == 'clean':
 
-            # FIXME : Put theses rules outside that loop for more visibility
-            clean_keys = {'placed_on': {'$exists': True},
-                          'prediction': {'$ne': 'None'},
-                          'not_student': True,
-                          'extra_location': {'$in' : ["Northern England",
-                                                  "London",
-                                                  "Midlands of England",
-                                                  "Scotland",
-                                                  "South West England",
-                                                  "South East England",
-                                                  "Wales",
-                                                  "Republic of Ireland",
-                                                  "Northern Ireland"]}
-                         }
+            clean_keys = {'include_in_study': True}
         else:
             clean_keys = {}
 
