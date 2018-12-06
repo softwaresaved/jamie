@@ -29,7 +29,6 @@ class OutputRow:
         """
         *Create attributes from the dict() input_row
         *Import the transformKey __init__() to have access to the key list
-        *Set up the default value of include_in_study as True
         * Transform the key of the input_row to the defined ones in TransformKey
         * Create a list of new key to add after cleaning process
         """
@@ -51,8 +50,7 @@ class OutputRow:
 
 
         # Create a list of keys that are added during the cleaning process
-        self.new_keys = ['include_in_study',
-                         'invalid_code',
+        self.new_keys = ['invalid_code',
                          'salary_min',
                          'salary_max',
                          'duration_ad_days',
@@ -64,10 +62,6 @@ class OutputRow:
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
         self.create_dictionary()
-        # Set attribute include_in_study as True by default
-        # This attribute is changed when some invalid codes
-        # are found
-        self.include_in_study = True
         self.invalid_code = list()
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
@@ -351,7 +345,6 @@ class OutputRow:
     def check_validity(self, *args):
         """
         Adds the passed invalid code to the output invalid_codes field.
-        Sets the output include_in_study field to "invalid".
         :param: invalid_code: the invalid code to add
         """
         if args[0] is None:
@@ -372,14 +365,12 @@ class OutputRow:
     def add_invalid_code(self, key):
         """
         Check the attribute of invalid code and append a key
-        set up the self.include_in_study to False
         :params: a string to append to the self.invalid_code dictionary
         """
         try:
             self.invalid_code.append(key)
         except AttributeError:
             self.invalid_code = [key]
-        self.include_in_study = False
 
     def check_match(self, element_to_compare, list_to_use, limit_ratio=0.70):
         """
