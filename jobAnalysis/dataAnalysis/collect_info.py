@@ -533,7 +533,7 @@ def main():
             generate_report.get_average_per_day(key, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
         logger.info('Get the different sum for: {}'.format(clean_or_not))
-        key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode']
+        key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode', 'in_uk']
         generate_report.get_sum_per_day(key_to_parse_for_sum_per_day, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
 
