@@ -57,7 +57,8 @@ class OutputRow:
                          'uk_university',
                          'uk_postcode',
                          'salary_median',
-                         'not_student']
+                         'not_student',
+                         'in_uk']
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
@@ -212,23 +213,6 @@ class OutputRow:
         """
         """
         self.check_validity(self.subject_area, 'subject_area')
-
-    def clean_location_region(self):
-        """
-        """
-        # clean LocationRegion
-        self.check_validity(self.LocationRegion, 'LocationRegion')
-        # Process if the self.LocationRegion is not empty
-        # Check if the location is within UK
-        if self.LocationRegion not in ('Midlands of England',
-                                       'South East England',
-                                       'London',
-                                       'Northern England',
-                                       'South West England',
-                                       'Scotland',
-                                       'Wales',
-                                       'Northern Ireland'):
-            self.add_invalid_code("LocationRegion")
 
     def clean_location(self):
         """
@@ -414,6 +398,19 @@ class OutputRow:
             if best_match:
                 self.uk_university = best_match
 
+    def add_in_uk(self)
+        """
+        Check the string from extra_location is from uk
+        """
+        if hasattr(self, 'extra_location'):
+            if self.extra_location in ['Northern England',
+                                       'London Midlands of England Scotland',
+                                       'South West England',
+                                       'South East England',
+                                       'Wales',
+                                       'Republic of Ireland',
+                                       'Northern Ireland']:
+                self.in_uk = True
 
 
     def add_postcode(self):
@@ -466,6 +463,7 @@ class OutputRow:
         self.clean_contract()
         self.add_duration()
         self.add_uk_university()
+        self.add_in_uk()
         self.add_postcode()
         self.clean_salary(self.salary, 'salary')
         self.clean_salary(self.funding_amount, 'funding_amount')
