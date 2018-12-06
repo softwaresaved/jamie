@@ -398,7 +398,7 @@ class OutputRow:
             if best_match:
                 self.uk_university = best_match
 
-    def add_in_uk(self)
+    def add_in_uk(self):
         """
         Check the string from extra_location is from uk
         """
