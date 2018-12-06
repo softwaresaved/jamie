@@ -222,9 +222,9 @@ class IncludeInStudy:
         :return:
             :print: results of the self.counts
         """
-        print('Total documents parsed: {}'.format(self.count_all_doc))
-        print('\tDocuments to include in the study: {}'.format(self.count_to_include))
-        print('\tDocument Not included in study: {}'.format(self.count_not_to_include))
+        logger.info('Total documents parsed: {}'.format(self.count_all_doc))
+        logger.info('Documents to include in the study: {}'.format(self.count_to_include))
+        logger.info('Document Not included in study: {}'.format(self.count_not_to_include))
 
     def run(self):
         """
@@ -232,6 +232,7 @@ class IncludeInStudy:
         """
         to_select = self._select_records()
 
+        logger.info('Start the process')
         for document in self._retrieve_doc(to_select):
             value_include = self._check_inclusion(document)
             self._update_record(document, value_include)
