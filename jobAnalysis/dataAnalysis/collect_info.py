@@ -398,9 +398,7 @@ class generateReport:
         """
         to_search = cleaned_set.copy()
         to_search.update({key: {'$exists': True}})
-        print(to_search)
         match_query = {'$match': {'$and': [{k:to_search[k]} for k in to_search]}}
-        print(match_query)
         # pipeline = [{'$match': to_search
         #              },
         pipeline = [match_query,
