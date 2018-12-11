@@ -105,36 +105,33 @@ def predicting(db_conn, features, model, relaunch):
             df = pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
             X_to_predict = features.transform(df)
             prediction = model.predict(X_to_predict)
+            predic_proba = model.predict_proba(X_to_predict)
         except KeyError:
             prediction = None
+            predic_proba = None
 
-        yield jobid, prediction, _id
+        yield jobid, prediction, predic_proba, _id
 
 
-def record_prediction(db, prediction, jobid, _id, model_name, model_best_params):
+def record_prediction(db, prediction, predict_proba, jobid, _id, model_name, model_best_params):
     """
     """
     if jobid is None:
         return
     if prediction is None:
-        prediction = 'None'
+        pred_int = 'None'
     else:
-        prediction = int(prediction[0])
-    # if prediction[0] == 0:
-    #     prediction = 'No'
-    # if prediction[0] == 1:
-    #     prediction = 'Yes'
-    print(prediction)
-    # print('model - type: {} - value: {}'.format(type(model_name), model_name))
-    # print('model best params - type: {}  - values: {}'.format(type(model_best_params), model_best_params))
-    # print('prediction - type: {} - value: {}'.format(type(prediction), prediction))
+        pred_int = int(prediction[0])
+
+    pred_proba = float(predict_proba[0][0])
 
     db['predictions'].update({'jobid': jobid,
                               'model': model_name},
                             # 'params': model_best_params},
-                            {'$set': {'prediction': prediction}},
+                             {'$set': {'prediction': pred_int, 'prediction_proba': pred_proba}},
                             upsert=True)
-    db['jobs'].update({'_id': _id}, {'$set': {'prediction': prediction}})
+    db['jobs'].update({'_id': _id}, {'$set': {'prediction': pred_int, 'prediction_proba': pred_proba}})
+    return pred_int
 
 
 def main():
@@ -155,9 +152,14 @@ def main():
     db_conn['predictions'].create_index('jobid', unique=True)
     db_conn['predictions'].create_index('prediction', unique=False)
 
+    final_count = dict()
     final_model, features, best_model_name, best_model_params = get_model(args.relaunch)
-    for job_id, prediction, _id in predicting(db_conn, features, final_model, args.relaunch):
-        record_prediction(db_conn, prediction, job_id, _id, best_model_name, best_model_params)
+    for job_id, prediction, predic_proba, _id in predicting(db_conn, features, final_model, args.relaunch):
+        record_prediction(db_conn, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
+        final_count[str(prediction[0])] = final_count.get(str(prediction[0]), 0)+1
+    logger.info('Summary of prediction for new jobs')
+    for k in final_count:
+        logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
 
 
 
