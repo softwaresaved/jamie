@@ -7,18 +7,16 @@ Require a connection to the MySQL database (where the tags are stored) and a con
 information is stored
 """
 
-import argparse
 
 import pymongo
-import pymysql as mdb
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
 from common.logger import logger
-from common.getConnection import connectDB
-from common.configParser import configParserPerso as configParser
+from common.getArgs import getArgs
+from common.getConnection import connectMongo, connectMysql
 
 
 logger = logger(name='dbPreparation')
@@ -29,25 +27,10 @@ class mySQL:
     Connection to MySQL using MySQLdb module
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, cursor):
         """
         """
-        self._host = kwargs.get('host', 'localhost')
-        self._db_user = kwargs.get('user', None)
-        self._db_pass = kwargs.get('password', None)
-        self._db = kwargs.get('db', None)
-        self.conn = self.connect(self._host, self._db_user, self._db_pass, self._db)
-        self.cursor = self.cursor(self.conn)
-
-    def connect(self, *args, **kwargs):
-        """
-        """
-        return mdb.connect(*args)
-
-    def cursor(self, connector):
-        """
-        """
-        return connector.cursor(mdb.cursors.DictCursor)
+        self.cursor = cursor
 
     def search_final_classification(self):
         """
@@ -69,31 +52,11 @@ class mongoDB:
     Class to update the document in mongoDB
     """
 
-    def __init__(self, *args):
+    def __init__(self, db):
         """
         """
-        self.db = self.get_connection(*args)
+        self.db = db
 
-    def get_connection(self, *args):
-        """
-        Parse the argument to Pymongo Client
-        and return a collection object to connect to the db
-        """
-        db = args[0]
-        c = pymongo.MongoClient()
-        try:
-            user = args[2]
-            passw = args[3]
-            db_auth = args[4]
-            db_mech = args[5]
-            confirmation = c[db].authenticate(user,
-                                              passw,
-                                              source=db_auth,
-                                              mechanism=db_mech)
-            logger.info('Authenticated: {}'.format(confirmation))
-        except (IndexError, ValueError, TypeError):
-            logger.info('Connection to the database without password and authentication')
-        return c[db]
 
     def update_list_of_tags(self, coll, row):
         """
@@ -137,50 +100,28 @@ def main():
     """
     # ### CONNECTION TO DB ### #
 
-    parser = argparse.ArgumentParser(description='Get the tags from the mysql database')
+    description='Get the tags from the mysql database'
 
-    parser.add_argument('-c', '--config',
-                        type=str,
-                        default='config_dev.ini')
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    args = parser.parse_args()
-    config_file = '../config/'+args.config
-    db_conn = connectDB(config_file)
-    # set up access credentials
-    config_value = configParser()
-    config_value.read(config_file)
 
-    DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
-    access_value = configParser()
-    access_value.read(DB_ACC_FILE)
+    db_conn = connectMongo(config_values)
 
-    # Get the information about the db and the collections
-    mongoDB_NAME = config_value['MongoDB'].get('DB_NAME'.lower(), None)
-
-    mongoDB_JOB_COLL = config_value['MongoDB'].get('DB_JOB_COLLECTION'.lower(), None)
-    mongoDB_TAG_COLL = config_value['MongoDB'].get('DB_TAG_COLLECTION'.lower(), None)
-
-    # connect to the mongoDB
-    mongoTag = mongoDB(mongoDB_NAME, mongoDB_JOB_COLL)
+    mongo = mongoDB(db_conn)
 
     # Create unique index on the JobId to avoid duplicating the records after launching the script
     # several time
-    mongoTag.create_index(mongoDB_TAG_COLL, 'jobid', unique=True)
-
-    # # MYSQL ACCESS # #
-    mysql_host = access_value['MYSQL'].get('db_host', None)
-    mysql_dbname = access_value['MYSQL'].get('db_name', None)
-    mysql_username = access_value['MYSQL'].get('db_username', None)
-    mysql_password= access_value['MYSQL'].get('db_password', None)
+    mongo.create_index(config_values.DB_TAG_COLLECTION, 'jobid', unique=True)
 
     # Connect to the mysql db
-    mysqlConnection = mySQL(host=mysql_host, user=mysql_username, password=mysql_password, db=mysql_dbname)
+    mysql_connector = connectMysql(config_values)
+    mysqlConnection = mySQL(mysql_connector)
 
     # Transferring the data from mysql to mongoDB
     for rows in mysqlConnection.search_final_classification():
-        # print(rows)
-        mongoTag.update_list_of_tags(mongoDB_TAG_COLL, rows)
-    mongoTag.update_done(mongoDB_TAG_COLL)
+        mongo.update_list_of_tags(config_values.DB_TAG_COLLECTION, rows)
+    mongo.update_done(config_values.DB_TAG_COLLECTION)
 
 
 if __name__ == "__main__":
