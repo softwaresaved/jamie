@@ -20,7 +20,6 @@ import os
 import csv
 import json
 import itertools
-import argparse
 import errno
 
 import pymongo
@@ -31,8 +30,8 @@ from pathlib import Path
 sys.path.append(str(Path(".").absolute().parent))
 
 from common.logger import logger
-from common.getConnection import connectDB
-from common.configParser import configParserPerso as configParser
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 from dataCollection.include.fileProcess import fileProcess
 from dataCollection.include.cleaningInformation import OutputRow
@@ -40,22 +39,6 @@ from dataCollection.include.summary_day_operation import generateReport
 
 
 logger = logger(name="include_in_study", stream_level="DEBUG")
-
-
-# TODO, move this list of requirements into the config file when reworked
-
-requirements = {'extra_location': {'$in' : ["Northern England",
-                                            "London",
-                                             "Midlands of England",
-                                             "Scotland",
-                                             "South West England",
-                                             "South East England",
-                                             "Wales",
-                                             "Republic of Ireland",
-                                             "Northern Ireland"]},
-                'placed_on': {'$exists': True},
-                'prediction': {'$ne': 'None'},
-                'not_student': True}
 
 
 class IncludeInStudy:
@@ -270,26 +253,20 @@ def main():
     """
     Wrapper around for the include_in_study or not
     """
-    parser = argparse.ArgumentParser(
-        description="Parse the database and add or update a key 'to_include' as True or False if document meet the requirements"
-    )
+    description="Parse the database and add or update a key 'to_include' as True or False if document meet the requirements"
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
 
-    args = parser.parse_args()
-    config_file = "../config/" + args.config
-    # set up access credentials
-    config_value = configParser()
-    config_value.read(config_file)
-    db_conn = connectDB(config_file)
-    # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_value["input"].get("INPUT_FOLDER".lower(), None)
+    db_conn = connectMongo(config_values)
     # ### Init the processes #####
 
     # Connect to the database
     logger.info("Connection to the database")
-    db_jobs = db_conn["jobs"]
-    to_include = IncludeInStudy(db_jobs, requirements, redo=True)
+    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
+
+    logger.info('Create the key `include_in_study`')
+    to_include = IncludeInStudy(db_jobs, config_values.include_in_study, redo=config_values.relaunch_include)
     to_include.run()
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@
 
 import os
 import re
-import argparse
 import json
 
 import sys
@@ -15,15 +14,15 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 
-
 from include.features import get_train_data
 from include.model import nested_cross_validation
 
 from sklearn.metrics import confusion_matrix
 from sklearn.externals import joblib
 
-from common.getConnection import connectDB
 from common.logger import logger
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 logger = logger(name='prediction_run', stream_level='DEBUG')
 
@@ -66,7 +65,7 @@ def load_info_model(folder='../../outputs/dataPrediction/'):
 
 def get_model(relaunch):
 
-    if relaunch == 'True':
+    if relaunch is True:
 
         X_train, X_test, y_train, y_test, features = get_train_data()
         X_train = features.fit_transform(X_train)
@@ -81,7 +80,7 @@ def get_model(relaunch):
         record_information(best_model_name, best_model_params, final_model, features,
                            y_test, y_pred, y_proba)
 
-    elif relaunch == 'False':
+    else:
         features, final_model = load_model()
         best_model_name, best_model_params = load_info_model()
 
@@ -94,9 +93,9 @@ def get_model(relaunch):
 
 def predicting(db_conn, features, model, relaunch):
 
-    if relaunch == 'True':
+    if relaunch is True:
         search = {}
-    elif relaunch == 'False':
+    else:
         search = {'prediction': {'$exists': False}}
     for doc in db_conn['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
         _id = doc['_id']
@@ -134,29 +133,28 @@ def record_prediction(db, prediction, predict_proba, jobid, _id, model_name, mod
     return pred_int
 
 
-def main():
+def main(config):
 
-    parser = argparse.ArgumentParser(description='Launch prediction modelling of jobs ads')
+    description = 'Launch prediction modelling of jobs ads'
 
-    parser.add_argument('-r', '--relaunch',
-                        type=str,
-                        default='False',
-                        help='Decide if rerun the modelling or pickle the existing one if exists. Default value is false')
-    parser.add_argument('-c', '--config',
-                        type=str,
-                        default='config_dev.ini')
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    args = parser.parse_args()
-    config_file = '../config/'+args.config
-    db_conn = connectDB(config_file)
+
+    db_conn = connectMongo(config_values)
     db_conn['predictions'].create_index('jobid', unique=True)
     db_conn['predictions'].create_index('prediction', unique=False)
 
     final_count = dict()
-    final_model, features, best_model_name, best_model_params = get_model(args.relaunch)
-    for job_id, prediction, predic_proba, _id in predicting(db_conn, features, final_model, args.relaunch):
-        record_prediction(db_conn, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
+    final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model)
+    for job_id, prediction, predic_proba, _id in predicting(db_conn, features, final_model, config_values.relaunch_prediction):
         final_count[str(prediction[0])] = final_count.get(str(prediction[0]), 0)+1
+
+        if config_values.record_prediction is True:
+            record_prediction(db_conn, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
+        else:
+            logger.info('prediction for {}: {}'.format(job_id, predic_proba))
+
     logger.info('Summary of prediction for new jobs')
     for k in final_count:
         logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))

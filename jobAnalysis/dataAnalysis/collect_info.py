@@ -11,15 +11,14 @@ from datetime import timedelta
 
 from bson import Code
 
-
 import sys
-
-import argparse
 from pathlib import Path
+
 sys.path.append(str(Path('.').absolute().parent))
 
 from common.logger import logger
-from common.getConnection import connectDB
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 logger = logger(name='collect info', stream_level='DEBUG')
 
@@ -482,20 +481,18 @@ def main():
     """
     """
     # Parsing the config file name
-    parser = argparse.ArgumentParser(description='Collect information from all the dataset and create csv file for being used in jupyter notebook without access to the databases')
-    parser.add_argument('-c', '--config',
-                        type=str,
-                        default='config_dev.ini')
-    args = parser.parse_args()
-    config_file = '../config/' + args.config
-    if config_file[-3:] != 'ini':
-        config_file += '.ini'
+    description = 'Collect information from all the dataset and create csv file for being used in jupyter notebook without access to the databases'
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
+
+    # ### Init the processes #####
 
     # Connect to the database
-    db_conn = connectDB(config_file)
-    db_jobs = db_conn['jobs']
-    db_tag = db_conn['tags']
-    db_prediction = db_conn['predictions']
+    logger.info("Connection to the database")
+    db_conn = connectMongo(config_values)
+    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
+    db_tag = db_conn[config_values.DB_TAG_COLLECTION]
+    db_prediction = db_conn[config_values.DB_PREDICTION_COLLECTION]
 
     # Collect the different data
     generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)

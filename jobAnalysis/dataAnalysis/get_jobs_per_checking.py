@@ -13,22 +13,9 @@ import numpy as np
 
 sys.path.append(str(Path('.').absolute().parent))
 
-from common.getConnection import connectDB
-
-from common.configParser import configParserPerso as configParser
-
-
-# ## GLOBAL VARIABLES  ###
-# # To set up the variable on prod or dev for config file and level of debugging in the
-# # stream_level
-RUNNING = 'dev'
-
-if RUNNING == 'dev':
-    CONFIG_FILE = '../config/config_dev.ini'
-    DEBUGGING='DEBUG'
-elif RUNNING == 'prod':
-    CONFIG_FILE = '../config/config.ini'
-    DEBUGGING='INFO'
+from common.logger import logger
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 
 def write_csv(header, results, filename):
@@ -93,20 +80,6 @@ def get_all_documents(db_conn):
     print('NOT Software Job: {}'.format(nrsj))
     print('NOT prediction: {}'.format(no_pred))
     print('Total of jobs: {}'.format(str(rsj+nrsj+no_pred)))
-        # try:
-        #     doc['description']
-        #     doc['placed_on']
-        #     # results['valid'] = results.get('valid', 0) +1
-        #     date = get_month(doc['placed_on'])
-        #     # results[date]['total ads'] = results[date].get('total ads', 0) +1
-        #     if date in results:
-        #         results[date]['total ads'] += 1
-        #     else:
-        #         results[date] = {'total ads': 1}
-        # except KeyError:
-        #     # results['invalid'] = results.get('invalid', 0) +1
-        #     pass
-        #
     return rsj_set,rsj_set_admin,  nrsj_set, nrsj_set_admin
 
 def get_sample(*args, **kwargs):
@@ -118,25 +91,26 @@ def get_sample(*args, **kwargs):
     print('Size rsj: {}'.format(size_rsj))
     print('Size nrsj: {}'.format(size_nrsj))
 
-
     list_rsj = random.sample(args[0], int(size_rsj*0.9)) + random.sample(args[1], int(size_rsj*0.1))
     list_nrsj = random.sample(args[2], int(size_nrsj*0.9)) + random.sample(args[3], int(size_nrsj*0.1))
 
     return list_rsj, list_nrsj
 
 
-
-
-
 if __name__ == "__main__":
 
-    config_value = configParser()
-    config_value.read(CONFIG_FILE)
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
+
+    db_conn = connectMongo(config_values)
+    # Get the folder or the file where the input data are stored
+    # ### Init the processes #####
 
     # Connect to the database
-    db_conn = connectDB(CONFIG_FILE)
+    logger.info("Connection to the database")
+    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
 
-    in_folder = config_value['input']['INPUT_FOLDER']
+    in_folder = config_values.INPUT_FOLDER
     out_folder = '../../outputs/jobs_checking_set/'
     filename =  '../../outputs/uniqueValue/id_list_new_sample.csv'
 

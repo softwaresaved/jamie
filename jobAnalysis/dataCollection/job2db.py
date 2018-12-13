@@ -14,7 +14,6 @@ import os
 import csv
 import json
 import itertools
-import argparse
 import errno
 
 import pymongo
@@ -25,8 +24,8 @@ from pathlib import Path
 sys.path.append(str(Path(".").absolute().parent))
 
 from common.logger import logger
-from common.getConnection import connectDB
-from common.configParser import configParserPerso as configParser
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 from dataCollection.include.fileProcess import fileProcess
 from dataCollection.include.cleaningInformation import OutputRow
@@ -88,25 +87,19 @@ def main():
     """
     Wrapper around for the data parser from html to mongodb
     """
-    parser = argparse.ArgumentParser(
-        description="Transform jobs ads stored in html file into the mongodb"
-    )
+    description="Transform jobs ads stored in html file into the mongodb"
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
 
-    args = parser.parse_args()
-    config_file = "../config/" + args.config
-    # set up access credentials
-    config_value = configParser()
-    config_value.read(config_file)
-    db_conn = connectDB(config_file)
+    db_conn = connectMongo(config_values)
     # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_value["input"].get("INPUT_FOLDER".lower(), None)
+    INPUT_FOLDER = config_values.INPUT_FOLDER
     # ### Init the processes #####
 
     # Connect to the database
     logger.info("Connection to the database")
-    db_jobs = db_conn["jobs"]
+    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
     # Ensure the indexes are created
     create_index(db_jobs, "jobid", unique=True)
     # create_index(db_jobs, 'IncludeInStudy', unique=False)
@@ -156,12 +149,6 @@ def main():
         clean_data = OutputRow(data)
         clean_data.clean_row()
         data_to_record = clean_data.to_dictionary()
-        # try:
-        #     logger.debug('Employer: {}'.format(data_to_record['employer']))
-        #     logger.debug('Uk Uni: {}'.format(data_to_record['uk_university']))
-        #     logger.debug('Postcode: {}'.format(data_to_record['uk_postcode']))
-        # except KeyError:
-        #     pass
         try:
             if len(data_to_record['invalid_code']) >= 3:
                 m+=1

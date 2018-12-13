@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 import pymongo
-import pymysql as mdb
+import pymysql
 
 from common.configParser import configParserPerso as configParser
 from common.logger import logger
@@ -65,7 +65,7 @@ def connectMysql(config):
     def connectDB(self, *args, **kwargs):
         """
         """
-        mdb = mdb.connect(*args)
+        mdb = pymysql.connect(*args)
         return connector.cursor(mdb.cursors.DictCursor)
 
     # set up access credentials
@@ -73,6 +73,7 @@ def connectMysql(config):
     args_to_connect = list()
     args_to_connect.append(config.MYSQL_db_host)
     args_to_connect.append(config.MYSQL_db_name)
+    args_to_connect.append(config.MYSQL_port)
     try:
         DB_ACC_FILE = config.DB_ACCESS_FILE
         access_value = configParser()

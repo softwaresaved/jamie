@@ -13,10 +13,9 @@ import os
 import re
 import json
 import itertools
-import argparse
 import errno
 
-import pymongo
+
 
 import sys
 from pathlib import Path
@@ -24,8 +23,8 @@ from pathlib import Path
 sys.path.append(str(Path(".").absolute().parent))
 
 from common.logger import logger
+from common.getArgs import getArgs
 from common.getConnection import connectDB
-from common.configParser import configParserPerso as configParser
 
 from dataCollection.include.fileProcess import fileProcess
 from dataCollection.include.cleaningInformation import OutputRow
@@ -65,25 +64,18 @@ def check_for_number(s):
 def main():
     """
     """
-    parser = argparse.ArgumentParser(
-        description="Transform jobs ads stored in html file into the mongodb"
-    )
+    description = "Clean salary"
 
-    parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    args = parser.parse_args()
-    config_file = "../config/" + args.config
-    # set up access credentials
-    config_value = configParser()
-    config_value.read(config_file)
-    db_conn = connectDB(config_file)
-    # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_value["input"].get("INPUT_FOLDER".lower(), None)
+
+    db_conn = connectMongo(config_values)
     # ### Init the processes #####
 
     # Connect to the database
     logger.info("Connection to the database")
-    db_jobs = db_conn["jobs"]
+    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
     nbr_job = db_jobs.count()
 
     nbr_improper_field = 0

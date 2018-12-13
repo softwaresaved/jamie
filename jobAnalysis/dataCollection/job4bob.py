@@ -6,7 +6,6 @@ Script to filter the job list with different parameters and copy that selected j
 for input into the classifier Bob. Connect to the mongodb and copy file in folder
 """
 import os
-import argparse
 from shutil import copy2
 
 import sys
@@ -14,7 +13,8 @@ from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
 from common.logger import logger
-from common.configParser import ConfigParserPerso as configParser
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 from job2db import make_sure_path_exists
 from job2db import get_connection
@@ -48,31 +48,27 @@ def copy_file(filename, inputfolder, outputfolder):
 def main():
     """
     """
-    parser = argparse.ArgumentParser(description='Transform jobs ads stored in html file into the mongodb')
+    description = 'Transform jobs ads stored in html file into the mongodb'
 
     parser.add_argument('-c', '--config',
                         type=str,
                         default='config_dev.ini')
 
-    args = parser.parse_args()
-    config_file = '../config/'+args.config
-    db_conn = connectDB(config_file)
-    # set up access credentials
-    config_value = configParser()
-    config_value.read(config_file)
-    # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_value['input'].get('INPUT_FOLDER'.lower(), None)
-    DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE'.lower(), None)
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    SAMPLE_FOLDER = config_value['BOB'].get('SAMPLE_OUT_FOLDER'.lower(), None)
+    db_conn = connectMongo(config_values)
+
+    # ### Init the processes #####
+    # Get the folder or the file where the input data are stored
+    INPUT_FOLDER = config_values.INPUT_FOLDER
+    SAMPLE_FOLDER = config_values.SAMPLE_OUT_FOLDER
     # Check if the folder exists and if not, create it
     make_sure_path_exists(SAMPLE_FOLDER)
 
-    # # MongoDB ACCESS # #
     # Connect to the database
-    logger.info('Connection to the database')
-    db_jobs = db_conn['jobs']
-    # Ensure the indexes are created
+    logger.info("Connection to the database")
+    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
 
     # ### Init the processes #####
 

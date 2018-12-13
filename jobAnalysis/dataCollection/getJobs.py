@@ -7,7 +7,6 @@ Script to scrap the different jobs on https://www.jobs.ac.uk
 import os
 import json
 import errno
-import argparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -18,7 +17,8 @@ from pathlib import Path
 sys.path.append(str(Path(".").absolute().parent))
 
 from common.logger import logger
-from common.configParser import configParserPerso as configParser
+from common.getArgs import getArgs
+
 from include.fileProcess import fileProcess
 from dataCollection.include.cleaningInformation import OutputRow
 
@@ -127,7 +127,7 @@ def to_download(input_folder, job_id):
         with open(filename, 'r') as f:
             check_content = f.read()
             if check_content is None:
-                print('{}: No data recorded'.format(filename))
+                logger.info('{}: No data recorded'.format(filename))
                 return True
 
 
@@ -150,7 +150,6 @@ def _extract_ads(data, attrs_id, attrs_content):
 def extract_ads_info(data):
     for attrs in content_attrs:
         content = _extract_ads(data, attrs['attrs_id'], attrs['attrs_content'])
-        raise
         if len(content) > 0:
             return content
 
@@ -190,20 +189,15 @@ def record_data(input_folder, job_id, data):
 def main():
     """
     """
-    parser = argparse.ArgumentParser(description="Collect jobs from jobs.ac.uk")
+    description = "Collect jobs from jobs.ac.uk"
 
-    parser.add_argument("-c", "--config", type=str, default="config_dev.ini")
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
 
-    args = parser.parse_args()
-    logger.info('Read config file')
-    config_file = "../config/" + args.config
-
-    # set up access credentials
-    config_value = configParser()
-    config_value.read(config_file)
 
     # Get the folder or the file where the input data are stored
-    input_folder = config_value["input"].get("INPUT_FOLDER".lower(), None)
+    input_folder = config_values.INPUT_FOLDER
+
     # Check if the folder exists
     logger.info('Check if the input folder exists: {}'.format(input_folder))
     make_sure_path_exists(input_folder)
@@ -211,7 +205,7 @@ def main():
 
     # Setting the URL.
     # Number of jobs fetch for one query
-    NUM_JOBS = config_value['input'].get('NUM_JOBS'.lower(), 6000)
+    NUM_JOBS = config_values.NUM_JOBS
     BASE_URL = "http://www.jobs.ac.uk"
     FULL_URL = "{}/search/?keywords=*&sort=re&s=1&pageSize={}".format(BASE_URL, NUM_JOBS)
 
@@ -230,7 +224,7 @@ def main():
         jobid, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
         # Check if the jobid is not parsed yet
         if to_download(input_folder, jobid) is True:
-            print('Job id: {}'.format(jobid))
+            logger.info('Job id: {}'.format(jobid))
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = new_extract_ads_info(job_data)
@@ -238,27 +232,6 @@ def main():
                 data_to_record = extract_ads_info(jobs_data)
             if data_to_record is None:
                 raise
-            # process_data = file_process.run(jobid, str(data_to_record))
-            # if process_data['enhanced'] == 'normal':
-            #
-            #     clean_data = OutputRow(process_data)
-            #     clean_data.clean_row()
-            #     data = clean_data.to_dictionary()
-            #     try:
-            #         # process_data['description']
-            #         print(data['jobid'])
-            #         print(data['enhanced'])
-            #         print(data['invalid_code'])
-            #         # if len(data['invalid_code']) > 3:
-            #             # print(data_to_record)
-            #             # raise
-            #         print(process_data['description'])
-            #     except KeyError:
-            #         pass
-            #         # print(process_data)
-            #         # print(data_to_record)
-            #          # raise
-            # logger.debug(data_to_record)
             record_data(input_folder, jobid, data_to_record)
             n+=1
             logger.info('Jobs downloaded: {}'.format(n))
