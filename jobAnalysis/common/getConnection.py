@@ -2,25 +2,45 @@
 # encoding: utf-8
 
 import pymongo
+import pymysql as mdb
+
 from common.configParser import configParserPerso as configParser
 from common.logger import logger
 
 logger = logger(name='getConnection', stream_level='DEBUG')
 
 
-def connectDB(config_file):
+def connectMongo(config):
     """
     """
-    # ### CONNECTION TO DB ### #
+    def connectDB(*args):
+        """
+        Parse the argument to Pymongo Client
+        and return a db object
+        """
+        db = args[0]
+        c = pymongo.MongoClient()
+        try:
+            user = args[1]
+            passw = args[2]
+            db_auth = args[3]
+            db_mech = args[4]
+            confirmation = c[db].authenticate(user,
+                                                passw,
+                                                source=db_auth,
+                                                mechanism=db_mech)
+            logger.info('Authenticated: {}'.format(confirmation))
+        except (IndexError, ValueError, TypeError):
+            logger.info('Connection to the database without password and authentication')
+        return c[db]
 
     # set up access credentials
     config_value = configParser()
-    config_value.read(config_file)
     args_to_connect = list()
-    args_to_connect.append(config_value['MongoDB'].get('DB_NAME', None))
+    args_to_connect.append(config.DB_NAME)
     # # MongoDB ACCESS # #
     try:
-        DB_ACC_FILE = config_value['db_access'].get('DB_ACCESS_FILE', None)
+        DB_ACC_FILE = config.DB_ACCESS_FILE
         access_value = configParser()
         access_value.read(DB_ACC_FILE)
         args_to_connect.append(access_value['MongoDB'].get('db_username', None))
@@ -33,27 +53,36 @@ def connectDB(config_file):
 
     # Get the information about the db and the collections
     # Create the instance that connect to the db storing the training set
-    mongoDB = connectMongo(*args_to_connect)
+    mongoDB = connectDB(*args_to_connect)
     return mongoDB
 
 
-def connectMongo(*args):
+def connectMysql(config):
     """
-    Parse the argument to Pymongo Client
-    and return a db object
+    Connection to MySQL using MySQLdb module
+    and return a cursor
     """
-    db = args[0]
-    c = pymongo.MongoClient()
+    def connectDB(self, *args, **kwargs):
+        """
+        """
+        mdb = mdb.connect(*args)
+        return connector.cursor(mdb.cursors.DictCursor)
+
+    # set up access credentials
+    config_value = configParser()
+    args_to_connect = list()
+    args_to_connect.append(config.MYSQL_db_host)
+    args_to_connect.append(config.MYSQL_db_name)
     try:
-        user = args[1]
-        passw = args[2]
-        db_auth = args[3]
-        db_mech = args[4]
-        confirmation = c[db].authenticate(user,
-                                            passw,
-                                            source=db_auth,
-                                            mechanism=db_mech)
-        logger.info('Authenticated: {}'.format(confirmation))
-    except (IndexError, ValueError, TypeError):
-        logger.info('Connection to the database without password and authentication')
-    return c[db]
+        DB_ACC_FILE = config.DB_ACCESS_FILE
+        access_value = configParser()
+        access_value.read(DB_ACC_FILE)
+
+        # # MYSQL ACCESS # #
+        args_to_connect.append(access_value['MYSQL'].get('db_username', None))
+        args_to_connect.append(access_value['MYSQL'].get('db_password', None))
+
+    except KeyError:
+        pass
+
+    return connectDB(*args_to_connect)
