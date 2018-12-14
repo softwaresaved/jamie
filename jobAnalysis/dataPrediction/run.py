@@ -80,7 +80,7 @@ def get_model(relaunch):
         record_information(best_model_name, best_model_params, final_model, features,
                            y_test, y_pred, y_proba)
 
-    else:
+    elif relaunch is False:
         features, final_model = load_model()
         best_model_name, best_model_params = load_info_model()
 
@@ -88,7 +88,6 @@ def get_model(relaunch):
         raise('Not a proper command argument')
 
     return final_model, features, best_model_name, best_model_params
-
 
 
 def predicting(db_conn, features, model, relaunch):
@@ -119,10 +118,11 @@ def record_prediction(db, prediction, predict_proba, jobid, _id, model_name, mod
         return
     if prediction is None:
         pred_int = 'None'
+        pred_proba = 'None'
     else:
         pred_int = int(prediction[0])
 
-    pred_proba = float(predict_proba[0][0])
+        pred_proba = float(predict_proba[0][0])
 
     db['predictions'].update({'jobid': jobid,
                               'model': model_name},
@@ -133,31 +133,32 @@ def record_prediction(db, prediction, predict_proba, jobid, _id, model_name, mod
     return pred_int
 
 
-def main(config):
+def main():
 
     description = 'Launch prediction modelling of jobs ads'
 
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
 
-
-    db_conn = connectMongo(config_values)
-    db_conn['predictions'].create_index('jobid', unique=True)
-    db_conn['predictions'].create_index('prediction', unique=False)
-
-    final_count = dict()
+    logger.info('Starting the predictions')
     final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model)
-    for job_id, prediction, predic_proba, _id in predicting(db_conn, features, final_model, config_values.relaunch_prediction):
-        final_count[str(prediction[0])] = final_count.get(str(prediction[0]), 0)+1
+    if config_values.record_prediction is True:
+        final_count = dict()
+        db_conn = connectMongo(config_values)
+        db_conn['predictions'].create_index('jobid', unique=True)
+        db_conn['predictions'].create_index('prediction', unique=False)
+        for job_id, prediction, predic_proba, _id in predicting(db_conn, features, final_model, config_values.relaunch_prediction):
+            if prediction == None:
+                to_record = 'None'
+            else:
+                to_record = str(prediction[0])
+            final_count[to_record] = final_count.get(to_record, 0)+1
 
-        if config_values.record_prediction is True:
             record_prediction(db_conn, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
-        else:
-            logger.info('prediction for {}: {}'.format(job_id, predic_proba))
 
-    logger.info('Summary of prediction for new jobs')
-    for k in final_count:
-        logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
+        logger.info('Summary of prediction for new jobs')
+        for k in final_count:
+            logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
 
 
 

@@ -61,6 +61,7 @@ class LenSelector(IntSelector):
     def transform(self, X):
         return self.len_txt(X[self.key])
 
+
 class SoftTermSelector(IntSelector, textClean):
 
     def __init__(self, key):
@@ -85,6 +86,7 @@ class SoftTermSelector(IntSelector, textClean):
     def fit(self, X, y=None):
         return self
 
+
 def find_words(df):
 
     def return_which_word(row):
@@ -93,8 +95,6 @@ def find_words(df):
             if i in row:
                 set_to_return.add(i)
         return set_to_return
-
-
 
     ## Create a columns to count the number of time one of the word from the list created in 'search_term.py' appears
     df['search_terms'] = df['description'].apply(lambda x: return_which_word(x))
@@ -110,8 +110,6 @@ def load_data(path_to_df):
     df = pd.read_pickle(path_to_df)
     df = df.loc[(df.SoftwareJob == 'Yes') | (df.SoftwareJob == 'None')]
     return df
-
-
 
 
 def check_if_research_software(df, cleaner):
