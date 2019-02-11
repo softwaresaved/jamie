@@ -87,7 +87,7 @@ class ConfigHome(Config):
     Config for development, meaning the deployment on personal computer
     """
     # Folder where the job files are stored
-    INPUT_FOLDER = '/home/olivier/data/job_analysis/dev_new_parser'
+    INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
     # Location of the access file where the credential for db are stored
     DB_ACCESS_FILE = "/home/olivier/data/job_analysis/.access"
@@ -102,10 +102,7 @@ class ConfigDevModel(ConfigHome):
     """
     DB_NAME = "jobsDevModel"
 
-    relaunch_model = True
-
-    # Decide to record or not the prediction in the database
-    prediction_record = False
+    INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs/dev_new_parser'
 
 
 class ConfigSoton(Config):

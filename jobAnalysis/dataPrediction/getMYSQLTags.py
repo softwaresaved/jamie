@@ -27,15 +27,16 @@ class mySQL:
     Connection to MySQL using MySQLdb module
     """
 
-    def __init__(self, cursor):
+    def __init__(self, mdb):
         """
         """
-        self.cursor = cursor
+        self.mdb = mdb
 
     def search_final_classification(self):
         """
         """
         # Option to specify the type of cursor to return. Here use a python dictionary
+        self.cursor = self.mdb.cursor()
         self.cursor.execute("""
                             SELECT job.website_id, job.final_classification, answer.value
                             FROM job
@@ -44,7 +45,12 @@ class mySQL:
                             ORDER BY job.website_id;
                             """)
         for rows in self.cursor.fetchall():
-            yield rows
+            return_dic = dict()
+            return_dic['job_id'] = rows[0]
+            # Get the last value given as it is that value containing the classification. The previous ones contains other type of info
+            return_dic['value'] = rows[2]
+            print(return_dic['job_id'])
+            yield return_dic
 
 
 class mongoDB:
@@ -58,25 +64,25 @@ class mongoDB:
         self.db = db
 
 
-    def update_list_of_tags(self, coll, row):
+    def update_list_of_tags(self, coll, row, run_tag):
         """
         Update the list of classifier
         """
         # If working on a copy of the db, some records will appears with the
         # final_classification set up as None (the obj, not a str()).
         # Just discard them.
-        if row['final_classification']:
-            # Try and except to only try to insert with jobId without done. If a done is present
-            # that means no need to create a new record and raise a DuplicateError
-            try:
-                self.db[coll].update({'jobid': row['website_id'], 'done': {'$exists': False}},
-                                     {'$push': {'tags': row['value']},
-                                     '$set': {'SoftwareJob': row['final_classification']}
-                                      },
-                                     upsert=True)
-            except pymongo.errors.DuplicateKeyError:
-                print(row)
-                pass
+        # if row['final_classification']:
+        # Try and except to only try to insert with jobId without done. If a done is present
+        # that means no need to create a new record and raise a DuplicateError
+        try:
+            self.db[coll].update({'jobid': row['job_id'],
+                                  'run_tag': run_tag, 'done': {'$exists': False}},
+                                    {'$push': {'tags': row['value']},
+                                    # '$set': {'SoftwareJob': row['final_classification']}
+                                    },
+                                    upsert=True)
+        except pymongo.errors.DuplicateKeyError:
+            pass
 
     def create_index(self, coll, key, unique=False):
         """
@@ -105,14 +111,14 @@ def main():
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
 
-
     db_conn = connectMongo(config_values)
 
     mongo = mongoDB(db_conn)
 
     # Create unique index on the JobId to avoid duplicating the records after launching the script
     # several time
-    mongo.create_index(config_values.DB_TAG_COLLECTION, 'jobid', unique=True)
+    name_tags = 'first_run'
+    mongo.create_index(config_values.DB_TAG_COLLECTION, [('jobid', pymongo.DESCENDING), ('run_tag', pymongo.ASCENDING)], unique=True)
 
     # Connect to the mysql db
     mysql_connector = connectMysql(config_values)
@@ -120,8 +126,8 @@ def main():
 
     # Transferring the data from mysql to mongoDB
     for rows in mysqlConnection.search_final_classification():
-        mongo.update_list_of_tags(config_values.DB_TAG_COLLECTION, rows)
-    mongo.update_done(config_values.DB_TAG_COLLECTION)
+        mongo.update_list_of_tags(config_values.DB_TAG_COLLECTION, rows, name_tags)
+    # mongo.update_done(config_values.DB_TAG_COLLECTION)
 
 
 if __name__ == "__main__":

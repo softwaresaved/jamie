@@ -11,7 +11,6 @@ It return a dataframe and store it in a pickle form for later use
 
 
 import sys
-import argparse
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
@@ -22,7 +21,8 @@ import pandas as pd
 import numpy as np
 
 from common.logger import logger
-from common.getConnection import connectDB
+from common.getArgs import getArgs
+from common.getConnection import connectMongo
 
 logger = logger(name='getTrainingSet', stream_level='DEBUG')
 
@@ -49,7 +49,7 @@ def building_pipeline(collection, *args, **kwargs):
     lookup = {'$lookup': {'from': collection, 'localField': 'jobid', 'foreignField': 'jobid', 'as': 'data'}}
     unwind = {'$unwind': '$data'}
 
-    field_to_return = {'jobid': 1, 'SoftwareJob': 1, 'tags': 1, 'data': 1}
+    field_to_return = {'jobid': 1, 'run_tag': 1, 'tags': 1, 'data': 1}
 
     if args:
         added_field_to_return = dict(('data.{}'.format(k), 1) for k in args)
@@ -88,6 +88,8 @@ def get_documents(db, collection, *args, **kwargs):
     pipeline = building_pipeline(collection, *args, **kwargs)
     for document in db['tags'].aggregate(pipeline):
         document.update({k: v for k, v in document['data'].items()})
+        document['tags'] = [x if x != 'None' else 'No' for x in document['tags']]
+        print(document['tags'])
         try:
             del document['data']
         except KeyError:
@@ -99,22 +101,19 @@ def get_training_set(db, collection, *args, **kwargs):
     """
     """
     df = pd.DataFrame.from_dict(list(get_documents(db, collection, *args, **kwargs)))
-    df.to_csv('./data/model_data.csv')
-    path_to_df = './data/model_data.pk1'
+    df.to_csv('./data/model_data_test.csv')
+    path_to_df = './data/model_data_test.pk1'
     df.to_pickle(path_to_df)
     return df
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Launch prediction modelling of jobs ads')
-    parser.add_argument('-c', '--config',
-                        type=str,
-                        default='config_dev.ini')
+    description='Get the tags from the mysql database'
 
-    args = parser.parse_args()
-    config_file = '../config/'+args.config
-    db_conn = connectDB(config_file)
+    arguments = getArgs(description)
+    config_values = arguments.return_arguments()
+
+    db_conn = connectMongo(config_values)
     # set up access credentials
     df = get_training_set(db_conn, 'jobs')
-    print(df)

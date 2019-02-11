@@ -2,8 +2,11 @@
 # encoding: utf-8
 
 import pymongo
-import pymysql
+# import pymysql
+import mysql.connector
 
+
+from common.getArgs import getArgs
 from common.configParser import configParserPerso as configParser
 from common.logger import logger
 
@@ -62,18 +65,23 @@ def connectMysql(config):
     Connection to MySQL using MySQLdb module
     and return a cursor
     """
-    def connectDB(self, *args, **kwargs):
+    def connectDB(*args, **kwargs):
         """
         """
-        mdb = pymysql.connect(*args)
-        return connector.cursor(mdb.cursors.DictCursor)
+        mdb = mysql.connector.connect(**kwargs)
+        # mdb = pymysql.connect(*args)
+        return mdb
+        # return connector.cursor(mdb.cursors.DictCursor)
 
     # set up access credentials
-    config_value = configParser()
     args_to_connect = list()
+    kwargs_to_connect = dict()
     args_to_connect.append(config.MYSQL_db_host)
+    kwargs_to_connect['host'] = config.MYSQL_db_host
     args_to_connect.append(config.MYSQL_db_name)
+    kwargs_to_connect['db'] = config.MYSQL_db_name
     args_to_connect.append(config.MYSQL_port)
+    kwargs_to_connect['port'] = config.MYSQL_port
     try:
         DB_ACC_FILE = config.DB_ACCESS_FILE
         access_value = configParser()
@@ -81,9 +89,11 @@ def connectMysql(config):
 
         # # MYSQL ACCESS # #
         args_to_connect.append(access_value['MYSQL'].get('db_username', None))
+        kwargs_to_connect['user'] = access_value['MYSQL'].get('db_username', None)
         args_to_connect.append(access_value['MYSQL'].get('db_password', None))
+        kwargs_to_connect['passwd'] = access_value['MYSQL'].get('db_password', None)
 
     except KeyError:
         pass
 
-    return connectDB(*args_to_connect)
+    return connectDB(**kwargs_to_connect)
