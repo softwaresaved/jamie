@@ -89,7 +89,6 @@ def get_documents(db, collection, *args, **kwargs):
     for document in db['tags'].aggregate(pipeline):
         document.update({k: v for k, v in document['data'].items()})
         document['tags'] = [x if x != 'None' else 'No' for x in document['tags']]
-        print(document['tags'])
         try:
             del document['data']
         except KeyError:
