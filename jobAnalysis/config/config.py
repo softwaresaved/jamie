@@ -102,7 +102,7 @@ class ConfigDevModel(ConfigHome):
     """
     DB_NAME = "jobsDevModel"
 
-    INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs/dev_new_parser'
+    INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
 
 class ConfigSoton(Config):

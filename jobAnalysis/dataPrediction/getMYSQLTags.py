@@ -117,7 +117,7 @@ def main():
 
     # Create unique index on the JobId to avoid duplicating the records after launching the script
     # several time
-    name_tags = 'first_run'
+    name_tags = 'third_run'
     mongo.create_index(config_values.DB_TAG_COLLECTION, [('jobid', pymongo.DESCENDING), ('run_tag', pymongo.ASCENDING)], unique=True)
 
     # Connect to the mysql db

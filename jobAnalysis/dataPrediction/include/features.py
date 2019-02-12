@@ -8,6 +8,10 @@ __author__: 'Olivier Philippe'
 Pipeline to create some features and union them
 """
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path('.').absolute().parent))
+
 import pickle
 
 import pandas as pd
