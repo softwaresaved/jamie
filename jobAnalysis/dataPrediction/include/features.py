@@ -127,6 +127,8 @@ def check_if_research_software(df, cleaner):
             try:
                 if word == 'research' and txt[pos+1] == 'software':
                     return 1
+                elif word == 'research' and txt[pos] == 'software':
+                    return 1
             except IndexError:
                 return 0
         return 0
@@ -135,18 +137,18 @@ def check_if_research_software(df, cleaner):
     return df
 
 
-def prepare_labels(df):
+def prepare_labels(df, column='SoftwareJob'):
 
-    y = df['SoftwareJob']
+    y = df[column]
     if len(set(y)) > 2:
         lb = MultiLabelBinarizer()
         # raise('Not implemented yet')
     else:
         # Relabel the 'yes' to 1 and 'no' to 0
         lb = LabelBinarizer()
-        y_train = lb.fit_transform(y)
-        # Need to apply the ravel otherwise it is not the right shape
-        y = lb.fit_transform(y).ravel()
+    y_train = lb.fit_transform(y)
+    # Need to apply the ravel otherwise it is not the right shape
+    y = lb.fit_transform(y).ravel()
     return y
 
 
