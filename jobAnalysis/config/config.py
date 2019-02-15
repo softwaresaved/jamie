@@ -64,7 +64,7 @@ class Config:
     record_prediction = True
 
     # Prediction field
-    prediction_field = 'prediction'
+    prediction_field = 'original'
 
     # What are the requirements to be included in the study. It follows the model of MongoDB search
     # and it is used in the script include_in_study.py to add the appropriate key
@@ -114,7 +114,7 @@ class ConfigDevModel(ConfigHome):
     # record_prediction = True
 
     # Prediction field
-    # prediction_field = 'final_prediction_bool'
+    prediction_field = 'final_bool'
 
 
 class ConfigSoton(Config):

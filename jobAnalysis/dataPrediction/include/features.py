@@ -137,7 +137,7 @@ def check_if_research_software(df, cleaner):
     return df
 
 
-def prepare_labels(df, column='SoftwareJob'):
+def prepare_labels(df):
 
     y = df[column]
     if len(set(y)) > 2:
@@ -190,7 +190,7 @@ def feature_union():
 
 def get_train_data(prediction_field):
 
-    path_to_df = './data/{}/training_set.pk1'.format(prediction_field)
+    path_to_df = './data/training_set.pk1'
     df = load_data(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)
@@ -199,7 +199,7 @@ def get_train_data(prediction_field):
     df = check_if_research_software(df, cleaner)
 
     # job_ids = df['jobid']
-    y = prepare_labels(df)
+    y = prepare_labels(df, column=prediction_field)
     features = feature_union()
     X = df[['description', 'job_title']]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y)

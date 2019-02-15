@@ -124,7 +124,7 @@ def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _i
 
         pred_proba = float(predict_proba[0][0])
 
-    db[prediction_field].update({'jobid': jobid,
+    db['prediction'].update({'jobid': jobid,
                               'model': model_name},
                             # 'params': model_best_params},
                              {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}},
@@ -139,7 +139,8 @@ def main():
 
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
-    prediction_field = config_values.prediction_field
+    # Create a prediction field by appending the name of the specific prediction to it
+    prediction_field = 'prediction_{}'.format(config_values.prediction_field)
 
     logger.info('Starting the predictions')
     final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model, prediction_field)
