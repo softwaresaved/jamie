@@ -42,20 +42,20 @@ def record_information(prediction_field, best_model_name, best_model_params,
     print(best_model_params)
 
 
-def record_model(prediction_field, model, features, folder='../../outputs/dataPrediction'):
+def record_model(prediction_field, model, features, folder='../../outputs/dataPrediction/prediction'):
     """
     """
     joblib.dump(features, '{}{}/{}'.format(folder, prediction_field, 'features.pkl'))
     joblib.dump(model, '{}{}/{}'.format(folder, prediction_field, 'model.pkl'))
 
 
-def load_model(prediction_field, folder='../../outputs/dataPrediction/'):
+def load_model(prediction_field, folder='../../outputs/dataPrediction/prediction/'):
     features = joblib.load('{}{}/{}'.format(folder, prediction_field, 'features.pkl'))
     model = joblib.load('{}{}/{}'.format(folder, prediction_field, 'model.pkl'))
     return features, model
 
 
-def load_info_model(prediction_field, folder='../../outputs/dataPrediction/'):
+def load_info_model(prediction_field, folder='../../outputs/dataPrediction/prediction/'):
     with open('{}{}/{}'.format(folder, prediction_field, 'best_model_params.json')) as handle:
         best_model_params = json.loads(handle.read())
     with open('{}{}/{}'.format(folder, prediction_field, 'best_model_name.txt', 'r')) as f:
@@ -91,7 +91,7 @@ def get_model(relaunch, prediction_field):
 
 
 def predicting(db_conn, prediction_field, features, model, relaunch):
-
+    predicting_field = 'prediction_{}'.format(prediction_field)
     if relaunch is True:
         search = {}
     else:
@@ -139,16 +139,14 @@ def main():
 
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
-    # Create a prediction field by appending the name of the specific prediction to it
-    prediction_field = 'prediction_{}'.format(config_values.prediction_field)
-
+    prediction_field = config_values.prediction_field
     logger.info('Starting the predictions')
     final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model, prediction_field)
     if config_values.record_prediction is True:
         final_count = dict()
         db_conn = connectMongo(config_values)
         db_conn[prediction_field].create_index('jobid', unique=True)
-        db_conn[prediction_field].create_index(prediction_field, unique=False)
+        db_conn[prediction_field].create_index('prediction_{}'.format(prediction_field), unique=False)
         for job_id, prediction, predic_proba, _id in predicting(db_conn, prediction_field, features, final_model, config_values.relaunch_prediction):
             if prediction == None:
                 to_record = 'None'
