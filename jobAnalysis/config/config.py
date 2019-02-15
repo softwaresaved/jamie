@@ -63,6 +63,9 @@ class Config:
     # Decide to record or not the prediction in the database
     record_prediction = True
 
+    # Prediction field
+    prediction_field = 'prediction'
+
     # What are the requirements to be included in the study. It follows the model of MongoDB search
     # and it is used in the script include_in_study.py to add the appropriate key
     include_in_study = {'extra_location': {'$in' : ["Northern England",
@@ -103,6 +106,15 @@ class ConfigDevModel(ConfigHome):
     DB_NAME = "jobsDevModel"
 
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
+
+    # Boolean to decide if it redo the prediction
+    # relaunch_prediction = True
+
+    # Decide to record or not the prediction in the database
+    # record_prediction = True
+
+    # Prediction field
+    # prediction_field = 'final_prediction_bool'
 
 
 class ConfigSoton(Config):

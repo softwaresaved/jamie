@@ -28,46 +28,46 @@ logger = logger(name='prediction_run', stream_level='DEBUG')
 
 
 
-def record_information(best_model_name, best_model_params,
+def record_information(prediction_field, best_model_name, best_model_params,
                        final_model, feature_model,
                        y_test, y_pred, y_proba,
                        folder='../../outputs/dataPrediction/'):
 
     print(y_test)
-    np.save('{}{}'.format(folder, 'y_test'), y_test)
+    np.save('{}{}/{}'.format(folder, prediction_field, 'y_test'), y_test)
     print(y_pred)
-    np.save('{}{}'.format(folder, 'y_pred'), y_pred)
+    np.save('{}{}/()'.format(folder, prediction_field, 'y_pred'), y_pred)
     print(y_proba)
-    np.save('{}{}'.format(folder, 'y_proba'), y_proba)
+    np.save('{}{}/{}'.format(folder, prediction_field, 'y_proba'), y_proba)
     print(best_model_params)
 
 
-def record_model(model, features, folder='../../outputs/dataPrediction'):
+def record_model(prediction_field, model, features, folder='../../outputs/dataPrediction'):
     """
     """
-    joblib.dump(features, '{}{}'.format(folder, 'features.pkl'))
-    joblib.dump(model, '{}{}'.format(folder, 'model.pkl'))
+    joblib.dump(features, '{}{}/{}'.format(folder, prediction_field, 'features.pkl'))
+    joblib.dump(model, '{}{}/{}'.format(folder, prediction_field, 'model.pkl'))
 
 
-def load_model(folder='../../outputs/dataPrediction/'):
-    features = joblib.load('{}{}'.format(folder, 'features.pkl'))
-    model = joblib.load('{}{}'.format(folder, 'model.pkl'))
+def load_model(prediction_field, folder='../../outputs/dataPrediction/'):
+    features = joblib.load('{}{}/{}'.format(folder, prediction_field, 'features.pkl'))
+    model = joblib.load('{}{}/{}'.format(folder, prediction_field, 'model.pkl'))
     return features, model
 
 
-def load_info_model(folder='../../outputs/dataPrediction/'):
-    with open('{}{}'.format(folder, 'best_model_params.json')) as handle:
+def load_info_model(prediction_field, folder='../../outputs/dataPrediction/'):
+    with open('{}{}/{}'.format(folder, prediction_field, 'best_model_params.json')) as handle:
         best_model_params = json.loads(handle.read())
-    with open('{}{}'.format(folder, 'best_model_name.txt', 'r')) as f:
+    with open('{}{}/{}'.format(folder, prediction_field, 'best_model_name.txt', 'r')) as f:
         best_model_name = f.readline().strip()
     return best_model_name, best_model_params
 
 
-def get_model(relaunch):
+def get_model(relaunch, prediction_field):
 
     if relaunch is True:
 
-        X_train, X_test, y_train, y_test, features = get_train_data()
+        X_train, X_test, y_train, y_test, features = get_train_data(prediction_field)
         X_train = features.fit_transform(X_train)
 
         best_model_name, best_model_params, final_model = nested_cross_validation(X_train, y_train)
@@ -76,13 +76,13 @@ def get_model(relaunch):
         y_pred = final_model.predict(X_test)
         y_proba = final_model.predict_proba(X_test)
 
-        record_model(final_model, features)
-        record_information(best_model_name, best_model_params, final_model, features,
+        record_model(prediction_field, final_model, features)
+        record_information(prediction_field, best_model_name, best_model_params, final_model, features,
                            y_test, y_pred, y_proba)
 
     elif relaunch is False:
-        features, final_model = load_model()
-        best_model_name, best_model_params = load_info_model()
+        features, final_model = load_model(prediction_field)
+        best_model_name, best_model_params = load_info_model(prediction_field)
 
     else:
         raise('Not a proper command argument')
@@ -90,12 +90,12 @@ def get_model(relaunch):
     return final_model, features, best_model_name, best_model_params
 
 
-def predicting(db_conn, features, model, relaunch):
+def predicting(db_conn, prediction_field, features, model, relaunch):
 
     if relaunch is True:
         search = {}
     else:
-        search = {'prediction': {'$exists': False}}
+        search = {prediction_field: {'$exists': False}}
     for doc in db_conn['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
         _id = doc['_id']
         jobid = doc['jobid']
@@ -111,7 +111,7 @@ def predicting(db_conn, features, model, relaunch):
         yield jobid, prediction, predic_proba, _id
 
 
-def record_prediction(db, prediction, predict_proba, jobid, _id, model_name, model_best_params):
+def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _id, model_name, model_best_params):
     """
     """
     if jobid is None:
@@ -124,12 +124,12 @@ def record_prediction(db, prediction, predict_proba, jobid, _id, model_name, mod
 
         pred_proba = float(predict_proba[0][0])
 
-    db['predictions'].update({'jobid': jobid,
+    db[prediction_field].update({'jobid': jobid,
                               'model': model_name},
                             # 'params': model_best_params},
-                             {'$set': {'prediction': pred_int, 'prediction_proba': pred_proba}},
+                             {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}},
                             upsert=True)
-    db['jobs'].update({'_id': _id}, {'$set': {'prediction': pred_int, 'prediction_proba': pred_proba}})
+    db['jobs'].update({'_id': _id}, {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}})
     return pred_int
 
 
@@ -139,22 +139,23 @@ def main():
 
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
+    prediction_field = config_values.prediction_field
 
     logger.info('Starting the predictions')
-    final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model)
+    final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model, prediction_field)
     if config_values.record_prediction is True:
         final_count = dict()
         db_conn = connectMongo(config_values)
-        db_conn['predictions'].create_index('jobid', unique=True)
-        db_conn['predictions'].create_index('prediction', unique=False)
-        for job_id, prediction, predic_proba, _id in predicting(db_conn, features, final_model, config_values.relaunch_prediction):
+        db_conn[prediction_field].create_index('jobid', unique=True)
+        db_conn[prediction_field].create_index(prediction_field, unique=False)
+        for job_id, prediction, predic_proba, _id in predicting(db_conn, prediction_field, features, final_model, config_values.relaunch_prediction):
             if prediction == None:
                 to_record = 'None'
             else:
                 to_record = str(prediction[0])
             final_count[to_record] = final_count.get(to_record, 0)+1
 
-            record_prediction(db_conn, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
+            record_prediction(db_conn, prediction_field, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
 
         logger.info('Summary of prediction for new jobs')
         for k in final_count:
