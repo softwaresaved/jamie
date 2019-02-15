@@ -96,12 +96,12 @@ def get_documents(db, collection, *args, **kwargs):
         yield document
 
 
-def get_training_set(db, collection, *args, **kwargs):
+def get_training_set(db, collection, prediction_field, *args, **kwargs):
     """
     """
     df = pd.DataFrame.from_dict(list(get_documents(db, collection, *args, **kwargs)))
-    df.to_csv('./data/model_data_test.csv')
-    path_to_df = './data/model_data_test.pk1'
+    df.to_csv('./data/{}/training_set.csv'.format(prediction_field))
+    path_to_df = './data/{}/training_set.pk1'.format(prediction_field)
     df.to_pickle(path_to_df)
     return df
 
@@ -115,4 +115,4 @@ if __name__ == "__main__":
 
     db_conn = connectMongo(config_values)
     # set up access credentials
-    df = get_training_set(db_conn, 'jobs')
+    df = get_training_set(db_conn, 'jobs', config_values.prediction_field)

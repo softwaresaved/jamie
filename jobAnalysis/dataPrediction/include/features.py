@@ -190,7 +190,7 @@ def feature_union():
 
 def get_train_data(prediction_field):
 
-    path_to_df = './data/{}/model_data.pk1'.format(prediction_field)
+    path_to_df = './data/{}/training_set.pk1'.format(prediction_field)
     df = load_data(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)
