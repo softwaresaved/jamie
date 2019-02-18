@@ -112,7 +112,10 @@ def find_words(df):
 def load_data(path_to_df):
 
     df = pd.read_pickle(path_to_df)
-    df = df.loc[(df.SoftwareJob == 'Yes') | (df.SoftwareJob == 'None')]
+    # try:
+    #     df = df.loc[(df.SoftwareJob == 'Yes') | (df.SoftwareJob == 'None')]
+    # except TypeError:
+    #     pass
     return df
 
 
@@ -137,7 +140,7 @@ def check_if_research_software(df, cleaner):
     return df
 
 
-def prepare_labels(df):
+def prepare_labels(df, column):
 
     y = df[column]
     if len(set(y)) > 2:
@@ -190,7 +193,7 @@ def feature_union():
 
 def get_train_data(prediction_field):
 
-    path_to_df = './data/training_set.pk1'
+    path_to_df = './data/training_set/training_set.pkl'
     df = load_data(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)

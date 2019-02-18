@@ -103,15 +103,15 @@ class ConfigDevModel(ConfigHome):
     """
     Config for testing different modelling without modifying any existing db
     """
-    DB_NAME = "jobsDevModel"
+    # DB_NAME = "jobsDevModel"
 
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
     # Boolean to decide if it redo the prediction
-    # relaunch_prediction = True
+    relaunch_model = True
 
     # Decide to record or not the prediction in the database
-    # record_prediction = True
+    record_prediction = False
 
     # Prediction field
     prediction_field = 'final_bool'
