@@ -31,7 +31,7 @@ logger = logger(name='prediction_run', stream_level='DEBUG')
 def record_information(prediction_field, best_model_name, best_model_params,
                        final_model, feature_model,
                        y_test, y_pred, y_proba,
-                       folder='../../outputs/dataPrediction/'):
+                       folder='../../outputs/dataPrediction/prediction/'):
 
     print(y_test)
     np.save('{}{}/{}'.format(folder, prediction_field, 'y_test'), y_test)
@@ -70,7 +70,7 @@ def get_model(relaunch, prediction_field):
         X_train, X_test, y_train, y_test, features = get_train_data(prediction_field)
         X_train = features.fit_transform(X_train)
 
-        best_model_name, best_model_params, final_model = nested_cross_validation(X_train, y_train, nbr_folds=2)
+        best_model_name, best_model_params, final_model = nested_cross_validation(X_train, y_train, nbr_folds=10)
 
         X_test = features.transform(X_test)
         y_pred = final_model.predict(X_test)

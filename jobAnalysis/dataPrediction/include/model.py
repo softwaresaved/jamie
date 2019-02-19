@@ -165,7 +165,11 @@ def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPredict
                                                 key=(lambda name_averagescore: name_averagescore[1]))
 
     # get the best model and its associated parameter grid
-    best_model, best_model_params = models[best_model_name]['model'], models[best_model_name]['params']
+
+    try:
+        best_model, best_model_params = models[best_model_name]['model'], models[best_model_name]['params']
+    except KeyError: ## In case the model doesnt have parameters
+        best_model, best_model_params = models[best_model_name]['model'], None
 
     # now we refit this best model on the whole dataset so that we can start
     # making predictions on other data, and now we have a reliable estimate of
