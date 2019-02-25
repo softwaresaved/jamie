@@ -72,17 +72,21 @@ def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPredict
               #        },
 
               'Gradient Boosting': {'model': GradientBoostingClassifier(),
-                                    'params': {'n_estimators': [100],
-                                               # 'min_samples_leaf': [7, 9, 13],
-                                               # 'max_depth': [4, 5, 6, 7],
-                                               # 'max_features': [100, 150, 250],
-                                               # 'learn_rate': [0.05, 0.02, 0.01]
+
+                                    'params': {
+                                             "learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
+                                             "min_samples_split": np.linspace(0.1, 0.5, 12),
+                                             "min_samples_leaf": np.linspace(0.1, 0.5, 12),
+                                             "max_depth":[3,5,8],
+                                             "max_features":["log2","sqrt"],
+                                             "criterion": ["friedman_mse",  "mae"],
+                                             "subsample":[0.5, 0.618, 0.8, 0.85, 0.9, 0.95, 1.0],
                                                },
                                     'matrix': 'sparse'
-                                   },
-              'RandomForest': {'model': RandomForestClassifier(),
-                               'matrix': 'sparse'
-                              },
+                                   }
+              # 'RandomForest': {'model': RandomForestClassifier(),
+              #                  'matrix': 'sparse'
+              #                 },
               }
 
     # Create the outer_cv with 3 folds for estimating generalization error
@@ -120,10 +124,7 @@ def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPredict
 
         # print(estimator.get_params().keys())
 
-        try:
-            params = models[name]['params']
-        except KeyError:
-            params = None
+        params = models[name]['params']
         # print(name, estimator, params)
         # if models[name]['matrix'] == 'dense':
         #     X = X.toarray()
@@ -175,7 +176,10 @@ def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPredict
     # making predictions on other data, and now we have a reliable estimate of
     # this model's generalization error and we are confident this is the best model
     # among the ones we have tried
-    final_model = GridSearchCV(best_model, best_model_params, cv=inner_cv, n_jobs=-1)
+    if best_model_params:
+        final_model = GridSearchCV(best_model, best_model_params, cv=inner_cv, n_jobs=-1)
+    else:
+        final_model = GridSearchCV(best_model, cv=inner_cv, n_jobs=-1)
     try:
         final_model.fit(X, y)
     except ValueError:
