@@ -108,7 +108,7 @@ class ConfigDevModel(ConfigHome):
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
     # Boolean to decide if it redo the prediction
-    relaunch_model = True
+    relaunch_model = False
 
     # Decide to record or not the prediction in the database
     record_prediction = False

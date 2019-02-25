@@ -28,19 +28,18 @@ logger = logger(name='prediction_run', stream_level='DEBUG')
 
 
 
-def record_information(prediction_field, best_model_name, best_model_params,
+def record_information(prediction_field, best_model_params,
                        final_model, feature_model,
                        y_test, y_pred, y_proba,
                        folder='../../outputs/dataPrediction/prediction/'):
 
-    print(y_test)
+    logger.info('Record the model information')
     np.save('{}{}/{}'.format(folder, prediction_field, 'y_test'), y_test)
-    print(y_pred)
-    np.save('{}{}/()'.format(folder, prediction_field, 'y_pred'), y_pred)
-    print(y_proba)
+    np.save('{}{}/{}'.format(folder, prediction_field, 'y_pred'), y_pred)
     np.save('{}{}/{}'.format(folder, prediction_field, 'y_proba'), y_proba)
-    print(best_model_params)
 
+    with open('{}{}/{}'.format(folder, prediction_field, 'best_model_params.json'), 'w') as f:
+        json.dump(best_model_params, f)
 
 def record_model(prediction_field, model, features, folder='../../outputs/dataPrediction/prediction/'):
     """
@@ -58,9 +57,7 @@ def load_model(prediction_field, folder='../../outputs/dataPrediction/prediction
 def load_info_model(prediction_field, folder='../../outputs/dataPrediction/prediction/'):
     with open('{}{}/{}'.format(folder, prediction_field, 'best_model_params.json')) as handle:
         best_model_params = json.loads(handle.read())
-    with open('{}{}/{}'.format(folder, prediction_field, 'best_model_name.txt', 'r')) as f:
-        best_model_name = f.readline().strip()
-    return best_model_name, best_model_params
+    return best_model_params
 
 
 def get_model(relaunch, prediction_field):
@@ -82,7 +79,8 @@ def get_model(relaunch, prediction_field):
 
     elif relaunch is False:
         features, final_model = load_model(prediction_field)
-        best_model_name, best_model_params = load_info_model(prediction_field)
+        # best_model_name, best_model_params = load_info_model(prediction_field)
+        best_model_params, best_model_name = final_model.best_params_, None
 
     else:
         raise('Not a proper command argument')
@@ -141,7 +139,7 @@ def main():
     config_values = arguments.return_arguments()
     prediction_field = config_values.prediction_field
     logger.info('Starting the predictions')
-    final_model, features, best_model_name, best_model_params = get_model(config_values.relaunch_model, prediction_field)
+    final_model, features, best_model_params = get_model(config_values.relaunch_model, prediction_field)
     if config_values.record_prediction is True:
         final_count = dict()
         db_conn = connectMongo(config_values)
@@ -154,7 +152,7 @@ def main():
                 to_record = str(prediction[0])
             final_count[to_record] = final_count.get(to_record, 0)+1
 
-            record_prediction(db_conn, prediction_field, prediction, predic_proba, job_id, _id, best_model_name, best_model_params)
+            record_prediction(db_conn, prediction_field, prediction, predic_proba, job_id, _id, best_model_params)
 
         logger.info('Summary of prediction for new jobs')
         for k in final_count:

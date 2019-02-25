@@ -185,7 +185,11 @@ def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPredict
     except ValueError:
         final_model.fit(X.toarray(), y)
 
+    # Add the best model name in the best_model_params
+    best_params = final_model.best_params_
+    best_params['name'] = best_model_name
     # return best_model, best_model_params
-    return best_model_name, final_model.best_params_, final_model
+
+    return final_model.best_params_, final_model
 
 
