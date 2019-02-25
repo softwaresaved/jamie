@@ -111,7 +111,7 @@ class ConfigDevModel(ConfigHome):
     relaunch_model = False
 
     # Decide to record or not the prediction in the database
-    record_prediction = False
+    record_prediction = True
 
     # Prediction field
     prediction_field = 'final_bool'

@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 # warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
 
 
-def record_result_csv(df, name_folds, folder):
+def record_result_csv(df, name_folds, folder, prediction_field):
     """
     Record the result of each outer_cv loop into a panda df and
     then record it into a csv.
@@ -33,7 +33,7 @@ def record_result_csv(df, name_folds, folder):
     of overwritting it.
     The name is based on the method to folds and just write the different models unders
     """
-    filename = folder + 'average_scores_' + name_folds+ '.csv'
+    filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
     if os.path.isfile(filename):
         df_to_append = pd.read_csv(filename, index_col=0)
         df_to_append = df_to_append.append(df)
@@ -41,7 +41,7 @@ def record_result_csv(df, name_folds, folder):
     else:
         df.to_csv(filename)
 
-def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPrediction/'):
+def nested_cross_validation(X, y, prediction_field, nbr_folds=5,folder='../../outputs/dataPrediction/prediction/'):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
@@ -157,7 +157,7 @@ def nested_cross_validation(X, y, nbr_folds=5, folder='../../outputs/dataPredict
 
 
 
-    record_result_csv(score_for_outer_cv, name_outer_cv, folder)
+    record_result_csv(score_for_outer_cv, name_outer_cv, folderi, prediction_field)
     print('Average score across the outer folds: ', average_scores_across_outer_folds_for_each_model)
     many_stars = '\n' + '*' * 100 + '\n'
     print(many_stars + 'Fitting the model on the training set Complete summary of the best model' + many_stars)

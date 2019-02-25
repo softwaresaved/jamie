@@ -67,25 +67,24 @@ def get_model(relaunch, prediction_field):
         X_train, X_test, y_train, y_test, features = get_train_data(prediction_field)
         X_train = features.fit_transform(X_train)
 
-        best_model_name, best_model_params, final_model = nested_cross_validation(X_train, y_train, nbr_folds=2)
+        best_model_params, final_model = nested_cross_validation(X_train, y_train, nbr_folds=2)
 
         X_test = features.transform(X_test)
         y_pred = final_model.predict(X_test)
         y_proba = final_model.predict_proba(X_test)
 
         record_model(prediction_field, final_model, features)
-        record_information(prediction_field, best_model_name, best_model_params, final_model, features,
+        record_information(prediction_field, best_model_params, final_model, features,
                            y_test, y_pred, y_proba)
 
     elif relaunch is False:
         features, final_model = load_model(prediction_field)
-        # best_model_name, best_model_params = load_info_model(prediction_field)
-        best_model_params, best_model_name = final_model.best_params_, None
+        best_model_params = load_info_model(prediction_field)
 
     else:
         raise('Not a proper command argument')
 
-    return final_model, features, best_model_name, best_model_params
+    return final_model, features, best_model_params
 
 
 def predicting(db_conn, prediction_field, features, model, relaunch):
@@ -109,7 +108,7 @@ def predicting(db_conn, prediction_field, features, model, relaunch):
         yield jobid, prediction, predic_proba, _id
 
 
-def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _id, model_name, model_best_params):
+def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _id, model_best_params):
     """
     """
     if jobid is None:
@@ -123,8 +122,7 @@ def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _i
         pred_proba = float(predict_proba[0][0])
 
     db['prediction'].update({'jobid': jobid,
-                              'model': model_name},
-                            # 'params': model_best_params},
+                            'params': model_best_params},
                              {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}},
                             upsert=True)
     db['jobs'].update({'_id': _id}, {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}})
@@ -143,8 +141,8 @@ def main():
     if config_values.record_prediction is True:
         final_count = dict()
         db_conn = connectMongo(config_values)
-        db_conn[prediction_field].create_index('jobid', unique=True)
-        db_conn[prediction_field].create_index('prediction_{}'.format(prediction_field), unique=False)
+        db_conn['predictions'].create_index('jobid', unique=False)
+        db_conn['predictions'].create_index('{}'.format(prediction_field), unique=False)
         for job_id, prediction, predic_proba, _id in predicting(db_conn, prediction_field, features, final_model, config_values.relaunch_prediction):
             if prediction == None:
                 to_record = 'None'
