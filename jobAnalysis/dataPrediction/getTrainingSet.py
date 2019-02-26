@@ -98,8 +98,8 @@ def get_training_set(db, collection, *args, **kwargs):
     """
     """
     df = pd.DataFrame.from_dict(list(get_documents(db, collection, *args, **kwargs)))
-    df.to_csv('./data/training_set/training_set.csv'
-    path_to_df = './data/training_set/training_set.pk1'
+    df.to_csv('./data/training_set/training_set.csv')
+    path_to_df = './data/training_set/training_set.pkl'
     df.to_pickle(path_to_df)
     return df
 

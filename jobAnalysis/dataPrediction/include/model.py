@@ -157,7 +157,7 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5,folder='../../ou
 
 
 
-    record_result_csv(score_for_outer_cv, name_outer_cv, folderi, prediction_field)
+    record_result_csv(score_for_outer_cv, name_outer_cv, folder, prediction_field)
     print('Average score across the outer folds: ', average_scores_across_outer_folds_for_each_model)
     many_stars = '\n' + '*' * 100 + '\n'
     print(many_stars + 'Fitting the model on the training set Complete summary of the best model' + many_stars)

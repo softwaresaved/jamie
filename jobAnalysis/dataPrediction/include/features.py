@@ -140,9 +140,13 @@ def check_if_research_software(df, cleaner):
     return df
 
 
-def prepare_labels(df, column):
+def prepare_labels(df, column, binary):
 
-    y = df[column]
+    if binary == True:
+        y = df[(df[column] == 0) | (df[column] == 1)][column]
+    else:
+        y = df[column]
+
     if len(set(y)) > 2:
         lb = MultiLabelBinarizer()
         # raise('Not implemented yet')
@@ -191,9 +195,9 @@ def feature_union():
     # return X
 
 
-def get_train_data(prediction_field):
+def get_train_data(prediction_field, binary=True):
 
-    path_to_df = './data/training_set/training_set.pkl'
+    path_to_df = './data/training_set/training_set_mod.pkl'
     df = load_data(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)
@@ -201,10 +205,16 @@ def get_train_data(prediction_field):
     cleaner = textClean(remove_stop=False)
     df = check_if_research_software(df, cleaner)
 
+    column_pred_field = '{}_tags'.format(prediction_field)
     # job_ids = df['jobid']
-    y = prepare_labels(df, column=prediction_field)
+    y = prepare_labels(df, column=column_pred_field, binary=binary)
     features = feature_union()
-    X = df[['description', 'job_title']]
+    if binary == True:
+        X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title']]
+
+    else:
+        X = df[['description', 'job_title']]
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y)
     return X_train, X_test, y_train, y_test, features
 
