@@ -67,7 +67,7 @@ def get_model(relaunch, prediction_field):
         X_train, X_test, y_train, y_test, features = get_train_data(prediction_field)
         X_train = features.fit_transform(X_train)
 
-        best_model_params, final_model = nested_cross_validation(X_train, y_train, prediction_field, nbr_folds=2)
+        best_model_params, final_model = nested_cross_validation(X_train, y_train, prediction_field, nbr_folds=5)
 
         X_test = features.transform(X_test)
         y_pred = final_model.predict(X_test)
@@ -121,10 +121,10 @@ def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _i
 
         pred_proba = float(predict_proba[0][0])
 
-    db['prediction'].update({'jobid': jobid,
-                            'params': model_best_params},
-                             {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}},
-                            upsert=True)
+    # db['predictions'].update({'jobid': jobid,
+    #                         'params': model_best_params},
+    #                          {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}},
+    #                         upsert=True)
     db['jobs'].update({'_id': _id}, {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}})
     return pred_int
 
