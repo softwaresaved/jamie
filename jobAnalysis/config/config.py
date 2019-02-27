@@ -114,7 +114,8 @@ class ConfigDevModel(ConfigHome):
     record_prediction = True
 
     # Prediction field
-    prediction_field = 'final_bool'
+    # prediction_field = 'final_bool'
+    prediction_field = 'original'
 
 
 class ConfigSoton(Config):

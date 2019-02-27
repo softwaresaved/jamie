@@ -144,6 +144,7 @@ def prepare_labels(df, column, binary):
 
     if binary == True:
         y = df[(df[column] == 0) | (df[column] == 1)][column]
+        y = y.astype(np.float64)
     else:
         y = df[column]
 
@@ -185,10 +186,10 @@ def feature_union():
                                             ('scaler', StandardScaler()),
                                         ])),
 
-                                        # ('research_software', Pipeline([ ('selector', IntSelector('research_software')),
-                                        #     # ('labeler', LabelEncoder()),
-                                        #     ('encoder', OneHotEncoder())
-                                        # ]))
+                                        ('research_software', Pipeline([ ('selector', IntSelector('research_software')),
+                                            # ('labeler', LabelEncoder()),
+                                            ('encoder', OneHotEncoder())
+                                        ]))
                             # ])),
                         ])
     # X = transformer.fit_transform(df)
@@ -197,7 +198,7 @@ def feature_union():
 
 def get_train_data(prediction_field, binary=True):
 
-    path_to_df = './data/training_set/training_set_mod.pkl'
+    path_to_df = './data/training_set/training_set.pkl'
     df = load_data(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)
@@ -210,10 +211,10 @@ def get_train_data(prediction_field, binary=True):
     y = prepare_labels(df, column=column_pred_field, binary=binary)
     features = feature_union()
     if binary == True:
-        X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title']]
+        X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title', 'research_software']]
 
     else:
-        X = df[['description', 'job_title']]
+        X = df[['description', 'job_title', 'research_software']]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y)
     return X_train, X_test, y_train, y_test, features
