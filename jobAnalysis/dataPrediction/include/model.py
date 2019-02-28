@@ -33,13 +33,13 @@ def record_result_csv(df, name_folds, folder, prediction_field):
     of overwritting it.
     The name is based on the method to folds and just write the different models unders
     """
-    filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
-    if os.path.isfile(filename):
-        df_to_append = pd.read_csv(filename, index_col=0)
-        df_to_append = df_to_append.append(df)
-        df_to_append.to_csv(filename)
-    else:
-        df.to_csv(filename)
+    # filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
+    # if os.path.isfile(filename):
+    #     df_to_append = pd.read_csv(filename, index_col=0)
+    #     df_to_append = df_to_append.append(df)
+    #     df_to_append.to_csv(filename)
+    # else:
+    df.to_csv(filename)
 
 def nested_cross_validation(X, y, prediction_field, nbr_folds=5,folder='../../outputs/dataPrediction/prediction/'):
     """

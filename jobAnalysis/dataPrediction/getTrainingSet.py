@@ -269,13 +269,12 @@ def transform_df(df):
     df['tag_count'] = df[tags.columns].count(axis=1)
     # Drop rows that have only one tag
     df = df[df['tag_count'] > 1]
-    df['agg_tag'] = df.loc[:, ['tags_1', 'tags_2', 'tags_3']].apply(calculate_score, axis=1)
-    df['agg_created_tag'] = df['agg_tag'].apply(lambda x: 1 if abs(x)>=.5 and abs(x) < 10 else 0)
-    df['new_tag_agg'] = df.loc[:, 'agg_tag'].apply(new_tag_agg)
-    df['previous_tags'] = df.loc[:, ['tags_1', 'tags_2', 'tags_3', 'run_tag']].apply(previous_tags, axis=1)
-    df['new_tags'] = df.loc[:, ['tags_1', 'tags_2', 'tags_3']].apply(new_tags, axis=1)
-    df['final_bool_tags'] = np.where((abs(df['agg_tag'])>=0.5) & (abs(df['agg_tag'])< 10), 1, 0)
-    df['original_tags'] = df.loc[:, ['previous_tags', 'prediction']].apply(corresponding_prev_train, axis=1)
+    df['agg_tags'] = df.loc[:, ['tags_1', 'tags_2', 'tags_3']].apply(calculate_score, axis=1)
+    df['aggregate_tags'] = df['agg_tags'].apply(lambda x: 1 if abs(x)>=.5 and abs(x) < 10 else 0)
+    df['multi_agg_tags'] = df.loc[:, 'agg_tags'].apply(new_tag_agg)
+    df['consensus_tags'] = df.loc[:, ['tags_1', 'tags_2', 'tags_3', 'run_tag']].apply(previous_tags, axis=1)
+    df['diff_consensus_tags'] = df.loc[:, ['tags_1', 'tags_2', 'tags_3']].apply(new_tags, axis=1)
+    # df['corresponding_prev_tags'] = df.loc[:, ['consensus_tags', 'prediction']].apply(corresponding_prev_train, axis=1)
 
     return df
 
