@@ -136,6 +136,12 @@ def main():
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
     prediction_field = config_values.prediction_field
+
+    # Create the folder if not existing
+    directory = '../../outputs/dataPrediction/prediction/{}/'.format(prediction_field)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     logger.info('Starting the predictions')
     final_model, features, best_model_params = get_model(config_values.relaunch_model, prediction_field)
     if config_values.record_prediction is True:
