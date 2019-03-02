@@ -147,8 +147,6 @@ def main():
     if config_values.record_prediction is True:
         final_count = dict()
         db_conn = connectMongo(config_values)
-        db_conn['predictions'].create_index('jobid', unique=False)
-        db_conn['predictions'].create_index('{}'.format(prediction_field), unique=False)
         for job_id, prediction, predic_proba, _id in predicting(db_conn, prediction_field, features, final_model, config_values.relaunch_prediction):
             if prediction == None:
                 to_record = 'None'
