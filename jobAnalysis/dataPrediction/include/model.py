@@ -67,9 +67,9 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5,folder='../../ou
                        'matrix': 'sparse'
                       },
 
-              # 'NB' : {'model': GaussianNB(),
-              #         'matrix': 'sparse'
-              #        },
+               'NB' : {'model': GaussianNB(),
+                       'matrix': 'sparse'
+                      },
 
               'Gradient Boosting': {'model': GradientBoostingClassifier(),
 
@@ -84,9 +84,9 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5,folder='../../ou
                                                },
                                     'matrix': 'sparse'
                                    }
-              # 'RandomForest': {'model': RandomForestClassifier(),
-              #                  'matrix': 'sparse'
-              #                 },
+               'RandomForest': {'model': RandomForestClassifier(),
+                                'matrix': 'sparse'
+                               },
               }
 
     # Create the outer_cv with 3 folds for estimating generalization error
