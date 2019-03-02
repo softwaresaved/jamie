@@ -136,13 +136,17 @@ def main():
     arguments = getArgs(description)
     config_values = arguments.return_arguments()
     prediction_field = config_values.prediction_field
+
+    # Create the folder if not existing
+    directory = '../../outputs/dataPrediction/prediction/{}/'.format(prediction_field)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     logger.info('Starting the predictions')
     final_model, features, best_model_params = get_model(config_values.relaunch_model, prediction_field)
     if config_values.record_prediction is True:
         final_count = dict()
         db_conn = connectMongo(config_values)
-        db_conn['predictions'].create_index('jobid', unique=False)
-        db_conn['predictions'].create_index('{}'.format(prediction_field), unique=False)
         for job_id, prediction, predic_proba, _id in predicting(db_conn, prediction_field, features, final_model, config_values.relaunch_prediction):
             if prediction == None:
                 to_record = 'None'
