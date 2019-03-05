@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__: 'Olivier Philippe'
+# __author__: 'Olivier Philippe'
 
 
 """
@@ -186,10 +186,10 @@ def feature_union():
                                             ('scaler', StandardScaler()),
                                         ])),
 
-                                        ('research_software', Pipeline([ ('selector', IntSelector('research_software')),
-                                            # ('labeler', LabelEncoder()),
-                                            ('encoder', OneHotEncoder())
-                                        ]))
+                                        # ('research_software', Pipeline([ ('selector', IntSelector('research_software')),
+                                        #     # ('labeler', LabelEncoder()),
+                                        #     ('encoder', OneHotEncoder())
+                                        # ]))
                             # ])),
                         ])
     # X = transformer.fit_transform(df)

@@ -133,14 +133,15 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
             estimator = GridSearchCV(estimator,
                                      param_grid=params,
                                      cv=inner_cv,
-                                     scoring='precision',
+                                     scoring='precision_micro',
                                      n_jobs=-1)
 
         # estimate generalization error on the K-fold splits of the data
         scores_across_outer_folds = cross_val_score(estimator,
                                                     X, y,
                                                     cv=outer_cv,
-                                                    scoring='precision',
+                                                    scoring='precision_micro',
+                                                    # scoring='precision',
                                                     n_jobs=-1)
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type

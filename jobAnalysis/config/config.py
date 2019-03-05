@@ -114,8 +114,8 @@ class ConfigDevModel(ConfigHome):
     record_prediction = True
 
     # Prediction field
-    prediction_field = 'aggregate'
-    # prediction_field = 'consensus'
+    # prediction_field = 'aggregate'
+    prediction_field = 'consensus'
 
 
 class ConfigSoton(Config):
