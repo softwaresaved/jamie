@@ -27,7 +27,6 @@ from common.getConnection import connectMongo
 logger = logger(name='prediction_run', stream_level='DEBUG')
 
 
-
 def record_information(prediction_field, best_model_params,
                        final_model, feature_model,
                        y_test, y_pred, y_proba,
@@ -40,6 +39,7 @@ def record_information(prediction_field, best_model_params,
 
     with open('{}{}/{}'.format(folder, prediction_field, 'best_model_params.json'), 'w') as f:
         json.dump(best_model_params, f)
+
 
 def record_model(prediction_field, model, features, folder='../../outputs/dataPrediction/prediction/'):
     """
@@ -87,48 +87,6 @@ def get_model(relaunch, prediction_field):
     return final_model, features, best_model_params
 
 
-def predicting(db_conn, prediction_field, features, model, relaunch):
-    predicting_field = 'prediction_{}'.format(prediction_field)
-    if relaunch is True:
-        search = {}
-    else:
-        search = {prediction_field: {'$exists': False}}
-    for doc in db_conn['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
-        _id = doc['_id']
-        jobid = doc['jobid']
-        try:
-            df = pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
-            X_to_predict = features.transform(df)
-            prediction = model.predict(X_to_predict)
-            predic_proba = model.predict_proba(X_to_predict)
-        except KeyError:
-            prediction = None
-            predic_proba = None
-
-        yield jobid, prediction, predic_proba, _id
-
-
-def record_prediction(db, prediction_field, prediction, predict_proba, jobid, _id, model_best_params):
-    """
-    """
-    if jobid is None:
-        return
-    if prediction is None:
-        pred_int = 'None'
-        pred_proba = 'None'
-    else:
-        pred_int = int(prediction[0])
-
-        pred_proba = float(predict_proba[0][0])
-
-    # db['predictions'].update({'jobid': jobid,
-    #                         'params': model_best_params},
-    #                          {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}},
-    #                         upsert=True)
-    db['jobs'].update({'_id': _id}, {'$set': {prediction_field: pred_int, '{}_proba'.format(prediction_field): pred_proba}})
-    return pred_int
-
-
 def main():
 
     description = 'Launch prediction modelling of jobs ads'
@@ -145,21 +103,14 @@ def main():
     logger.info('Starting the predictions')
     final_model, features, best_model_params = get_model(config_values.relaunch_model, prediction_field)
     if config_values.record_prediction is True:
+        from include.predicting import Predict
+        predict = Predict(config_values, prediction_field, features, final_model, config_values.relaunch)
+        predict.run()
         final_count = dict()
-        db_conn = connectMongo(config_values)
-        for job_id, prediction, predic_proba, _id in predicting(db_conn, prediction_field, features, final_model, config_values.relaunch_prediction):
-            if prediction == None:
-                to_record = 'None'
-            else:
-                to_record = str(prediction[0])
-            final_count[to_record] = final_count.get(to_record, 0)+1
-
-            record_prediction(db_conn, prediction_field, prediction, predic_proba, job_id, _id, best_model_params)
 
         logger.info('Summary of prediction for new jobs')
         for k in final_count:
             logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
-
 
 
 if __name__ == "__main__":

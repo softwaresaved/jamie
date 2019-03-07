@@ -167,12 +167,12 @@ def feature_union():
     """
     return FeatureUnion(n_jobs=1, transformer_list=[
                                         ('description', Pipeline([('selector', TextSelector('description')),
-                                                        ('tfidf', TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english'))
+                                                        ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2', ngram_range=(1, 2), stop_words='english'))
                                         ])),
 
                                         ('job_title', Pipeline([('selector',
                                                                    TextSelector('job_title')),
-                                                        ('tfidf', TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', ngram_range=(1, 2), stop_words='english'))
+                                                        ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2', ngram_range=(1, 2), stop_words='english'))
                                         ])),
                                        # ('num_terms_int', Pipeline([('selector', IntSelector('number_terms')),
                                        #                              ('scaler', StandardScaler()),
