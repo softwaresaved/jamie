@@ -8,7 +8,11 @@ import pandas as pd
 import numpy as np
 
 
-from sklearn.pipeline import Pipeline
+# from sklearn.pipeline import Pipeline
+
+from imblearn.pipeline import Pipeline
+
+from imblearn.over_sampling import SMOTE  # or: import RandomOverSampler
 
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
@@ -20,10 +24,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
 from sklearn.model_selection import train_test_split
 
-# import sklearn.exceptions
-# import warnings
-# warnings.filterwarnings('ignore', category=sklearn.exceptions.UndefinedMetricWarning)
-
 
 def record_result_csv(df, name_folds, folder, prediction_field):
     """
@@ -34,11 +34,6 @@ def record_result_csv(df, name_folds, folder, prediction_field):
     The name is based on the method to folds and just write the different models unders
     """
     filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
-    # if os.path.isfile(filename):
-    #     df_to_append = pd.read_csv(filename, index_col=0)
-    #     df_to_append = df_to_append.append(df)
-    #     df_to_append.to_csv(filename)
-    # else:
     df.to_csv(filename)
 
 def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../outputs/dataPrediction/prediction/'):
@@ -50,22 +45,22 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
     gamma_params = 10. ** np.arange(-5, 4)
 
     models = {'SVC': {'model': SVC(probability=True),
-                      'params': [{'C': c_params,
-                                  'gamma': gamma_params,
-                                  'kernel': ['rbf'],
-                                  'class_weight': ['balanced', None]
+                      'params': [{'clf__C': c_params,
+                                  'clf__gamma': gamma_params,
+                                  'clf__kernel': ['rbf'],
+                                  'clf__class_weight': ['balanced', None]
                                  },
-                                 {'C': c_params,
-                                  'kernel': ['linear']
+                                 {'clf__C': c_params,
+                                  'clf__kernel': ['linear']
                                  }
                                 ],
                       'matrix': 'sparse'
                      },
 
-              'CART': {'model': DecisionTreeClassifier(),
-                       'params': [{'max_depth': range(3, 20)}],
-                       'matrix': 'sparse'
-                      },
+              # 'CART': {'model': DecisionTreeClassifier(),
+              #          'params': [{'clf__max_depth': range(3, 20)}],
+              #          'matrix': 'sparse'
+              #         },
 
               # 'NB' : {'model': GaussianNB(),
               #         'matrix': 'sparse'
@@ -74,13 +69,13 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
               'Gradient Boosting': {'model': GradientBoostingClassifier(),
 
                                     'params': {
-                                             "learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
-                                             "min_samples_split": np.linspace(0.1, 0.5, 12),
-                                             "min_samples_leaf": np.linspace(0.1, 0.5, 12),
-                                             "max_depth":[3,5,8],
-                                             "max_features":["log2","sqrt"],
-                                             "criterion": ["friedman_mse",  "mae"],
-                                             "subsample":[0.5, 0.618, 0.8, 0.85, 0.9, 0.95, 1.0],
+                                             "clf__learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
+                                             "clf__min_samples_split": np.linspace(0.1, 0.5, 12),
+                                             "clf__min_samples_leaf": np.linspace(0.1, 0.5, 12),
+                                             "clf__max_depth":[3,5,8],
+                                             "clf__max_features":["log2","sqrt"],
+                                             "clf__criterion": ["friedman_mse",  "mae"],
+                                             "clf__subsample":[0.5, 0.618, 0.8, 0.85, 0.9, 0.95, 1.0],
                                                },
                                     'matrix': 'sparse'
                                    }
@@ -119,7 +114,7 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
     average_scores_across_outer_folds_for_each_model = dict()
     # Get the average of the scores for the {nbr_fold} folds
     for i, name in enumerate(models):
-        estimator = models[name]['model']
+        estimator = Pipeline([('sampling', SMOTE()), ('clf', models[name]['model'])])
         # estimator = Pipeline([('features', features), ('clf', model)])
 
         # print(estimator.get_params().keys())
@@ -133,16 +128,17 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
             estimator = GridSearchCV(estimator,
                                      param_grid=params,
                                      cv=inner_cv,
-                                     scoring='precision_micro',
-                                     n_jobs=-1)
+                                     scoring='balanced_accuracy',
+                                     n_jobs=1)
 
         # estimate generalization error on the K-fold splits of the data
         scores_across_outer_folds = cross_val_score(estimator,
                                                     X, y,
                                                     cv=outer_cv,
-                                                    scoring='precision_micro',
+                                                    scoring='balanced_accuracy',
+                                                    # scoring='precision_micro',
                                                     # scoring='precision',
-                                                    n_jobs=-1)
+                                                    n_jobs=1)
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
         score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
