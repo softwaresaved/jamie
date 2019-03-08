@@ -78,7 +78,7 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
                                              "clf__subsample":[0.5, 0.618, 0.8, 0.85, 0.9, 0.95, 1.0],
                                                },
                                     'matrix': 'sparse'
-                                   }
+                                   },
                'RandomForest': {'model': RandomForestClassifier(),
                                 'matrix': 'sparse'
                                },

@@ -22,7 +22,6 @@ from sklearn.externals import joblib
 
 from common.logger import logger
 from common.getArgs import getArgs
-from common.getConnection import connectMongo
 
 logger = logger(name='prediction_run', stream_level='DEBUG')
 
@@ -60,14 +59,14 @@ def load_info_model(prediction_field, folder='../../outputs/dataPrediction/predi
     return best_model_params
 
 
-def get_model(relaunch, prediction_field):
+def get_model(relaunch, nb_folds, prediction_field):
 
     if relaunch is True:
 
         X_train, X_test, y_train, y_test, features = get_train_data(prediction_field)
         X_train = features.fit_transform(X_train)
 
-        best_model_params, final_model = nested_cross_validation(X_train, y_train, prediction_field, nbr_folds=2)
+        best_model_params, final_model = nested_cross_validation(X_train, y_train, prediction_field, nbr_folds=nbr_folds)
 
         X_test = features.transform(X_test)
         y_pred = final_model.predict(X_test)
@@ -101,7 +100,7 @@ def main():
         os.makedirs(directory)
 
     logger.info('Starting the predictions')
-    final_model, features, best_model_params = get_model(config_values.relaunch_model, prediction_field)
+    final_model, features, best_model_params = get_model(config_values.relaunch_model, config_values.k_fold, prediction_field)
     if config_values.record_prediction is True:
         from include.predicting import Predict
         predict = Predict(config_values, prediction_field, features, final_model, config_values.relaunch)

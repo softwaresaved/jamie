@@ -83,6 +83,7 @@ class Config:
 
     # If the key is reset for all the records for include in study or not
     relaunch_include = True
+    k_fold = 2
 
 
 class ConfigHome(Config):
@@ -111,7 +112,7 @@ class ConfigDevModel(ConfigHome):
     relaunch_model = True
 
     # Decide to record or not the prediction in the database
-    record_prediction = True
+    record_prediction = False
 
     # Prediction field
     # prediction_field = 'aggregate'
@@ -128,3 +129,25 @@ class ConfigSoton(Config):
     SAMPLE_OUT_FOLDER = "/disk/ssi-data0/home/deploy/jobs-data-etl/JobAdverts/Jobs4Bob"
 
     DB_ACCESS_FILE = "/disk/ssi-data0/home/deploy/jobs-data-etl/.access"
+    k_fold = 5
+
+
+class ConfigIridis(Config)
+
+    """
+    """
+
+    # Boolean to decide if it redo the prediction
+    relaunch_model = True
+
+    # Decide to record or not the prediction in the database
+    record_prediction = False
+
+    # Prediction field
+    # prediction_field = 'aggregate'
+    prediction_field = 'consensus'
+    k_fold = 100
+
+class ConfigIridis2(ConfigIridis):
+    prediction_filed = 'aggregate'
+    k_fold = 100
