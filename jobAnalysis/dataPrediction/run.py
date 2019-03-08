@@ -59,7 +59,7 @@ def load_info_model(prediction_field, folder='../../outputs/dataPrediction/predi
     return best_model_params
 
 
-def get_model(relaunch, nb_folds, prediction_field):
+def get_model(relaunch, nbr_folds, prediction_field):
 
     if relaunch is True:
 

@@ -115,8 +115,8 @@ class ConfigDevModel(ConfigHome):
     record_prediction = False
 
     # Prediction field
-    # prediction_field = 'aggregate'
-    prediction_field = 'consensus'
+    prediction_field = 'aggregate'
+    # prediction_field = 'consensus'
 
 
 class ConfigSoton(Config):
@@ -132,7 +132,7 @@ class ConfigSoton(Config):
     k_fold = 5
 
 
-class ConfigIridis(Config)
+class ConfigIridis(Config):
 
     """
     """

@@ -281,8 +281,8 @@ def transform_df(df):
 
 def save_df(df):
     # df.to_csv('./data/training_set/training_set.csv')
-    path_to_df = './data/training_set/training_set.pkl'
-    df.to_pickle(path_to_df)
+    path_to_df = './data/training_set/training_set.csv'
+    df.to_csv(path_to_df)
 
 
 if __name__ == "__main__":
