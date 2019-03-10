@@ -66,6 +66,9 @@ class Config:
     # Prediction field
     prediction_field = 'original'
 
+    # Oversampling
+    oversampling = False
+
     # What are the requirements to be included in the study. It follows the model of MongoDB search
     # and it is used in the script include_in_study.py to add the appropriate key
     include_in_study = {'extra_location': {'$in' : ["Northern England",
@@ -143,11 +146,21 @@ class ConfigIridis(Config):
     # Decide to record or not the prediction in the database
     record_prediction = False
 
-    # Prediction field
-    # prediction_field = 'aggregate'
     prediction_field = 'consensus'
-    k_fold = 100
+    k_fold = 10
+    oversampling = False
 
 class ConfigIridis2(ConfigIridis):
+    prediction_filed = 'consensus'
+    oversampling = True
+
+
+class ConfigIridis3(ConfigIridis):
+
     prediction_filed = 'aggregate'
-    k_fold = 100
+    oversampling = False
+
+class ConfigIridis4(ConfigIridis):
+
+    prediction_filed = 'aggregate'
+    oversampling = True

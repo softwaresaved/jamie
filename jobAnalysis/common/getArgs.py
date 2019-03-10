@@ -10,7 +10,7 @@ import argparse
 import config.config as config
 
 # List of valid arguments for the parser in each scripts whe argparse is called
-valid_arguments = ['home', 'ssi', 'model_test', 'iridis', 'iridis2']
+valid_arguments = ['home', 'ssi', 'model_test', 'iridis', 'iridis2', 'iridis3', 'iridis4']
 
 class getArgs:
     """
@@ -50,6 +50,12 @@ class getArgs:
 
         elif args.env == 'iridis2':
             return config.ConfigIridis2
+
+        elif args.env == 'iridis3':
+            return config.ConfigIridis3
+
+        elif args.env == 'iridis4':
+            return config.ConfigIridis4
 
         else:
             raise ValueError('Invalid environment name')
