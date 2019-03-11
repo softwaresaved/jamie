@@ -25,7 +25,7 @@ from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveO
 from sklearn.model_selection import train_test_split
 
 
-def record_result_csv(df, name_folds, folder, prediction_field):
+def record_result_csv(df, name_folds, folder, prediction_field, oversampling):
     """
     Record the result of each outer_cv loop into a panda df and
     then record it into a csv.
@@ -33,10 +33,13 @@ def record_result_csv(df, name_folds, folder, prediction_field):
     of overwritting it.
     The name is based on the method to folds and just write the different models unders
     """
-    filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
+    if oversampling:
+        filename = folder + prediction_field + '_oversampling' + '/' + 'average_scores_' + name_folds+ '.csv'
+    else:
+        filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
     df.to_csv(filename)
 
-def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../outputs/dataPrediction/prediction/'):
+def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_folds=5, folder='../../outputs/dataPrediction/prediction/'):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
@@ -114,7 +117,10 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
     average_scores_across_outer_folds_for_each_model = dict()
     # Get the average of the scores for the {nbr_fold} folds
     for i, name in enumerate(models):
-        estimator = Pipeline([('sampling', SMOTE()), ('clf', models[name]['model'])])
+        if oversampling is True:
+            estimator = Pipeline([('sampling', SMOTE()), ('clf', models[name]['model'])])
+        else:
+            estimator = Pipeline([('clf', models[name]['model'])])
         # estimator = Pipeline([('features', features), ('clf', model)])
 
         # print(estimator.get_params().keys())
@@ -139,8 +145,6 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
                                                     X, y,
                                                     cv=outer_cv,
                                                     scoring='balanced_accuracy',
-                                                    # scoring='precision_micro',
-                                                    # scoring='precision',
                                                     n_jobs=-1)
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
@@ -157,7 +161,7 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
 
 
 
-    record_result_csv(score_for_outer_cv, name_outer_cv, folder, prediction_field)
+    record_result_csv(score_for_outer_cv, name_outer_cv, folder, prediction_field, oversampling)
     print('Average score across the outer folds: ', average_scores_across_outer_folds_for_each_model)
     many_stars = '\n' + '*' * 100 + '\n'
     print(many_stars + 'Fitting the model on the training set Complete summary of the best model' + many_stars)
@@ -186,10 +190,13 @@ def nested_cross_validation(X, y, prediction_field, nbr_folds=5, folder='../../o
         final_model.fit(X.toarray(), y)
 
     # Add the best model name in the best_model_params
-    best_params = final_model.best_params_
+    try:
+        best_params = final_model.best_params_
+    except AttributeError:
+        best_params = None
     best_params['name'] = best_model_name
     # return best_model, best_model_params
 
-    return final_model.best_params_, final_model
+    return best_params, final_model
 
 

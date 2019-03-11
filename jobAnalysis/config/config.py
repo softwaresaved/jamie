@@ -111,11 +111,14 @@ class ConfigDevModel(ConfigHome):
 
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
+    k_fold = 2
     # Boolean to decide if it redo the prediction
     relaunch_model = True
 
     # Decide to record or not the prediction in the database
     record_prediction = False
+
+    oversampling = True
 
     # Prediction field
     prediction_field = 'aggregate'
@@ -139,7 +142,6 @@ class ConfigIridis(Config):
 
     """
     """
-
     # Boolean to decide if it redo the prediction
     relaunch_model = True
 
@@ -150,6 +152,7 @@ class ConfigIridis(Config):
     k_fold = 10
     oversampling = False
 
+
 class ConfigIridis2(ConfigIridis):
     prediction_filed = 'consensus'
     oversampling = True
@@ -159,6 +162,7 @@ class ConfigIridis3(ConfigIridis):
 
     prediction_filed = 'aggregate'
     oversampling = False
+
 
 class ConfigIridis4(ConfigIridis):
 

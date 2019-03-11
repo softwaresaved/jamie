@@ -22,7 +22,7 @@ the prediction
 
 class Predict:
 
-    def __init__(self, config_values, prediction_field, features, model, relaunch=False):
+    def __init__(self, config_values, prediction_field, features, model, oversampling, relaunch=False):
         """
         params:
         ------
@@ -40,6 +40,7 @@ class Predict:
         self.prediction_field = prediction_field
         self.features = features
         self.model = model
+        self.oversampling = oversampling
         self.relaunch = relaunch
         self.db = _connect_db()
 
@@ -65,7 +66,10 @@ class Predict:
             _id ObjectID(): the unique id from the document, provided by MongoDB
             doc dataframe() -- None: the dataframe containing the description and job_title field. None if Keyerror
         """
-        predicting_field = 'prediction_{}'.format(self.prediction_field)
+        if oversampling is True:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        else:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
         if relaunch is True:
             search = {}
         else:
@@ -120,8 +124,12 @@ class Predict:
             pred_int int(): class of given by the prediction
             pred_proba float(): float of the probability of prediction
         """
-        self.db['jobs'].update({'_id': _id}, {'$set': {self.prediction_field: pred_int,
-                                                       '{}_proba'.format(self.prediction_field): pred_proba}})
+        if oversampling is True:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        else:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        self.db['jobs'].update({'_id': _id}, {'$set': {prediction_field: pred_int
+                                                       '{}_proba'.format(prediction_field): pred_proba}})
 
     def predict(self):
         for _id, doc in self._get_documents(self.relaunch):
