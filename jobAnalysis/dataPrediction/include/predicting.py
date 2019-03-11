@@ -69,7 +69,7 @@ class Predict:
         if self.oversampling is True:
             predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
         else:
-            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+            predicting_field = 'prediction_{}'.format(self.prediction_field)
         if relaunch is True:
             search = {}
         else:
@@ -127,7 +127,7 @@ class Predict:
         if self.oversampling is True:
             predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
         else:
-            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+            predicting_field = 'prediction_{}'.format(self.prediction_field)
         self.db['jobs'].update({'_id': _id}, {'$set': {predicting_field: pred_int,
                                                        '{}_proba'.format(predicting_field): pred_proba}})
 
