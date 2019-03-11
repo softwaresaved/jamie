@@ -116,8 +116,8 @@ def main():
     final_model, features, best_model_params = get_model(config_values.relaunch_model, config_values.k_fold, prediction_field, oversampling)
     if config_values.record_prediction is True:
         from include.predicting import Predict
-        predict = Predict(config_values, prediction_field, features, final_model, oversampling, config_values.relaunch)
-        predict.run()
+        predict = Predict(config_values, prediction_field, features, final_model, oversampling, config_values.relaunch_model)
+        predict.predict()
         final_count = dict()
 
         logger.info('Summary of prediction for new jobs')
