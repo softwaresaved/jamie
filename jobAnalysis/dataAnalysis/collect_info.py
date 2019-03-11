@@ -41,8 +41,12 @@ class generateReport:
 
         self.db_jobs = args[1]
         self.db_tag = args[2]
-        self.db_predictions = args[3]
-
+        self.prediction_to_recall = args[3]
+        self.oversampling = args[4]
+        if self.oversampling:
+            self.prediction_to_recall = "prediction_{}_oversampling".format(self.prediction_to_recall)
+        else:
+            self.prediction_to_recall = "prediction_{}".format(self.prediction_to_recall)
         self.report_csv_folder = '../../outputs/'
 
         self.first_id = self.get_record_ord(key='_id', order=1)
@@ -231,7 +235,7 @@ class generateReport:
         search = cleaned_set.copy()
         search.update({key: {'$exists': True}})
         if research_soft_only is True:
-            search['prediction'] = 1
+            search[self.prediction_to_recall] = 1
         for data in self.db_jobs.find(search, {key: 1, '_id': 0}):
             set_unique.add(data[key].replace('\n', '\t').strip())
         with open('../../outputs/uniqueValue/{}_{}.csv'.format(key, clean_txt), 'w') as f:
@@ -267,10 +271,10 @@ class generateReport:
                                  }},
                     {'$unwind': '$results'},
                     {'$project': {'model': 1,
-                                  'prediction': 1,
+                                  self.prediction_to_recall: 1,
                                   'date': '$results.placed_on'
                                   }},
-                    {'$group': {'_id': {'prediction': '$prediction',
+                    {'$group': {'_id': {'prediction': '${}'.format(self.prediction_to_recall),
                                         'model': '$model',
                                         'date': '$date'},
                                 'count': {'$sum': 1}
@@ -328,15 +332,18 @@ class generateReport:
             except KeyError:
                 date_ = 'NaN'
             # Inc the total
-            dict_key_with_date[date_][record['prediction']]['total'] +=1
+            try:
+                dict_key_with_date[date_][record[self.prediction_to_recall]]['total'] +=1
+            except KeyError:
+                dict_key_with_date[date_]['None']['total'] +=1
             # Inc any keys that are present
             for k in record:
                 try:
                     try:
                         if k not in record['invalid_code']:
-                            dict_key_with_date[date_][record['prediction']][k] +=1
+                            dict_key_with_date[date_][record[self.prediction_to_recall]][k] +=1
                     except KeyError:
-                        dict_key_with_date[date_][record['prediction']][k]+=1
+                        dict_key_with_date[date_][record[self.prediction_to_recall]][k]+=1
                 except KeyError:
                     pass
 
@@ -362,7 +369,7 @@ class generateReport:
         match_query = {'$match': {'$and': [{k:to_search[k]} for k in to_search]}}
         pipeline = [match_query,
                     {'$group': {'_id': {'date': '$placed_on',
-                                        'prediction': '$prediction'},
+                                        'prediction': '${}'.format(self.prediction_to_recall)},
                                 key: {'$avg': '${}'.format(key)}
                                 }
                      }
@@ -404,7 +411,7 @@ class generateReport:
                     {'$unwind': '${}'.format(key)},
 
                     {'$group': {'_id': {'date': '$placed_on',
-                                        'prediction': '$prediction',
+                                        'prediction': '${}'.format(self.prediction_to_recall),
                                         key: '${}'.format(key)},
                                 'count': {'$sum': 1}
                                 }
@@ -451,7 +458,7 @@ class generateReport:
             for i in header_csv:
                 if i not in record:
                     record[i] = None
-            to_record = [record['placed_on'], record['prediction'], record['job_title'], record['subject_area'], record['location'], record['extra_location'], record[key]]
+            to_record = [record['placed_on'], record[self.prediction_to_recall], record['job_title'], record['subject_area'], record['location'], record['extra_location'], record[key]]
 
 
             data_for_csv.append(to_record)
@@ -462,7 +469,7 @@ class generateReport:
         Get all location from uk to check if there are a lot of interesting
         jobs ads that are from research centers
         """
-        header_csv = ['date', 'prediction', 'job_title', 'subject_area', 'extra_location', 'uk_university',  'employer']
+        header_csv = ['date', self.prediction_to_recall, 'job_title', 'subject_area', 'extra_location', 'uk_university',  'employer']
         data_for_csv = list()
         name_file = '{}_all_{}'.format(clean_txt, 'jobs_in_uk')
         for record in self.db_jobs.find(cleaned_set):
@@ -492,10 +499,9 @@ def main():
     db_conn = connectMongo(config_values)
     db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
     db_tag = db_conn[config_values.DB_TAG_COLLECTION]
-    db_prediction = db_conn[config_values.DB_PREDICTION_COLLECTION]
 
     # Collect the different data
-    generate_report = generateReport(db_conn, db_jobs, db_tag, db_prediction)
+    generate_report = generateReport(db_conn, db_jobs, db_tag, config_values.prediction_to_recall, config_values.oversampling)
 
     logger.info('Invalid code with salary')
     logger.info(generate_report.get_invalid_code())
@@ -506,8 +512,8 @@ def main():
     logger.info('Count invalid code without salary')
     generate_report.count_invalid_codes()
 
-    logger.info('Get the classifications')
-    generate_report.get_classification()
+    # logger.info('Get the classifications')
+    # generate_report.get_classification()
 
     logger.info('Get the training set')
     generate_report.get_training_set()
