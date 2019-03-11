@@ -111,7 +111,7 @@ class ConfigDevModel(ConfigHome):
     relaunch_model = True
 
     # Decide to record or not the prediction in the database
-    record_prediction = True
+    record_prediction = False
 
     # Prediction field
     # prediction_field = 'aggregate'
