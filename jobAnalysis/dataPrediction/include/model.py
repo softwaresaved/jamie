@@ -8,11 +8,12 @@ import pandas as pd
 import numpy as np
 
 
-# from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline
 
+# from sklearn.base import BaseEstimator, TransformerMixin
 from imblearn.pipeline import Pipeline
 
-from imblearn.over_sampling import SMOTE  # or: import RandomOverSampler
+# from imblearn.over_sampling import RandomOverSampler  # or: import RandomOverSampler
 
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
@@ -23,6 +24,24 @@ from sklearn.naive_bayes import GaussianNB
 
 from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
 from sklearn.model_selection import train_test_split
+
+import dask_ml.model_selection as dcv
+
+
+from sklearn.externals import joblib
+# import distributed.joblib  # register the dask joblib backend
+
+from dask.distributed import Client, LocalCluster
+from dask_jobqueue import PBSCluster
+
+cluster = LocalCluster(processes=False)
+# cluster.scale(20)
+# cluster = PBSCluster(cores=32,
+#                      memory="100GB",
+#                      walltime='01:00:00')
+
+client = Client(cluster)
+# cluster.scale(10)  # Start 100 workers in 100 jobs that match the description above
 
 
 def record_result_csv(df, name_folds, folder, prediction_field, oversampling):
@@ -60,15 +79,15 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
                       'matrix': 'sparse'
                      },
 
-              'CART': {'model': DecisionTreeClassifier(),
-                       'params': [{'clf__max_depth': range(3, 20)}],
-                       'matrix': 'sparse'
-                      },
+              # 'CART': {'model': DecisionTreeClassifier(),
+              #          'params': [{'clf__max_depth': range(3, 20)}],
+              #          'matrix': 'sparse'
+              #         },
 
-               # 'NB' : {'model': GaussianNB(),
-               #         'matrix': 'sparse'
-               #        },
-               #
+              #  # 'NB' : {'model': GaussianNB(),
+              #  #         'matrix': 'sparse'
+              #  #        },
+              #  #
               'Gradient Boosting': {'model': GradientBoostingClassifier(),
 
                                     'params': {
@@ -82,9 +101,9 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
                                                },
                                     'matrix': 'sparse'
                                    },
-               'RandomForest': {'model': RandomForestClassifier(),
-                                'matrix': 'sparse'
-                               }
+              #  'RandomForest': {'model': RandomForestClassifier(),
+              #                   'matrix': 'sparse'
+              #                  }
               }
 
     # Create the outer_cv with 3 folds for estimating generalization error
@@ -117,10 +136,10 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
     average_scores_across_outer_folds_for_each_model = dict()
     # Get the average of the scores for the {nbr_fold} folds
     for i, name in enumerate(models):
-        if oversampling is True:
-            estimator = Pipeline([('sampling', SMOTE()), ('clf', models[name]['model'])])
-        else:
-            estimator = Pipeline([('clf', models[name]['model'])])
+        # if oversampling is True:
+        #     estimator = Pipeline([('sampling', RandomOverSampler()), ('clf', models[name]['model'])])
+        # else:
+        estimator = Pipeline([('clf', models[name]['model'])])
         # estimator = Pipeline([('features', features), ('clf', model)])
 
         # print(estimator.get_params().keys())
@@ -137,27 +156,27 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
             estimator = GridSearchCV(estimator,
                                      param_grid=params,
                                      cv=inner_cv,
-                                     scoring='balanced_accuracy',
-                                     n_jobs=-1)
+                                     scoring='balanced_accuracy')
 
         # estimate generalization error on the K-fold splits of the data
-        scores_across_outer_folds = cross_val_score(estimator,
-                                                    X, y,
-                                                    cv=outer_cv,
-                                                    scoring='balanced_accuracy',
-                                                    n_jobs=-1)
+        with joblib.parallel_backend('dask'):
+            scores_across_outer_folds = cross_val_score(estimator,
+                                                        X, y,
+                                                        cv=outer_cv,
+                                                        scoring='balanced_accuracy')#,
+                                                        # n_jobs=-1)
 
-        # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
-        score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
-        #
-        # get the mean MSE across each of outer_cv's K-folds
-        average_scores_across_outer_folds_for_each_model[name] = np.mean(scores_across_outer_folds.mean())
-        # error_summary = 'Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}'
+            # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
+            score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
+            #
+            # get the mean MSE across each of outer_cv's K-folds
+            average_scores_across_outer_folds_for_each_model[name] = np.mean(scores_across_outer_folds.mean())
+            # error_summary = 'Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}'
 
-        # print(error_summary.format(name=name, nbr_folds=nbr_folds,
-        #                            scores=scores_across_outer_folds,
-        #                            avg=np.mean(scores_across_outer_folds)))
-        # print()
+                # print(error_summary.format(name=name, nbr_folds=nbr_folds,
+                #                            scores=scores_across_outer_folds,
+                #                            avg=np.mean(scores_across_outer_folds)))
+                # print()
 
 
 
@@ -175,19 +194,22 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
         best_model, best_model_params = models[best_model_name]['model'], models[best_model_name]['params']
     except KeyError: ## In case the model doesnt have parameters
         best_model, best_model_params = models[best_model_name]['model'], None
+    print(models[best_model_name])
 
     # now we refit this best model on the whole dataset so that we can start
     # making predictions on other data, and now we have a reliable estimate of
     # this model's generalization error and we are confident this is the best model
     # among the ones we have tried
+    estimator = Pipeline([('clf', models[best_model_name]['model'])])
     if best_model_params:
-        final_model = GridSearchCV(best_model, best_model_params, cv=inner_cv, n_jobs=-1)
+        params = models[best_model_name]['params']
+        final_model = dcv.GridSearchCV(estimator, params, cv=inner_cv, n_jobs=-1)
     else:
-        final_model = GridSearchCV(best_model, cv=inner_cv, n_jobs=-1)
-    try:
-        final_model.fit(X, y)
-    except ValueError:
-        final_model.fit(X.toarray(), y)
+        final_model = dcv.GridSearchCV(estimator, cv=inner_cv, n_jobs=-1)
+    # try:
+    final_model.fit(X, y)
+    # except ValueError:
+        # final_model.fit(X.toarray(), y)
 
     # Add the best model name in the best_model_params
     try:
