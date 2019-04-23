@@ -183,10 +183,10 @@ def feature_union():
                                        #                              ('scaler', StandardScaler()),
                                        #  ])),
 
-                                        ('num_terms_cat', Pipeline([('selector', SoftTermSelector('description')),
-                                        #                             ('encoder', MultiLabelBinarizer(classes=SEARCH_TERM_LIST)),
-                                                                    ('encoder', OneHotEncoder(n_values=len(SEARCH_TERM_LIST)))
-                                        ])),
+                                        # ('num_terms_cat', Pipeline([('selector', SoftTermSelector('description')),
+                                        # #                             ('encoder', MultiLabelBinarizer(classes=SEARCH_TERM_LIST)),
+                                        #                             ('encoder', OneHotEncoder(n_values=len(SEARCH_TERM_LIST)))
+                                        # ])),
                                         ('size_txt', Pipeline([('selector', LenSelector('description')),
                                             ('scaler', StandardScaler()),
                                         ])),
