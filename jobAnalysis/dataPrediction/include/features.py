@@ -23,7 +23,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from sklearn.pipeline import Pipeline, FeatureUnion
+# from sklearn.pipeline import Pipeline, FeatureUnion
+from imblearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, LabelBinarizer, MultiLabelBinarizer, LabelEncoder
 
 
@@ -111,7 +113,7 @@ def find_words(df):
 
 def load_data(path_to_df):
 
-    df = pd.read_pickle(path_to_df)
+    df = pd.read_csv(path_to_df)
     # try:
     #     df = df.loc[(df.SoftwareJob == 'Yes') | (df.SoftwareJob == 'None')]
     # except TypeError:
@@ -143,7 +145,10 @@ def check_if_research_software(df, cleaner):
 def prepare_labels(df, column, binary):
 
     if binary == True:
-        y = df[(df[column] == 0) | (df[column] == 1)][column]
+        y = df[(df[column] == '0') | (df[column] == '1')][column]
+        if len(y) == 0:
+            y = df[(df[column] == 0) | (df[column] == 1)][column]
+
         y = y.astype(np.float64)
     else:
         y = df[column]
@@ -178,10 +183,10 @@ def feature_union():
                                        #                              ('scaler', StandardScaler()),
                                        #  ])),
 
-                                        ('num_terms_cat', Pipeline([('selector', SoftTermSelector('description')),
-                                        #                             ('encoder', MultiLabelBinarizer(classes=SEARCH_TERM_LIST)),
-                                                                    ('encoder', OneHotEncoder(n_values=len(SEARCH_TERM_LIST)))
-                                        ])),
+                                        # ('num_terms_cat', Pipeline([('selector', SoftTermSelector('description')),
+                                        # #                             ('encoder', MultiLabelBinarizer(classes=SEARCH_TERM_LIST)),
+                                        #                             ('encoder', OneHotEncoder(n_values=len(SEARCH_TERM_LIST)))
+                                        # ])),
                                         ('size_txt', Pipeline([('selector', LenSelector('description')),
                                             ('scaler', StandardScaler()),
                                         ])),
@@ -198,7 +203,7 @@ def feature_union():
 
 def get_train_data(prediction_field, binary=True):
 
-    path_to_df = './data/training_set/training_set.pkl'
+    path_to_df = './data/training_set/training_set.csv'
     df = load_data(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)
@@ -211,7 +216,10 @@ def get_train_data(prediction_field, binary=True):
     y = prepare_labels(df, column=column_pred_field, binary=binary)
     features = feature_union()
     if binary == True:
-        X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title', 'research_software']]
+        X = df[(df[column_pred_field] == '0') | (df[column_pred_field] == '1')][['description', 'job_title', 'research_software']]
+        if len(X) == 0:
+
+            X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title', 'research_software']]
 
     else:
         X = df[['description', 'job_title', 'research_software']]

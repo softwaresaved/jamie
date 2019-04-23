@@ -22,7 +22,7 @@ the prediction
 
 class Predict:
 
-    def __init__(self, config_values, prediction_field, features, model, relaunch=False):
+    def __init__(self, config_values, prediction_field, features, model, oversampling, relaunch=False):
         """
         params:
         ------
@@ -40,8 +40,9 @@ class Predict:
         self.prediction_field = prediction_field
         self.features = features
         self.model = model
+        self.oversampling = oversampling
         self.relaunch = relaunch
-        self.db = _connect_db()
+        self.db = self._connect_db()
 
     def _connect_db(self):
         """
@@ -51,7 +52,7 @@ class Predict:
         ------
             db Mongodb(): connection to the specific collection
         """
-        return connectMongo(config_values)
+        return connectMongo(self.config_values)
 
     def _get_documents(self, relaunch=False):
         """
@@ -65,12 +66,15 @@ class Predict:
             _id ObjectID(): the unique id from the document, provided by MongoDB
             doc dataframe() -- None: the dataframe containing the description and job_title field. None if Keyerror
         """
-        predicting_field = 'prediction_{}'.format(self.prediction_field)
+        if self.oversampling is True:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        else:
+            predicting_field = 'prediction_{}'.format(self.prediction_field)
         if relaunch is True:
             search = {}
         else:
-            search = {prediction_field: {'$exists': False}}
-        for doc in db_conn['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
+            search = {self.prediction_field: {'$exists': False}}
+        for doc in self.db['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
             _id = doc['_id']
             try:
                 doc =  pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
@@ -101,7 +105,7 @@ class Predict:
             prediction numpy_array(): Class predicted
             pred_proba numpy_array(): probability of the prediction
         """
-        return self.model.predict(X_to_predict), self.model.predict_proba(X_to_predict)
+        return self.model.predict(X), self.model.predict_proba(X)
 
     def _extract_prediction(self, pred_int, pred_proba):
         """
@@ -109,7 +113,7 @@ class Predict:
         Right now, only tested for binary classification. If multilabel is used,
         need to test it. #TODO
         """
-        return int(prediction[0]), float(predict_proba[0][0])
+        return int(pred_int[0]), float(pred_proba[0][0])
 
     def _record_prediction(self, _id, pred_int, pred_proba):
         """
@@ -120,12 +124,16 @@ class Predict:
             pred_int int(): class of given by the prediction
             pred_proba float(): float of the probability of prediction
         """
-        self.db['jobs'].update({'_id': _id}, {'$set': {self.prediction_field: pred_int,
-                                                       '{}_proba'.format(self.prediction_field): pred_proba}})
+        if self.oversampling is True:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        else:
+            predicting_field = 'prediction_{}'.format(self.prediction_field)
+        self.db['jobs'].update({'_id': _id}, {'$set': {predicting_field: pred_int,
+                                                       '{}_proba'.format(predicting_field): pred_proba}})
 
     def predict(self):
         for _id, doc in self._get_documents(self.relaunch):
-            if doc:
+            if doc is not None:
                 X = self._prepare_X(doc)
                 pred_int, pred_proba = self._predict(X)
                 pred_int, pred_proba = self._extract_prediction(pred_int, pred_proba)

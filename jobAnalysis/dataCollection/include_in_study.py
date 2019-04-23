@@ -33,9 +33,7 @@ from common.logger import logger
 from common.getArgs import getArgs
 from common.getConnection import connectMongo
 
-from dataCollection.include.fileProcess import fileProcess
 from dataCollection.include.cleaningInformation import OutputRow
-from dataCollection.include.summary_day_operation import generateReport
 
 
 logger = logger(name="include_in_study", stream_level="DEBUG")

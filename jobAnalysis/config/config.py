@@ -66,6 +66,9 @@ class Config:
     # Prediction field
     prediction_field = 'original'
 
+    # Oversampling
+    oversampling = False
+
     # What are the requirements to be included in the study. It follows the model of MongoDB search
     # and it is used in the script include_in_study.py to add the appropriate key
     include_in_study = {'extra_location': {'$in' : ["Northern England",
@@ -78,24 +81,27 @@ class Config:
                                              "Republic of Ireland",
                                              "Northern Ireland"]},
                         'placed_on': {'$exists': True},
-                        'prediction': {'$ne': 'None'},
+                        # 'prediction': {'$ne': 'None'},
                         'not_student': True}
 
-    # If the key is reset for all the records for include in study or not
+    # Relaunch the include_in_study script
     relaunch_include = True
+
+    # Number of k_fold for nested cross validation
+    k_fold = 2
+
+    # prediction model used to get the data
+    prediction_to_recall = 'aggregate'
 
 
 class ConfigHome(Config):
     """
     Config for development, meaning the deployment on personal computer
     """
-    # Folder where the job files are stored
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
-    # Location of the access file where the credential for db are stored
     DB_ACCESS_FILE = "/home/olivier/data/job_analysis/.access"
 
-    # Port to connect to the MySQL DB
     MYSQL_port = 3306
 
 
@@ -103,19 +109,17 @@ class ConfigDevModel(ConfigHome):
     """
     Config for testing different modelling without modifying any existing db
     """
-    # DB_NAME = "jobsDevModel"
-
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
-    # Boolean to decide if it redo the prediction
-    relaunch_model = True
+    k_fold = 2
 
-    # Decide to record or not the prediction in the database
+    relaunch_model = False
+
     record_prediction = False
 
-    # Prediction field
-    # prediction_field = 'aggregate'
-    prediction_field = 'consensus'
+    oversampling = False
+
+    prediction_field = 'aggregate'
 
 
 class ConfigSoton(Config):
@@ -124,7 +128,44 @@ class ConfigSoton(Config):
     """
     INPUT_FOLDER = "/disk/ssi-data0/home/deploy/jobs-data-etl/JobAdverts/JobsAcUk/"
 
-    # Folder where to store the jobs for BoB classification
     SAMPLE_OUT_FOLDER = "/disk/ssi-data0/home/deploy/jobs-data-etl/JobAdverts/Jobs4Bob"
 
     DB_ACCESS_FILE = "/disk/ssi-data0/home/deploy/jobs-data-etl/.access"
+
+    k_fold = 5
+
+
+class ConfigIridis(Config):
+
+    """
+    """
+    relaunch_model = True
+
+    record_prediction = False
+
+    prediction_field = 'consensus'
+
+    k_fold = 10
+
+    oversampling = False
+
+
+class ConfigIridis2(ConfigIridis):
+
+    prediction_filed = 'consensus'
+
+    oversampling = True
+
+
+class ConfigIridis3(ConfigIridis):
+
+    prediction_filed = 'aggregate'
+
+    oversampling = False
+
+
+class ConfigIridis4(ConfigIridis):
+
+    prediction_filed = 'aggregate'
+
+    oversampling = True
