@@ -9,7 +9,7 @@ import numpy as np
 # from sklearn.base import BaseEstimator, TransformerMixin
 from imblearn.pipeline import Pipeline
 
-# from imblearn.over_sampling import RandomOverSampler  # or: import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler  # or: import RandomOverSampler
 
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
@@ -40,7 +40,7 @@ client = Client(cluster)
 # cluster.scale(10)  # Start 100 workers in 100 jobs that match the description above
 
 
-def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_folds=5, scoring_value='precision', folder='../../outputs/dataPrediction/prediction/'):
+def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=False, nbr_folds=5):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
@@ -141,10 +141,10 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
     average_scores_across_outer_folds_for_each_model = dict()
     # Get the average of the scores for the {nbr_fold} folds
     for i, name in enumerate(models):
-        # if oversampling is True:
-        #     estimator = Pipeline([('sampling', RandomOverSampler()), ('clf', models[name]['model'])])
-        # else:
-        estimator = Pipeline([('clf', models[name]['model'])])
+        if oversampling is True:
+            estimator = Pipeline([('sampling', RandomOverSampler()), ('clf', models[name]['model'])])
+        else:
+            estimator = Pipeline([('clf', models[name]['model'])])
         # estimator = Pipeline([('features', features), ('clf', model)])
 
         # print(estimator.get_params().keys())

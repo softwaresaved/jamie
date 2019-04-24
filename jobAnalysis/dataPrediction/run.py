@@ -43,8 +43,8 @@ def record_information(best_model_params,
 def record_model(model, features, directory):
     """
     """
-    joblib.dump(features, '{}{}'.format(directory 'features.pkl'))
-    joblib.dump(model, '{}{}'.format(directory 'model.pkl'))
+    joblib.dump(features, '{}{}'.format(directory, 'features.pkl'))
+    joblib.dump(model, '{}{}'.format(directory, 'model.pkl'))
 
 
 def record_average_scores(scores, nbr_folds, directory):
@@ -103,9 +103,9 @@ def _create_directory(prediction_field, scoring_value, oversampling):
 
     root_folder = '../../outputs/dataPrediction/prediction/'
     if oversampling:
-        directory = root_folder + prediction_field + scoring_value + '_oversampling' + '/'
+        directory = root_folder + prediction_field + '_' + scoring_value + '_oversampling' + '/'
     else:
-        directory = root_folder + prediction_field + scoring_value + '/'
+        directory = root_folder + prediction_field + + '_' + scoring_value + '/'
 
     # check folder if exists otherwise create it
 
@@ -121,7 +121,7 @@ def main():
     config_values = arguments.return_arguments()
     prediction_field = config_values.prediction_field
     oversampling = config_values.oversampling
-    scoring_value = config_values.scoring_value
+    scoring_value = config_values.prediction_metric
     nb_folds = config_values.k_fold
 
     # Create the folder if not existing
