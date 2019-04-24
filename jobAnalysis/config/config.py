@@ -93,6 +93,9 @@ class Config:
     # prediction model used to get the data
     prediction_to_recall = 'aggregate'
 
+    # which metric to use for the gridsearch
+    prediction_metric = 'precision'
+
 
 class ConfigHome(Config):
     """
@@ -111,15 +114,17 @@ class ConfigDevModel(ConfigHome):
     """
     INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
 
-    k_fold = 2
+    k_fold = 5
 
-    relaunch_model = False
+    relaunch_model = True
 
     record_prediction = False
 
-    oversampling = False
+    oversampling = True
 
     prediction_field = 'aggregate'
+
+    prediction_metric = 'precision'
 
 
 class ConfigSoton(Config):
