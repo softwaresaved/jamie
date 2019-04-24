@@ -177,27 +177,28 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
             estimator = GridSearchCV(estimator,
                                      param_grid=params,
                                      cv=inner_cv,
-                                     scoring='balanced_accuracy')
+                                     scoring='balanced_accuracy',
+                                     n_jobs=-1)
 
         # estimate generalization error on the K-fold splits of the data
-        with joblib.parallel_backend('dask'):
-            scores_across_outer_folds = cross_val_score(estimator,
-                                                        X, y,
-                                                        cv=outer_cv,
-                                                        scoring='balanced_accuracy')  #,
-                                                        # n_jobs=-1)
+        # with joblib.parallel_backend('dask'):
+        scores_across_outer_folds = cross_val_score(estimator,
+                                                    X, y,
+                                                    cv=outer_cv,
+                                                    scoring='balanced_accuracy',
+                                                    n_jobs=-1)
 
-            # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
-            score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
-            #
-            # get the mean MSE across each of outer_cv's K-folds
-            average_scores_across_outer_folds_for_each_model[name] = np.mean(scores_across_outer_folds.mean())
-            # error_summary = 'Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}'
+        # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
+        score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
+        #
+        # get the mean MSE across each of outer_cv's K-folds
+        average_scores_across_outer_folds_for_each_model[name] = np.mean(scores_across_outer_folds.mean())
+        # error_summary = 'Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}'
 
-            # print(error_summary.format(name=name, nbr_folds=nbr_folds,
-            #                            scores=scores_across_outer_folds,
-            #                            avg=np.mean(scores_across_outer_folds)))
-            # print()
+        # print(error_summary.format(name=name, nbr_folds=nbr_folds,
+        #                            scores=scores_across_outer_folds,
+        #                            avg=np.mean(scores_across_outer_folds)))
+        # print()
 
 
 
