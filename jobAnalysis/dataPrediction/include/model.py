@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import pandas as pd
 import numpy as np
 
@@ -41,22 +40,7 @@ client = Client(cluster)
 # cluster.scale(10)  # Start 100 workers in 100 jobs that match the description above
 
 
-def record_result_csv(df, name_folds, folder, prediction_field, oversampling):
-    """
-    Record the result of each outer_cv loop into a panda df and
-    then record it into a csv.
-    Before saving it checks if a similar csv file exists to append it instead
-    of overwritting it.
-    The name is based on the method to folds and just write the different models unders
-    """
-    if oversampling:
-        filename = folder + prediction_field + '_oversampling' + '/' + 'average_scores_' + name_folds+ '.csv'
-    else:
-        filename = folder + prediction_field + '/' + 'average_scores_' + name_folds+ '.csv'
-    df.to_csv(filename)
-
-
-def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_folds=5, folder='../../outputs/dataPrediction/prediction/'):
+def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_folds=5, scoring_value='precision', folder='../../outputs/dataPrediction/prediction/'):
     """
     Dev version of the training instance
     Source: https://datascience.stackexchange.com/a/16856
@@ -193,16 +177,15 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
         #
         # get the mean MSE across each of outer_cv's K-folds
         average_scores_across_outer_folds_for_each_model[name] = np.mean(scores_across_outer_folds.mean())
-        # error_summary = 'Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}'
+        error_summary = 'Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}'
 
-        # print(error_summary.format(name=name, nbr_folds=nbr_folds,
-        #                            scores=scores_across_outer_folds,
-        #                            avg=np.mean(scores_across_outer_folds)))
-        # print()
+        print(error_summary.format(name=name, nbr_folds=nbr_folds,
+                                   scores=scores_across_outer_folds,
+                                   avg=np.mean(scores_across_outer_folds)))
+        print()
 
 
 
-    record_result_csv(score_for_outer_cv, name_outer_cv, folder, prediction_field, oversampling)
     print('Average score across the outer folds: ', average_scores_across_outer_folds_for_each_model)
     many_stars = '\n' + '*' * 100 + '\n'
     print(many_stars + 'Fitting the model on the training set Complete summary of the best model' + many_stars)
@@ -241,4 +224,4 @@ def nested_cross_validation(X, y, prediction_field, oversampling=False, nbr_fold
     best_params['name'] = best_model_name
     # return best_model, best_model_params
 
-    return best_params, final_model
+    return best_params, final_model, score_for_outer_cv
