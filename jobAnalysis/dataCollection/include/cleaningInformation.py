@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.append(str(Path(".").absolute().parent))
 from common.textClean import textClean
 
+
 class OutputRow:
     """
     A class that receive a dictionary as input. It checks several keys and operate additional
@@ -47,7 +48,6 @@ class OutputRow:
                             'placed_on',
                             'closes',
                             'subject_area']
-
 
         # Create a list of keys that are added during the cleaning process
         self.new_keys = ['invalid_code',
@@ -87,7 +87,7 @@ class OutputRow:
         Read the csv file containing university and postcode for UK only
         """
         dict_uk_uni_postcode = dict()
-        with open ('./data/uk_uni_postcode.csv', 'r') as f:
+        with open('./data/uk_uni_postcode.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 dict_uk_uni_postcode[row['PROVIDER_NAME']] = row['POSTCODE']
@@ -412,7 +412,6 @@ class OutputRow:
                                        'Northern Ireland']:
                 self.in_uk = True
 
-
     def add_postcode(self):
         """
         If there is a uk_university, try to match it with the code
@@ -429,7 +428,7 @@ class OutputRow:
         between the two salary. to get an average
         """
         if hasattr(self, 'salary_min') and hasattr(self, 'salary_max'):
-            self.salary_median = self.salary_min + ((self.salary_max - self.salary_min)/2)
+            self.salary_median = self.salary_min + ((self.salary_max - self.salary_min)/ 2)
 
     def add_not_student(self):
         """
@@ -462,9 +461,9 @@ class OutputRow:
         self.clean_closes()
         self.clean_contract()
         self.add_duration()
-        self.add_uk_university()
-        self.add_in_uk()
-        self.add_postcode()
+        # self.add_uk_university()
+        # self.add_in_uk()
+        # self.add_postcode()
         self.clean_salary(self.salary, 'salary')
         self.clean_salary(self.funding_amount, 'funding_amount')
         if hasattr(self, 'funding_amount') and 'contract' in self.invalid_code:
@@ -499,7 +498,7 @@ class OutputRow:
         # self.clean_employRef()
         self.clean_subject_area()
         self.add_median_salary()
-        self.add_not_student()
+        # self.add_not_student()
 
     def to_dictionary(self):
         """
@@ -519,11 +518,11 @@ class OutputRow:
         return result
 
 
-
 def main():
     """
     """
     pass
+
 
 if __name__ == '__main__':
     main()
