@@ -101,7 +101,9 @@ class ConfigDevModel(ConfigHome):
 
     k_fold = 5
 
-    relaunch_model = True
+    relaunch_model = False
+
+    relaunch_include = True
 
     record_prediction = False
 

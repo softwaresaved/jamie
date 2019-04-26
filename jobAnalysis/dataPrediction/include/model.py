@@ -40,15 +40,11 @@ client = Client(cluster)
 # cluster.scale(10)  # Start 100 workers in 100 jobs that match the description above
 
 
-def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=False, nbr_folds=5):
-    """
-    Dev version of the training instance
-    Source: https://datascience.stackexchange.com/a/16856
-    """
+def set_up_models():
     c_params = 10. ** np.arange(-3, 8)
     gamma_params = 10. ** np.arange(-5, 4)
 
-    models = {'SVC': {'model': SVC(probability=True),
+    return  {'SVC': {'model': SVC(probability=True),
                       'params': [{'clf__C': c_params,
                                   'clf__gamma': gamma_params,
                                   'clf__kernel': ['rbf'],
@@ -111,12 +107,15 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
 
 
 
-    # Create the outer_cv with 3 folds for estimating generalization error
-    # outer_cv = StratifiedKFold(nbr_folds)
-    # outer_csv = LeaveOneOut()
-    # outer_cv  = LeaveOneOut(nbr_folds)
-    # outer_cv = KFold(nbr_folds)
 
+def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=False, nbr_folds=5):
+    """
+    Dev version of the training instance
+    Source: https://datascience.stackexchange.com/a/16856
+    """
+
+    # Get the models
+    models = set_up_models()
     # When trained a certain fold, doing the second cross-validation split to choose hyper parameters
     if isinstance(nbr_folds, int):
         # outer_cv = KFold(nbr_folds)
@@ -131,37 +130,29 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
             nbr_folds = len(y)
             name_outer_cv = 'leaveoneout-{}'.format(str(nbr_folds))
 
+    # Creaging the dataframe for the different scores
     score_for_outer_cv = pd.DataFrame(index=range(len(models)),
                                       columns=['model'])
     score_for_outer_cv['model'] = [name for name in models]
-
     columns_to_add = ['fold-{}'.format(int(i)+ 1) for i in range(nbr_folds)]
     score_for_outer_cv = score_for_outer_cv.reindex(columns=score_for_outer_cv.columns.tolist() + columns_to_add)
-
     average_scores_across_outer_folds_for_each_model = dict()
-    # Get the average of the scores for the {nbr_fold} folds
+
     for i, name in enumerate(models):
         if oversampling is True:
             estimator = Pipeline([('sampling', RandomOverSampler()), ('clf', models[name]['model'])])
         else:
             estimator = Pipeline([('clf', models[name]['model'])])
-        # estimator = Pipeline([('features', features), ('clf', model)])
-
-        # print(estimator.get_params().keys())
 
         try:
             params = models[name]['params']
         except KeyError:
             params = None
-        # print(name, estimator, params)
-        # if models[name]['matrix'] == 'dense':
-        #     X = X.toarray()
         if params:
-
             estimator = GridSearchCV(estimator,
                                      param_grid=params,
                                      cv=inner_cv,
-                                     scoring='balanced_accuracy',
+                                     scoring=scoring_value,
                                      n_jobs=-1)
 
         # estimate generalization error on the K-fold splits of the data
@@ -169,7 +160,7 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
         scores_across_outer_folds = cross_val_score(estimator,
                                                     X, y,
                                                     cv=outer_cv,
-                                                    scoring='balanced_accuracy',
+                                                    scoring=scoring_value,
                                                     n_jobs=-1)
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
@@ -184,8 +175,6 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
                                    avg=np.mean(scores_across_outer_folds)))
         print()
 
-
-
     print('Average score across the outer folds: ', average_scores_across_outer_folds_for_each_model)
     many_stars = '\n' + '*' * 100 + '\n'
     print(many_stars + 'Fitting the model on the training set Complete summary of the best model' + many_stars)
@@ -194,7 +183,6 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
                                                 key=(lambda name_averagescore: name_averagescore[1]))
 
     # get the best model and its associated parameter grid
-
     try:
         best_model, best_model_params = models[best_model_name]['model'], models[best_model_name]['params']
     except KeyError:  # In case the model doesnt have parameters
@@ -211,10 +199,7 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
         final_model = dcv.GridSearchCV(estimator, params, cv=inner_cv, n_jobs=-1)
     else:
         final_model = dcv.GridSearchCV(estimator, cv=inner_cv, n_jobs=-1)
-    # try:
     final_model.fit(X, y)
-    # except ValueError:
-    #     final_model.fit(X.toarray(), y)
 
     # Add the best model name in the best_model_params
     try:
@@ -222,6 +207,5 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
     except AttributeError:
         best_params = None
     best_params['name'] = best_model_name
-    # return best_model, best_model_params
 
     return best_params, final_model, score_for_outer_cv
