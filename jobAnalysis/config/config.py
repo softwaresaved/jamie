@@ -15,7 +15,7 @@ class Config:
     """
     # Variables to install and retrieve nltk files needed for the text cleaning
     NLTK_FILES = "./nltk_files/"
-    LIST_PICKLES = ['punkt','maxent_treebank_pos_tagger', 'stopwords', 'wordnet', 'averaged_perceptron_tagger']
+    LIST_PICKLES = ['punkt', 'maxent_treebank_pos_tagger', 'stopwords', 'wordnet', 'averaged_perceptron_tagger']
     NlTK_UPDATE = False
 
     # How the data are stored
@@ -68,21 +68,6 @@ class Config:
 
     # Oversampling
     oversampling = False
-
-    # What are the requirements to be included in the study. It follows the model of MongoDB search
-    # and it is used in the script include_in_study.py to add the appropriate key
-    include_in_study = {'extra_location': {'$in' : ["Northern England",
-                                            "London",
-                                             "Midlands of England",
-                                             "Scotland",
-                                             "South West England",
-                                             "South East England",
-                                             "Wales",
-                                             "Republic of Ireland",
-                                             "Northern Ireland"]},
-                        'placed_on': {'$exists': True},
-                        # 'prediction': {'$ne': 'None'},
-                        'not_student': True}
 
     # Relaunch the include_in_study script
     relaunch_include = True

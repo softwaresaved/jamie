@@ -227,6 +227,24 @@ class generateReport:
                        name='count_invalid_code',
                        type_info='dataCollection')
 
+    def count_invalid_process(self):
+        """
+        """
+        pipeline = [{'$match': {'invalid_process': {'$not': {'$size': 0}}}},
+                    {'$unwind': '$invalid_process'},
+                    {'$group': {'_id': '$invalid_process', 'count': {'$sum': 1}}},
+                    {'$match': {'count': {'$gte': 1}}},
+                    {'$sort': {'count': -1}},
+                    {'$limit': 100}
+                    ]
+        data_for_csv = list()
+        for data in self.aggregate(pipeline):
+            data_for_csv.append([data['_id'], data['count']])
+        self.write_csv(header=['Type of invalid_process', 'count'],
+                       result=data_for_csv,
+                       name='count_invalid_process',
+                       type_info='dataCollection')
+
     def get_unique_values(self, key, cleaned_set, clean_txt,research_soft_only=False):
         """
         return unique value for the field specified by the key
@@ -446,6 +464,7 @@ class generateReport:
         print(key_to_search)
         for record in self.db_jobs.find(key_to_search):
             yield record
+
     def get_all_metric(self, key, cleaned_set, clean_txt, all_uk=True):
         """
         Get a csv file with all the different metrics without grouping them
@@ -511,6 +530,8 @@ def main():
 
     logger.info('Count invalid code without salary')
     generate_report.count_invalid_codes()
+
+    logger.info('Count invalid process')
 
     # logger.info('Get the classifications')
     # generate_report.get_classification()

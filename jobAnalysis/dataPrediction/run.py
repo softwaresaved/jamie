@@ -2,23 +2,20 @@
 # -*- coding: utf-8 -*-
 
 import os
-import re
 import json
 
 import sys
 from pathlib import Path
 sys.path.append(str(Path('.').absolute().parent))
 
-from io import StringIO
+# from io import StringIO
 
-import pandas as pd
 import numpy as np
 
 from include.features import get_train_data
 from include.model import nested_cross_validation
 from include.predicting import Predict
 
-from sklearn.metrics import confusion_matrix
 from sklearn.externals import joblib
 
 from common.logger import logger
@@ -29,7 +26,7 @@ logger = logger(name='prediction_run', stream_level='DEBUG')
 
 def record_information(best_model_params,
                        final_model, feature_model,
-                       y_test, y_pred, y_proba):
+                       y_test, y_pred, y_proba, directory):
 
     logger.info('Record the model information')
     np.save('{}{}'.format(directory, 'y_test'), y_test)
@@ -130,7 +127,6 @@ def main():
     logger.info('Starting the predictions')
     final_model, features, best_model_params = get_model(config_values.relaunch_model, nb_folds, prediction_field, scoring_value, oversampling, directory)
     if config_values.record_prediction is True:
-        from include.predicting import Predict
         predict = Predict(config_values, prediction_field, features, final_model, oversampling, config_values.relaunch_model)
         predict.predict()
         final_count = dict()
