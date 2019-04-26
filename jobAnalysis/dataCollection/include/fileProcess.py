@@ -284,8 +284,15 @@ class fileProcess(object):
             pass
         try:
             dict_output['location'] = dict_output['json']['jobLocation']['address']['addressLocality']
+        except TypeError:  # The job location seems to appears sometimes in a list. However that list contains the same dictionary
+            try:
+                dict_location = dict_output['json']['jobLocation'][0]
+                dict_output['location'] = dict_location['address']['addressLocality']
+            except IndexError:
+                pass
         except KeyError:
             pass
+
         try:
             dict_output['salary'] = dict_output['json']['baseSalary']['value']
         except KeyError:
@@ -314,6 +321,13 @@ class fileProcess(object):
             pass
         try:
             dict_output['region'] = dict_output['json']['jobLocation']['address']['addressRegion']
+
+        except TypeError:  # The job location seems to appears sometimes in a list. However that list contains the same dictionary
+            try:
+                dict_region = dict_output['json']['jobLocation'][0]
+                dict_output['location'] = dict_location['address']['addressRegion']
+            except IndexError:
+                pass
         except KeyError:
             pass
 
