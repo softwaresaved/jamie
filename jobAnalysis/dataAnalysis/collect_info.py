@@ -532,7 +532,7 @@ def main():
     generate_report.count_invalid_codes()
 
     logger.info('Count invalid process')
-
+    generate_report.count_invalid_process()
     # logger.info('Get the classifications')
     # generate_report.get_classification()
 
