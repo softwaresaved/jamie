@@ -101,13 +101,13 @@ class ConfigDevModel(ConfigHome):
 
     k_fold = 5
 
-    relaunch_model = False
+    relaunch_model = True
 
     relaunch_include = True
 
     record_prediction = False
 
-    oversampling = True
+    oversampling = False
 
     prediction_field = 'aggregate'
 
