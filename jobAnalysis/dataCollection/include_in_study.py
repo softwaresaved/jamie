@@ -215,7 +215,7 @@ class IncludeInStudy:
                 self.db.update_one({'jobid': document['jobid']},
                                    {'$set': {'in_uk': True}},
                                    upsert=False)
-            return
+                return
         except KeyError:
             pass
         self.invalid_process.append('in_uk')
