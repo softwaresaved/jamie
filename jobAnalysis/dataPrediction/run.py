@@ -102,7 +102,7 @@ def _create_directory(prediction_field, scoring_value, oversampling):
     if oversampling:
         directory = root_folder + prediction_field + '_' + scoring_value + '_oversampling' + '/'
     else:
-        directory = root_folder + prediction_field + + '_' + scoring_value + '/'
+        directory = root_folder + prediction_field  + '_' + scoring_value + '/'
 
     # check folder if exists otherwise create it
 
