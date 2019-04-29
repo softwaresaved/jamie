@@ -123,7 +123,7 @@ class generateReport:
         for info in self.db_jobs.aggregate(pipeline):
             yield info
 
-    def write_csv(self, header, result, name, type_info='dataCollection'):
+    def write_csv(self, header, result, name, type_info='dataAnalysis'):
         """
         """
         filename = os.path.join(self.report_csv_folder, type_info, '{}.csv'.format(name))
@@ -208,7 +208,7 @@ class generateReport:
         self.write_csv(header=['type of job html', 'type of code', 'count'],
                        result=data_for_csv,
                        name=type_data,
-                       type_info='dataCollection')
+                       type_info='dataAnalysis')
 
         return output
 
@@ -228,7 +228,7 @@ class generateReport:
         self.write_csv(header=['Type of invalid_code', 'count'],
                        result=data_for_csv,
                        name='count_invalid_code',
-                       type_info='dataCollection')
+                       type_info='dataAnalysis')
 
     def count_invalid_process(self):
         """
@@ -246,7 +246,7 @@ class generateReport:
         self.write_csv(header=['Type of invalid_process', 'count'],
                        result=data_for_csv,
                        name='count_invalid_process',
-                       type_info='dataCollection')
+                       type_info='dataAnalysis')
 
     def get_unique_values(self, key, cleaned_set, clean_txt,research_soft_only=False):
         """
@@ -369,7 +369,7 @@ class generateReport:
                     pass
 
         # Record the results
-        filename = '{}dataCollection/{}_presence_keys.csv'.format(self.report_csv_folder, clean_txt)
+        filename = '{}dataAnalysis/{}_presence_keys.csv'.format(self.report_csv_folder, clean_txt)
         with open(filename, "w") as f:
             group = ['date', 'prediction']
             fields = group + list_to_parse
