@@ -101,11 +101,11 @@ class ConfigDevModel(ConfigHome):
 
     k_fold = 5
 
-    relaunch_model = True
+    relaunch_model = False
 
-    relaunch_include = True
+    relaunch_include = False
 
-    record_prediction = False
+    record_prediction = True
 
     oversampling = False
 
