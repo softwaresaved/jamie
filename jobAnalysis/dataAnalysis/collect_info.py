@@ -196,7 +196,10 @@ class generateReport:
             pipeline = self.match_last_id + pipeline
         output = dict()
         for data in self.aggregate(pipeline):
-            output.setdefault(data['_id']['enhanced'], {}).update({data['_id']['invalid_code']: data['count']})
+            try:
+                output.setdefault(data['_id']['enhanced'], {}).update({data['_id']['invalid_code']: data['count']})
+            except KeyError:  # in case of empty file
+                output.setdefault('empty', {}).update({data['_id']['invalid_code']: data['count']})
 
         data_for_csv = list()
         for data in output:
