@@ -101,7 +101,7 @@ class ConfigDevModel(ConfigHome):
 
     k_fold = 5
 
-    relaunch_model = False
+    relaunch_model = True
 
     relaunch_include = False
 
@@ -109,7 +109,7 @@ class ConfigDevModel(ConfigHome):
 
     oversampling = False
 
-    prediction_field = 'aggregate'
+    prediction_field = 'consensus'
 
     prediction_metric = 'precision_weighted'
 
