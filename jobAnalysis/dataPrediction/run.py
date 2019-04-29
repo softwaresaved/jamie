@@ -52,7 +52,7 @@ def record_average_scores(scores, nbr_folds, directory):
     of overwritting it.
     The name is based on the method to folds and just write the different models unders
     """
-    filename = directory +'average_scores_' + nbr_folds + '.csv'
+    filename = directory +'average_scores_' + str(nbr_folds) + '.csv'
     scores.to_csv(filename)
 
 
