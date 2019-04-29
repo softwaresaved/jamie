@@ -544,10 +544,11 @@ def main():
 
     # Need to creat a dataset for raw data (used to describe the overall dataset) i
     # and one that is cleaned (used for actual analysis).
-    for clean_or_not in ['raw', 'clean']:
-        if clean_or_not == 'clean':
-
-            clean_keys = {'include_in_study': True}
+    for clean_or_not in ['raw', 'include_in_study', 'include_in_process']:
+        if clean_or_not == 'include_in_study':
+            clean_keys = {'invalid_code':{"$exists": False}}
+        elif clean_or_not == 'include_in_process':
+            clean_keys = {'$and':[{'invalid_code':{"$exists": False}}, {'invalid_process': {'$exists': False}}]}
         else:
             clean_keys = {}
 
@@ -560,7 +561,7 @@ def main():
             generate_report.get_average_per_day(key, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
         logger.info('Get the different sum for: {}'.format(clean_or_not))
-        key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'uk_university', 'type_role', 'uk_postcode', 'in_uk']
+        key_to_parse_for_sum_per_day = ['contract', 'hours', 'location', 'extra_location', 'subject_area', 'type_role',  'in_uk']
         generate_report.get_sum_per_day(key_to_parse_for_sum_per_day, cleaned_set=clean_keys, clean_txt=clean_or_not)
 
 
@@ -572,9 +573,9 @@ def main():
         logger.info('Get the unique job title for: {}'.format(clean_or_not))
         generate_report.get_unique_values('job_title', cleaned_set=clean_keys, clean_txt=clean_or_not, research_soft_only=True)
 
-        if clean_or_not == 'clean':
-            logger.info('Get all the jobs from uk')
-            generate_report.get_uk_location(cleaned_set=clean_keys, clean_txt=clean_or_not)
+        # if clean_or_not == 'clean':
+        #     logger.info('Get all the jobs from uk')
+        #     generate_report.get_uk_location(cleaned_set=clean_keys, clean_txt=clean_or_not)
 
 
 if __name__ == '__main__':

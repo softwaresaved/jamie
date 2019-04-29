@@ -277,17 +277,19 @@ class IncludeInStudy:
         Add the list of invalid key for document that have some
         errors in the preprocess
         """
-        if len(self.invalid_process) == 0:
-            self.db.update_one({'jobid': document['jobid']},
-                               {'$set': {'include_in_study': True}},
-                               upsert=False)
-            self.count_to_include +=1
-            return
-        else:
+        # if len(self.invalid_process) == 0:
+        #     self.db.update_one({'jobid': document['jobid']},
+        #                        {'$set': {'include_in_study': True}},
+        #                        upsert=False)
+        #     self.count_to_include +=1
+        #     return
+        if len(self.invalid_process) > 0:
             self.db.update_one({'jobid': document['jobid']},
                                {'$set': {'invalid_process': self.invalid_process}},
                                upsert=False)
             self.count_not_to_include +=1
+        else:
+            self.count_to_include +=1
 
     def run(self):
         """
