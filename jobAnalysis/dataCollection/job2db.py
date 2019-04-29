@@ -122,6 +122,7 @@ def main():
     wrong_enhanced = []
     wrong_normal = []
     wrong_json = []
+    empty_file = []
     # ### Start the record ####
     n = 0
     right_normal = []
@@ -169,12 +170,15 @@ def main():
                     right_json.append(data_to_record['jobid'])
         except KeyError:
             n +=1
-            if data_to_record['enhanced'] == 'normal':
-                right_normal.append(data_to_record['jobid'])
-            elif data_to_record['enhanced'] == 'enhanced':
-                right_enhanced.append(data_to_record['jobid'])
-            elif data_to_record['enhanced'] == 'json':
-                right_json.append(data_to_record['jobid'])
+            try:
+                if data_to_record['enhanced'] == 'normal':
+                    right_normal.append(data_to_record['jobid'])
+                elif data_to_record['enhanced'] == 'enhanced':
+                    right_enhanced.append(data_to_record['jobid'])
+                elif data_to_record['enhanced'] == 'json':
+                    right_json.append(data_to_record['jobid'])
+            except KeyError:
+                empty_file.append(data_to_record['jobid'])
         try:
             db_jobs.insert(data_to_record)
             report.nb_inserted_job += 1
@@ -195,9 +199,10 @@ def main():
     logger.debug('\t\tWrong normal: {}'.format(len(wrong_normal)))
     logger.debug('\t\tWrong enhanced: {}'.format(len(wrong_enhanced)))
     logger.debug('\t\tWrong json: {}'.format(len(wrong_json)))
+    logger.debug('\t\tEmpty file: {}'.format(len(empty_file)))
 
     for type_wrong, inlist in [('wrong_normal.csv', wrong_normal), ('wrong_enhanced', wrong_enhanced),
-                               ('wrong_json', wrong_json)]:
+                               ('wrong_json', wrong_json), ('empty_file', empty_file)]:
 
         with open(type_wrong, 'w') as f:
             csvwriter = csv.writer(f)
