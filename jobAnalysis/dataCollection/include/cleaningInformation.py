@@ -261,6 +261,11 @@ class OutputRow:
         """
         self.check_validity(self.employer, 'employer')
 
+    def clean_type_role(self):
+        """
+        """
+        self.check_validity(self.employer, 'type_role')
+
     def clean_contract(self):
         """
         """
@@ -460,6 +465,7 @@ class OutputRow:
         self.clean_place_on()
         self.clean_closes()
         self.clean_contract()
+        self.clean_type_role()
         self.add_duration()
         # self.add_uk_university()
         # self.add_in_uk()
