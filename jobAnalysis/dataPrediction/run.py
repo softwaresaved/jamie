@@ -120,20 +120,21 @@ def main():
     oversampling = config_values.oversampling
     scoring_value = config_values.prediction_metric
     nb_folds = config_values.k_fold
+    for prediction_field, oversampling, scoring_value in [('aggregate', True, 'precision_weighted'),
+                                                          ('consensus', True, 'precision_weighted')]:
+        # Create the folder if not existing
+        directory = _create_directory(prediction_field, scoring_value, oversampling)
 
-    # Create the folder if not existing
-    directory = _create_directory(prediction_field, scoring_value, oversampling)
+        logger.info('Starting the predictions')
+        final_model, features, best_model_params = get_model(config_values.relaunch_model, nb_folds, prediction_field, scoring_value, oversampling, directory)
+        if config_values.record_prediction is True:
+            predict = Predict(config_values, prediction_field, features, final_model, oversampling, config_values.relaunch_model)
+            predict.predict()
+            final_count = dict()
 
-    logger.info('Starting the predictions')
-    final_model, features, best_model_params = get_model(config_values.relaunch_model, nb_folds, prediction_field, scoring_value, oversampling, directory)
-    if config_values.record_prediction is True:
-        predict = Predict(config_values, prediction_field, features, final_model, oversampling, config_values.relaunch_model)
-        predict.predict()
-        final_count = dict()
-
-        logger.info('Summary of prediction for new jobs')
-        for k in final_count:
-            logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
+            logger.info('Summary of prediction for new jobs')
+            for k in final_count:
+                logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
 
 
 if __name__ == "__main__":

@@ -107,9 +107,9 @@ class ConfigDevModel(ConfigHome):
 
     record_prediction = True
 
-    oversampling = False
+    oversampling = True
 
-    prediction_field = 'consensus'
+    prediction_field = 'aggregate'
 
     prediction_metric = 'precision_weighted'
 
