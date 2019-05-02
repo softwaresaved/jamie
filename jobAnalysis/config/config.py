@@ -107,7 +107,7 @@ class ConfigDevModel(ConfigHome):
 
     record_prediction = True
 
-    oversampling = True
+    oversampling = False
 
     prediction_field = 'aggregate'
 
