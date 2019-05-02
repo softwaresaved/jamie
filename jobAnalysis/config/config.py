@@ -111,7 +111,7 @@ class ConfigDevModel(ConfigHome):
 
     prediction_field = 'aggregate'
 
-    prediction_metric = 'precision_weighted'
+    prediction_metric = 'best_accuracy'
 
 
 class ConfigSoton(Config):
