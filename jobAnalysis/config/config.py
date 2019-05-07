@@ -103,7 +103,7 @@ class ConfigDevModel(ConfigHome):
 
     relaunch_model = True
 
-    relaunch_include = False
+    relaunch_include = True
 
     record_prediction = True
 

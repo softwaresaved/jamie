@@ -161,7 +161,9 @@ def prepare_labels(df, column, binary):
         lb = LabelBinarizer()
     y_train = lb.fit_transform(y)
     # Need to apply the ravel otherwise it is not the right shape
+    print(y)
     y = lb.fit_transform(y).ravel()
+    print(y)
     return y
 
 
@@ -227,3 +229,6 @@ def get_train_data(prediction_field, binary=True):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y)
     return X_train, X_test, y_train, y_test, features
 
+
+if __name__ == "__main__":
+    get_train_data('aggregate')

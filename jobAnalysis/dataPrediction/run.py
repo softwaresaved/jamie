@@ -120,9 +120,10 @@ def main():
     oversampling = config_values.oversampling
     scoring_value = config_values.prediction_metric
     nb_folds = config_values.k_fold
-    for prediction_field, oversampling, scoring_value in [('aggregate', True, 'balanced_accuracy'),
-                                                          ('consensus', False, 'balanced_accuracy'),
-                                                          ('consensus', True, 'balanced_accuracy')]:
+    for prediction_field, oversampling, scoring_value in [('aggregate', True, 'f1_weighted'),
+                                                          ('aggregate', False, 'f1_weighted'),
+                                                          ('consensus', False, 'f1_weighted'),
+                                                          ('consensus', True, 'f1_weighted')]:
         # Create the folder if not existing
         directory = _create_directory(prediction_field, scoring_value, oversampling)
 

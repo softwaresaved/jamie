@@ -229,7 +229,7 @@ class IncludeInStudy:
         try:
             date_job = document['placed_on']
             date_2015 = datetime(2015, 1, 1, 0, 0, 0)
-            date_2018= datetime(2018, 1, 1, 0, 0, 0)
+            date_2018= datetime(2018, 12, 31, 0, 0, 0)
             if date_job >= date_2015 and date_job <= date_2018:
                 self.db.update_one({'jobid': document['jobid']},
                                    {'$set': {'in_range': True}},
