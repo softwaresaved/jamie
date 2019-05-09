@@ -101,9 +101,9 @@ class ConfigDevModel(ConfigHome):
 
     k_fold = 5
 
-    relaunch_model = True
+    relaunch_model = False
 
-    relaunch_include = True
+    relaunch_include = False
 
     record_prediction = True
 
@@ -111,7 +111,7 @@ class ConfigDevModel(ConfigHome):
 
     prediction_field = 'aggregate'
 
-    prediction_metric = 'best_accuracy'
+    prediction_metric = 'balanced_accuracy'
 
 
 class ConfigSoton(Config):
