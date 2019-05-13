@@ -86,17 +86,7 @@ We selected the best model with nested-cross validation. At the end, the model c
 
 Once the model was selected, we run it to an unseen dataset. This testing dataset was created at the beginning of the process by splitting the total dataset into two (using stratified sampling). The first subset (80% of the dataset) was used for the model selection and training. The second subset (20%) was used to check the model.
 
-Once we tested the model on the unseen dataset, we re-train the selected model on the total dataset.
 
-
-The confusion matrix applied to the unseen dataset (20% of the total training set) shows that the model predicts accurately **75%** of the Research Software Job correctly (True Positives) and in 25% of the case seen it labels incorrectly a Research Software job as Non Software Job (false negative). It also shows that the model mislabels `non Software Job` as `Software job` in **2%** of the cases (false positives) which is really low but it is due to the unbalanced dataset (more Non Software Jobs).
-
-To conclude that confusion matrix. It is possible to understand it as: ***our model predict accuratly a Research Software job in 75% of the cases it seen.***
-
-
-Here the plot of the confusion matrix. For further details on the process of model creation and selection, please refer to the [Data Prediction notebook](./notebooks/dataPrediction.ipynb).
-
-![Confusion matrix with normalisation](./outputs/png/confusion_matrix_normalised.png?raw=true "Title")
 
 
 ### [Analysis of the dataset](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataAnalysis)
