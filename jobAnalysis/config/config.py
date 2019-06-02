@@ -107,7 +107,7 @@ class ConfigDevModel(ConfigHome):
 
     record_prediction = True
 
-    oversampling = False
+    oversampling = True
 
     prediction_field = 'aggregate'
 
@@ -118,12 +118,23 @@ class ConfigSoton(Config):
     """
     Config for deployment on Soton vm in rsg.soton.ac.uk
     """
-    INPUT_FOLDER = "/disk/ssi-data0/home/deploy/jobs-data-etl/JobAdverts/JobsAcUk/"
+    INPUT_FOLDER = "/home/rsg/last_jobs"
 
     SAMPLE_OUT_FOLDER = "/disk/ssi-data0/home/deploy/jobs-data-etl/JobAdverts/Jobs4Bob"
 
-    DB_ACCESS_FILE = "/disk/ssi-data0/home/deploy/jobs-data-etl/.access"
+    DB_ACCESS_FILE = "/home/rsg/.access"
 
+    relaunch_model = False
+
+    relaunch_include = False
+
+    record_prediction = True
+
+    oversampling = True
+
+    prediction_field = 'aggregate'
+
+    prediction_metric = 'balanced_accuracy'
     k_fold = 5
 
 

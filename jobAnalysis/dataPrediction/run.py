@@ -16,8 +16,8 @@ from include.features import get_train_data
 from include.model import nested_cross_validation
 from include.predicting import Predict
 
-from sklearn.externals import joblib
-
+from sklearn.externals.joblib  import dump, load
+#from pickle import dump, load
 from common.logger import logger
 from common.getArgs import getArgs
 
@@ -40,8 +40,8 @@ def record_information(best_model_params,
 def record_model(model, features, directory):
     """
     """
-    joblib.dump(features, '{}{}'.format(directory, 'features.pkl'))
-    joblib.dump(model, '{}{}'.format(directory, 'model.pkl'))
+    dump(features, '{}{}'.format(directory, 'features.pkl'))
+    dump(model, '{}{}'.format(directory, 'model.pkl'))
 
 
 def record_average_scores(scores, nbr_folds, directory):
@@ -57,8 +57,16 @@ def record_average_scores(scores, nbr_folds, directory):
 
 
 def load_model(directory):
-    features = joblib.load('{}{}'.format(directory, 'features.pkl'))
-    model = joblib.load('{}{}'.format(directory, 'model.pkl'))
+    try:
+        features = load('{}{}'.format(directory, 'features.pkl'))
+    except TypeError:
+        with open('{}{}'.format(directory, 'features.pkl')) as f:
+            features = load(f)
+    try:
+        model = load('{}{}'.format(directory, 'model.pkl'))
+    except TypeError:
+        with open('{}{}'.format(directory, 'model.pkl')) as f:
+            model = load(f)
     return features, model
 
 

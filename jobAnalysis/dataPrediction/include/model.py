@@ -21,7 +21,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
 from sklearn.model_selection import train_test_split
 
-import dask_ml.model_selection as dcv
+#import dask_ml.model_selection as dcv
 
 
 from sklearn.externals import joblib
@@ -196,9 +196,9 @@ def nested_cross_validation(X, y, prediction_field, scoring_value, oversampling=
     estimator = Pipeline([('clf', models[best_model_name]['model'])])
     if best_model_params:
         params = models[best_model_name]['params']
-        final_model = dcv.GridSearchCV(estimator, params, cv=inner_cv, n_jobs=-1)
+        final_model = GridSearchCV(estimator, params, cv=inner_cv, n_jobs=-1)
     else:
-        final_model = dcv.GridSearchCV(estimator, cv=inner_cv, n_jobs=-1)
+        final_model = GridSearchCV(estimator, cv=inner_cv, n_jobs=-1)
     final_model.fit(X, y)
 
     # Add the best model name in the best_model_params
