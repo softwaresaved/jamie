@@ -1,6 +1,6 @@
 # jobs-analysis
 
-This project aims to monitor and analyse the number of academic jobs, mainly in the UK, that require software skills. It does this by scraping jobs posted on the [job.ac.uk](https://www.jobs.ac.uk/) (academic jobs) website every day and stores these as file fragments.  These files are then pushed into a database. A classifier is then run to determine whether each job is a `Software Research Job` or not.  By a `Software Research Job` we mean a job that requires some level of software development. A job that uses software as an end-user is not a Software Research job.
+This project aims to monitor and analyse the number of academic jobs, mainly in the UK, that require software skills. It does this by scraping jobs posted on the [job.ac.uk](https://www.jobs.ac.uk/) (academic jobs) website every week day and stores these as file fragments.  These files are then pushed into a database. A classifier is then run to determine whether each job is a `Software Research Job` or not.  By a `Software Research Job` we mean a job that requires some level of software development. A job that uses software as an end-user is not a Software Research job.
 
 ## Description of the project
 
@@ -16,22 +16,22 @@ Collecting the jobs ads in a naive way and store then into a file for further an
 
 #### Data collection
 
-It is an html scraper built with python and [beautifulSoup](https://pypi.org/project/beautifulsoup4/) to parse the html content. It uses the search feature on the website to collect the links of all jobs posted on the website. With that information, it recreates the URL to download the html content of all each job ads into a separated file. Each file is supposed to have an unique ID parsed from that website. It ensures we do not store twice the same jobs.
-That file is preprocessed only to store the valuable sections (remove the header and footer) and there is no other transformation at this step.
+This uses an html scraper built using Python and [beautifulSoup](https://pypi.org/project/beautifulsoup4/) to parse the html content. It uses the search feature on the website to collect the links of all jobs posted on the website. With that information, it recreates the URL to download the html content of each job ads into a separate file. Each file is supposed to have an unique ID parsed from that website. It ensures that we do not store the same jobs twice.
+That file is preprocessed only to store the valuable sections (removes the header and footer) and there is no other transformation at this stage.
 
-The job collection spams from 2013 until today. Any details about the dataset, the raw data, the data missing, etc, can be found in the [dataCollection notebook](./notebooks/dataCollection.ipynb).
+The job collection spams from 2013 until today. Any details about the dataset, the raw data, the missing data, etc, can be found in the [dataCollection notebook](./notebooks/dataCollection.ipynb).
 
 #### Data cleansing
 
-After downloading and storing the jobs into the file, a cleaning operation is done over these files.
+After downloading and storing the jobs into the file, a cleaning operation is done over the files.
 
-Sometimes the ads does not contains the information we want or the formatting of the field is not following the rules we expect. This data cleaning focus on different keys as described below. Once the job ads is cleaned it is stored into a MongoDB to facilitate further steps.
+Sometimes the ads do not contain the information we require or the formatting of the field does not follow the rules we expect. This data cleaning focus on the different keys described below. Once a job ads is cleaned it is stored in MongoDB to facilitate further steps.
 
-* **Description**: This key contains the description of the job. It is essential to classify the job. In case of absence, the job ads is discarded.
+* **Description**: This key contains the description of the job. This is essential to classify the job. In case of absence, the job ads is discarded.
 
-* **Date of publishing**: The date of publishing, stored under the key `placed_on`, is essential to be able to do an analysis over time.
+* **Date of publishing**: The date of publishing, stored using the key `placed_on`, is essential to do an analysis over time.
 
-* **Salary**: This information is essential for our analysis. it is a text field that we convert into two piece of information. One is the lower salary and the second is the higher salary upon negotiations/skills/... The maximum effort is made to extract this two information, but if it is impossible, the job ads is discarded. This could be the case when that field does not contain information about salary (usually under the line of 'Competitive' or 'Not specified') or contains salary in hours or in foreign currencies.
+* **Salary**: This information is essential for our analysis. it is a text field that we convert into two piece of information. One is the lower salary and the second is the higher salary upon negotiations/skills/... The maximum effort is made to extract this two information, but if it is impossible, the job ads is discarded. This could be the case when that field does not contain information about salary (usually using the line of 'Competitive' or 'Not specified') or contains salary in hours or in foreign currencies.
 
 * **Employer**: This is which employer posted the job ads. We are only interested in Universities in United-Kingdom. Therefore we use a list of all universities in UK (that can be found [here]()) and only keep the ones that matches an element in that list.
 
