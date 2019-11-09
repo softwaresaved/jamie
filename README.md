@@ -25,7 +25,7 @@ The job collection spams from 2013 until today. Any details about the dataset, t
 
 After downloading and storing the jobs into the file, a cleaning operation is done over the files.
 
-Sometimes the ads do not contain the information we require or the formatting of the field does not follow the rules we expect. This data cleaning focus on the different keys described below. Once a job ads is cleaned it is stored in MongoDB to facilitate further steps.
+Sometimes the ads do not contain the information we require or the formatting of the field does not follow the rules we expect. This data cleaning focus on the different keys described below. Once a job ads is cleaned it is stored in MongoDB to facilitate subsequent steps.
 
 * **Description**: This key contains the description of the job. This is essential to classify the job. In case of absence, the job ads is discarded.
 
@@ -42,11 +42,11 @@ At the end of this cleaning process, the results are stored into a MongoDB with 
 ### [Predicting the type of job](https//github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataPrediction)
 
 Each new added jobs into the database get a prediction to know if they are a Software development position or not.
-To build the predictive model, two one-shot operations were needed. We needed to collect a training set and building the model itself.
+To build the predictive model, two one-shot operations were needed. We needed to collect a training set and to build the model itself.
 
 #### Creating a training set
 
-To classify the jobs in two categories we needed to have a training dataset. We asked expert to read a subset of Job Ads as presented on the website (without pictures) in which category that jobs fallen into. They had the choice between 4 options:
+To classify the jobs in two categories we needed to have a training dataset. We asked experts to read a subset of Job Ads as presented on a website (without pictures) in which category that jobs fallen into. They had the choice between 4 options:
 * This job ads is mostly for a Software development position.
 * This jobs requires some software development.
 * This jobs does not requires software development.
