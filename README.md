@@ -33,7 +33,7 @@ Sometimes the ads do not contain the information we require or the formatting of
 
 * **Salary**: This information is essential for our analysis. it is a text field that we convert into two piece of information. One is the lower salary and the second is the higher salary upon negotiations/skills/... The maximum effort is made to extract this two information, but if it is impossible, the job ads is discarded. This could be the case when that field does not contain information about salary (usually using the line of 'Competitive' or 'Not specified') or contains salary in hours or in foreign currencies.
 
-* **Employer**: This is which employer posted the job ads. We are only interested in Universities in United-Kingdom. Therefore we use a list of all universities in UK (that can be found [here]()) and only keep the ones that matches an element in that list.
+* **Employer**: This is which employer posted the job ads. We are only interested in Universities in United-Kingdom. Therefore we use a list of all universities in UK (that can be found [here](dataCollection/data/uk_uni_list.txt)) and only keep the ones that matches an element in that list.
 
 * **Type of role**: This field is an array of the type of job is given. It can be one or more of these values: [`Academic or Research`, `Professional or Managerial`, `Technical`, `Clerical`, `Craft or Manual`, `PhD`, `Masters`]. This is used to filter out all the ads about a `PhD` position or a `Master`, as it is not our interest. All others job ads are kept for further analysis.
 
