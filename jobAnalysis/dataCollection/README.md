@@ -4,17 +4,17 @@ author: Olivier Philippe
 
 ## Description
 
-This directory is used to build the parser that input HTML excerpt files containing the job data, cleans them and inserts them into a MongoDB instance.
+This directory is used to build the parser that inputs HTML excerpt files containing the job data, cleans them and inserts them into a MongoDB instance.
 
 All the operation are done by the `job2db.py` script.
 
 
 ### Parsing
 
-The script parses the folder containing the html file and create a list of JobId (the name of the file). Then it compare this list with the already recorded list into the database by querying the same key.
+The script parses the folder containing the html file and create a list of `JobId`s (the names used for the files). Then it compare this list with the already recorded list into the database by querying the same key.
 The difference is then send to `fileProcess.py` for the transformation of the file.
 
-It compares the name of the file with two list: SKIPPED_ID and RECORDED_ID. If the name of the file is present in one of these lists it is skipped.
+It compares the name of the file with two list: `SKIPPED_ID` and `RECORDED_ID`. If the name of the file is present in one of these lists it is skipped.
 The file is opened and the he content is passed to the `fileProcess.py` and transformed with bs4.
 A first cleaning transformation is done on the key and return a dictionary.
 
