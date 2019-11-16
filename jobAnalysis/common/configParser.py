@@ -1,15 +1,15 @@
 from configparser import ConfigParser
 
 
-""" A config parser that use the inbuild configParser but add
-    the possibility to parse a list of value separated with comma
+""" A config parser that use the inbuilt configParser but adds
+    the possibility to parse a list of values separated by commas
     and return a list from it
     Source: http://stackoverflow.com/a/11866695
 """
 
 
 class configParserPerso(ConfigParser):
-    """ Inherit from configparser and modify the method get() to
+    """ Inherit from configparser and modifies the get() method to
         return a list if it catch [ at the beginning and ] at the end
     """
     def getlist(self, section, option, **kwargs):
