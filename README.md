@@ -10,7 +10,7 @@ For that purpose we downloaded the ads that are published on the website [jobs.a
 
 In practice, it is possible to decompose the project into 3 distinct steps: **data collection and cleansing**, **prediction** and **analysis**. Each of these steps are conducted everyday automatically with a [bash script](day_task.sh).
 
-### [Data collection and cleansing](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataCollection)
+### [Data collection and cleaning](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataCollection)
 
 Collecting the jobs ads in a naive way and store then into a file for further analysis.
 
