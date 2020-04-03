@@ -21,7 +21,7 @@ That file is preprocessed only to store the valuable sections (removes the heade
 
 The job collection spams from 2013 until today. Any details about the dataset, the raw data, the missing data, etc, can be found in the [dataCollection notebook](./notebooks/dataCollection.ipynb).
 
-#### Data cleansing
+#### Data cleaning
 
 After downloading and storing the jobs into the file, a cleaning operation is done over the files.
 
