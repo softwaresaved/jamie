@@ -86,9 +86,9 @@ class ConfigHome(Config):
     """
     Config for development, meaning the deployment on personal computer
     """
-    INPUT_FOLDER = '/home/olivier/data/job_analysis/raw_jobs'
+    INPUT_FOLDER = '/home/abhidg/src/job_analysis/raw_jobs'
 
-    DB_ACCESS_FILE = "/home/olivier/data/job_analysis/.access"
+    DB_ACCESS_FILE = "/home/abhidg/src/job_analysis/.access"
 
     MYSQL_port = 3306
 
