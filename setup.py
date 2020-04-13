@@ -11,6 +11,7 @@ setup(name='jamie',
         'jamie',
         'jamie.analysis',
         'jamie.common',
+        'jamie.scrape',
         'jamie.config',
         'jamie.prediction'],
       install_requires = [
