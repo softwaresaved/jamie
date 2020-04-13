@@ -177,7 +177,7 @@ def record_data(input_folder, job_id, data):
         raise
 
 
-def main():
+def main(_):
     """
     """
     # Get the folder or the file where the input data are stored
