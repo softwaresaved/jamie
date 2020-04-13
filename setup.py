@@ -1,5 +1,4 @@
 from setuptools import setup
-import uklaw
 
 setup(name='jamie',
       version='0.1',

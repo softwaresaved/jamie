@@ -1,0 +1,37 @@
+#!/usr/bin/python3
+# jamie main file
+
+import os
+import sys
+import pytest
+import socket
+import jamie
+import jamie.config
+
+maintxt = """jamie: Job Analysis by Machine Information Extraction
+syntax: jamie [command]
+
+where command is one of:
+  scrape          Scrapes jobs from jobs.ac.uk            
+  ingest          Read scraped jobs into MongoDB
+  train           Train new model using data from Bob
+  predict         Predict using saved models
+  report          Generate report with analysis of jobs
+  version         Version information for Jamie
+"""
+
+def main(args):
+    if args == []:
+        print(maintxt)
+        sys.exit(0)
+    elif args[0] == "version":
+        print("jamie version", jamie.__version__)
+        sys.exit(0)
+    elif args[0] == "config":
+        jamie.config.main(args[1:])
+    else:
+        print("jamie: unknown or not implemented option")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
