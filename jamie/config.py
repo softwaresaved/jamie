@@ -2,9 +2,9 @@ from pathlib import Path
 import pytoml as toml
 
 DEFAULTS = {
-    'scraper.input-folder': 'input',
+    'scrape.folder': 'input',
     'common.nltk-files': './nltk-files/',
-    'scraper.njobs': 10000,
+    'scrape.njobs': 10000,
     'db.name': 'jobsDB',
     'db.tags': 'tags',
     'db.prediction': 'prediction',
