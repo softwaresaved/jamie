@@ -13,6 +13,7 @@ setup(name='jamie',
         'jamie.common',
         'jamie.scrape',
         'jamie.config',
+        'jamie.data',
         'jamie.prediction'],
       install_requires = [
           'pymongo>=3.4.0',
