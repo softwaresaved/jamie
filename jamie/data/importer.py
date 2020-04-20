@@ -9,10 +9,8 @@ downloaded from www.jobs.ac.uk to mongodb, after cleaning.
 import os
 import csv
 import itertools
-import errno
 import pymongo
 from ..logger import logger
-from ..common.lib import make_sure_path_exists
 from ..common.getConnection import connectMongo
 from ..scrape.fileProcess import fileProcess
 from .cleaningInformation import OutputRow
