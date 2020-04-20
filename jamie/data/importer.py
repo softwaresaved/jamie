@@ -2,46 +2,23 @@
 # encoding: utf-8
 
 """
-Python script that converts job htm excerpts downloaded from www.job.ac.uk
-Clean the files and insert them into a mongodb
-Requirement:
-    * config.ini file to collect information for the mongoDB connection
-Input:
-    * Folder containing html files
+Python module to import scraped job data in HTML format
+downloaded from www.jobs.ac.uk to mongodb, after cleaning.
 """
 
 import os
 import csv
-import json
 import itertools
 import errno
-
 import pymongo
+from ..logger import logger
+from ..common.lib import make_sure_path_exists
+from ..common.getConnection import connectMongo
+from ..scrape.fileProcess import fileProcess
+from .cleaningInformation import OutputRow
+from .summary_day_operation import generateReport
 
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(".").absolute().parent))
-
-from common.logger import logger
-from common.getArgs import getArgs
-from common.getConnection import connectMongo
-
-from dataCollection.include.fileProcess import fileProcess
-from dataCollection.include.cleaningInformation import OutputRow
-from dataCollection.include.summary_day_operation import generateReport
-
-
-logger = logger(name="jobs2db", stream_level="DEBUG")
-
-
-def make_sure_path_exists(path):
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
+logger = logger(name="importer", stream_level="DEBUG")
 
 def get_filename(root_folder, *args):
     """

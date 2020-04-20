@@ -10,6 +10,7 @@ import errno
 import requests
 from bs4 import BeautifulSoup
 
+from ..common.lib import make_sure_path_exists
 from ..config import Config
 from ..logger import logger
 from .fileProcess import fileProcess
@@ -18,14 +19,6 @@ logger = logger(name="scrape", stream_level="DEBUG")
 
 content_attrs = [{'attrs_id': 'class', 'attrs_content': 'content'},
                  {'attrs_id': 'id', 'attrs_content' :'enhanced-content'}]
-
-
-def make_sure_path_exists(path):
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
 
 
 def get_page(url):
