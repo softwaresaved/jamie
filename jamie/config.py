@@ -26,7 +26,7 @@ class Config:
             with filename.open() as fp:
                 _cf = toml.load(fp)
             for k in _cf:
-                if not isinstance(cf[k], dict):
+                if not isinstance(_cf[k], dict):
                     raise ValueError("Incorrect configuration file format in %s" % self.filename)
                 else:
                     for y in _cf[k]:
