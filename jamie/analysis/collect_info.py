@@ -6,19 +6,9 @@ Generate data for all the different operations
 """
 import os
 import csv
-import argparse
 from datetime import timedelta
-
 from bson import Code
-
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path('.').absolute().parent))
-
-from common.logger import logger
-from common.getArgs import getArgs
-from common.getConnection import connectMongo
+from ..logger import logger
 
 logger = logger(name='collect info', stream_level='DEBUG')
 
