@@ -11,6 +11,7 @@ import csv
 import itertools
 import pymongo
 from ..logger import logger
+from ..config import Config
 from ..common.getConnection import connectMongo
 from ..scrape.fileProcess import fileProcess
 from .cleaningInformation import OutputRow
@@ -62,19 +63,16 @@ def main():
     """
     Wrapper around for the data parser from html to mongodb
     """
-    description="Transform jobs ads stored in html file into the mongodb"
-    arguments = getArgs(description)
-    config_values = arguments.return_arguments()
 
-
-    db_conn = connectMongo(config_values)
+    c = Config()
+    db_conn = connectMongo(c)
     # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = config_values.INPUT_FOLDER
+    INPUT_FOLDER = c['scrape.folder']
     # ### Init the processes #####
 
     # Connect to the database
     logger.info("Connection to the database")
-    db_jobs = db_conn[config_values.DB_JOB_COLLECTION]
+    db_jobs = db_conn[c['db.jobs']]
     # Ensure the indexes are created
     create_index(db_jobs, "jobid", unique=True)
     # create_index(db_jobs, 'IncludeInStudy', unique=False)
@@ -114,7 +112,7 @@ def main():
                 )
             )
             logger.debug('Total jobs: {}'.format(report.nb_processed_job))
-            logger.debug('\tTotal right jobs: {}'.format(report.nb_processed_job -m))
+            logger.debug('\tTotal right jobs: {}'.format(report.nb_processed_job - m))
             logger.debug('\t\tRight normal: {}'.format(len(right_normal)))
             logger.debug('\t\tRight enhanced: {}'.format(len(right_enhanced)))
             logger.debug('\t\tRight json: {}'.format(len(right_json)))
@@ -127,7 +125,7 @@ def main():
         data_to_record = clean_data.to_dictionary()
         try:
             if len(data_to_record['invalid_code']) >= 3:
-                m+=1
+                m += 1
                 if data_to_record['enhanced'] == 'normal':
                     wrong_normal.append(data_to_record['jobid'])
                 elif data_to_record['enhanced'] == 'enhanced':
@@ -136,7 +134,7 @@ def main():
                     wrong_json.append(data_to_record['jobid'])
 
             else:
-                n +=1
+                n += 1
                 if data_to_record['enhanced'] == 'normal':
                     right_normal.append(data_to_record['jobid'])
                 elif data_to_record['enhanced'] == 'enhanced':
@@ -144,7 +142,7 @@ def main():
                 elif data_to_record['enhanced'] == 'json':
                     right_json.append(data_to_record['jobid'])
         except KeyError:
-            n +=1
+            n += 1
             try:
                 if data_to_record['enhanced'] == 'normal':
                     right_normal.append(data_to_record['jobid'])
@@ -166,7 +164,7 @@ def main():
     logger.info(report.get_current())
     logger.info(report.get_total())
     logger.debug('Total jobs: {}'.format(report.nb_processed_job))
-    logger.debug('\tTotal right jobs: {}'.format(report.nb_processed_job -m))
+    logger.debug('\tTotal right jobs: {}'.format(report.nb_processed_job - m))
     logger.debug('\t\tRight normal: {}'.format(len(right_normal)))
     logger.debug('\t\tRight enhanced: {}'.format(len(right_enhanced)))
     logger.debug('\t\tRight json: {}'.format(len(right_json)))
