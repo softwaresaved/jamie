@@ -7,6 +7,7 @@ DEFAULTS = {
     'scrape.njobs': 10000,
     'db.name': 'jobsDB',
     'db.tags': 'tags',
+    'db.jobs': 'jobs',
     'db.prediction': 'prediction',
     'db.mysql-host': '127.0.0.1',
     'db.mysql-port': None,
