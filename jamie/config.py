@@ -39,7 +39,7 @@ class Config:
         if not self.cache.exists():
             self.cache.mkdir(parents=True)
 
-    def has(self, s):
+    def __contains__(self, s):
         return s in self.cf
 
     def get(self, s, default=None):
