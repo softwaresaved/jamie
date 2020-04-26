@@ -1,5 +1,6 @@
 from pathlib import Path
 import pytoml as toml
+from tabulate import tabulate
 
 DEFAULTS = {
     'scrape.folder': 'input',
@@ -23,6 +24,7 @@ class Config:
     def __init__(self, filename=Path("~/.config/jamie.toml").expanduser(), who="jamie"):
         self.who = who
         self.filename = filename
+        self.exists = Path(filename).exists()
         if filename.exists():
             with filename.open() as fp:
                 _cf = toml.load(fp)
@@ -41,6 +43,9 @@ class Config:
 
     def __contains__(self, s):
         return s in self.cf
+
+    def __str__(self):
+        return tabulate(self.cf.items())
 
     def get(self, s, default=None):
         if s in self.cf:
@@ -79,8 +84,16 @@ class Config:
 
 def main(args):
     c = Config()
+
     if len(args) == 0:
-        print("syntax: jamie config <configname>")
+        print("jamie: configuration file %s -- %s\n"
+              "  config               List current configuration\n"
+              "  config <name>        Read value of configuration <name>\n"
+              "  config <name> <val>  Set configuration <name> to <val>\n\n"
+              "Current configuration:" %
+              ("(not present, using defaults)" if not c.exists else "",
+                  c.filename))
+        print(c)
     elif len(args) == 1:
         print(str(c.get(args[0])))
     else:
