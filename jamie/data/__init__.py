@@ -1,7 +1,6 @@
 from pathlib import Path
 import pandas as pd
 from box import Box
-from .importer import main as importer  # NOQA
 
 def read_list(fn):
     lines = Path(fn).read_text().split('\n')

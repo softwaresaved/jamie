@@ -9,8 +9,10 @@ import re
 import csv
 import difflib
 from operator import itemgetter
+from pathlib import Path
 from datetime import datetime
 from ..common.textClean import textClean
+from ..data import datasets
 
 
 class OutputRow:
@@ -65,29 +67,20 @@ class OutputRow:
         self.uk_uni_list = self.read_uni_list_file()
         self.uk_postcode_dict = self.read_postcode()
 
-    def read_uni_list_file(self):
+    def read_uni_list_file(self, dataset='uk_uni'):
         """
         Read the txt file containing all universities from a text file
         and create a set of strings
         """
-        set_uni_list = set()
-        with open('./data/uk_uni_list.txt', 'r') as f:
-            for l in f:
-                s = ' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
-                set_uni_list.add(s.strip())
-        return set_uni_list
+        return set(' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
+                   for l in datasets[dataset].list)
 
-    def read_postcode(self):
+    def read_postcode(self, dataset='uk_uni'):
         """
         Read the csv file containing university and postcode for UK only
         """
-        dict_uk_uni_postcode = dict()
-        with open('./data/uk_uni_postcode.csv', 'r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                dict_uk_uni_postcode[row['PROVIDER_NAME']] = row['POSTCODE']
-
-        return dict_uk_uni_postcode
+        return {row.PROVIDER_NAME: row.POSTCODE
+                for row in datasets[dataset].postcodes.itertuples()}
 
     def matching_key(self, key):
         """
