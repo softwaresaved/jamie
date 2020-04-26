@@ -23,7 +23,7 @@ class OutputRow:
     Return the cleaned dictionary and the key with the invalid code with it
     """
 
-    def __init__(self, input_row):
+    def __init__(self, input_row, dataset='uk_uni'):
         """
         *Create attributes from the dict() input_row
         *Import the transformKey __init__() to have access to the key list
@@ -32,6 +32,7 @@ class OutputRow:
         """
         # Create attribute from the input_row
         self.input_row = input_row
+        self.dataset = dataset
 
         self.needed_keys = ['jobid',
                             'description',
@@ -67,20 +68,20 @@ class OutputRow:
         self.uk_uni_list = self.read_uni_list_file()
         self.uk_postcode_dict = self.read_postcode()
 
-    def read_uni_list_file(self, dataset='uk_uni'):
+    def read_uni_list_file(self):
         """
         Read the txt file containing all universities from a text file
         and create a set of strings
         """
         return set(' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
-                   for l in datasets[dataset].list)
+                   for l in datasets[self.dataset].list)
 
-    def read_postcode(self, dataset='uk_uni'):
+    def read_postcode(self):
         """
         Read the csv file containing university and postcode for UK only
         """
         return {row.PROVIDER_NAME: row.POSTCODE
-                for row in datasets[dataset].postcodes.itertuples()}
+                for row in datasets[self.dataset].postcodes.itertuples()}
 
     def matching_key(self, key):
         """
