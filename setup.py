@@ -17,14 +17,15 @@ setup(name='jamie',
         'jamie.prediction'],
       install_requires = [
           'pymongo>=3.4.0',
-          'pytoml',
+          'pytoml',  # read .toml configuration files
           'pandas',
           'mysql',
           'mysql-connector-python',
-          'nltk',
-          'tabulate',
+          'nltk',  # text cleaning
+          'tabulate', # pretty printing tabular data
+          'python-box',  # access dict using dot notation
           'numpy>=1.12.0',
-          'tqdm',
+          'tqdm',  # progress bars
           'pytest',
           'requests',
           'beautifulsoup4'],
