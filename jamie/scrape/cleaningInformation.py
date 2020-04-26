@@ -10,12 +10,7 @@ import csv
 import difflib
 from operator import itemgetter
 from datetime import datetime
-
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(".").absolute().parent))
-from common.textClean import textClean
+from ..common.textClean import textClean
 
 
 class OutputRow:

@@ -8,9 +8,7 @@ import csv
 import pymongo
 
 from tabulate import tabulate
-from common.logger import logger
-
-from common.configParser import configParserPerso as configParser
+from ..logger import logger
 
 logger = logger(name='summary_day_operation', stream_level='DEBUG')
 

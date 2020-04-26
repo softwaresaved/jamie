@@ -14,7 +14,7 @@ from ..logger import logger
 from ..config import Config
 from ..common.getConnection import connectMongo
 from ..scrape.fileProcess import fileProcess
-from .cleaningInformation import OutputRow
+from ..scrape.cleaningInformation import OutputRow
 from .summary_day_operation import generateReport
 
 logger = logger(name="importer", stream_level="DEBUG")

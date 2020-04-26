@@ -5,13 +5,14 @@ import sys
 import jamie
 import jamie.config
 import jamie.scrape
+import jamie.data
 
 maintxt = """jamie: Job Analysis by Machine Information Extraction
 syntax: jamie [command]
 
 where command is one of:
   scrape          Scrapes jobs from jobs.ac.uk
-  ingest          Read scraped jobs into MongoDB
+  import          Read scraped jobs into MongoDB
   train           Train new model using data from Bob
   predict         Predict using saved models
   report          Generate report with analysis of jobs
@@ -25,6 +26,8 @@ def main(args):
     elif args[0] == "version":
         print("jamie version", jamie.__version__)
         sys.exit(0)
+    elif args[0] == "import":
+        jamie.data.importer()
     elif args[0] == "config":
         jamie.config.main(args[1:])
     elif args[0] == "scrape":
