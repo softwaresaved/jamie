@@ -8,6 +8,7 @@ downloaded from www.jobs.ac.uk to mongodb, after cleaning.
 
 import os
 import csv
+import sys
 import itertools
 import pymongo
 from ..logger import logger
@@ -15,6 +16,7 @@ from ..config import Config
 from ..common.getConnection import connectMongo
 from ..scrape.fileProcess import fileProcess
 from ..scrape.cleaningInformation import OutputRow
+from . import valid_employer
 from .summary_day_operation import generateReport
 
 logger = logger(name="importer", stream_level="DEBUG")
@@ -64,6 +66,10 @@ def main(employer='uk_uni'):
     Wrapper around for the data parser from html to mongodb
     """
 
+    if not valid_employer(employer):
+        print("importer: not a valid employer set\n"
+              "          use 'jamie list-employers' to see them")
+        sys.exit(1)
     c = Config()
     db_conn = connectMongo(c)
     # Get the folder or the file where the input data are stored
