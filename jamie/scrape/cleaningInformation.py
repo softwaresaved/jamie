@@ -6,13 +6,11 @@ This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs 
 """
 
 import re
-import csv
 import difflib
 from operator import itemgetter
-from pathlib import Path
 from datetime import datetime
 from ..common.textClean import textClean
-from ..data import datasets
+from ..data import employers
 
 
 class OutputRow:
@@ -23,7 +21,7 @@ class OutputRow:
     Return the cleaned dictionary and the key with the invalid code with it
     """
 
-    def __init__(self, input_row, dataset='uk_uni'):
+    def __init__(self, input_row, employers='uk_uni'):
         """
         *Create attributes from the dict() input_row
         *Import the transformKey __init__() to have access to the key list
@@ -32,7 +30,7 @@ class OutputRow:
         """
         # Create attribute from the input_row
         self.input_row = input_row
-        self.dataset = dataset
+        self.employers = employers
 
         self.needed_keys = ['jobid',
                             'description',
@@ -74,14 +72,14 @@ class OutputRow:
         and create a set of strings
         """
         return set(' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
-                   for l in datasets[self.dataset].list)
+                   for l in employers[self.employers].list)
 
     def read_postcode(self):
         """
         Read the csv file containing university and postcode for UK only
         """
         return {row.PROVIDER_NAME: row.POSTCODE
-                for row in datasets[self.dataset].postcodes.itertuples()}
+                for row in employers[self.employers].postcodes.itertuples()}
 
     def matching_key(self, key):
         """

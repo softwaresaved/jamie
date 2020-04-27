@@ -59,7 +59,7 @@ def get_db_ids(db):
     return db.distinct("jobid")
 
 
-def main():
+def main(employer='uk_uni'):
     """
     Wrapper around for the data parser from html to mongodb
     """
@@ -120,7 +120,7 @@ def main():
             logger.debug('\t\tWrong normal: {}'.format(len(wrong_normal)))
             logger.debug('\t\tWrong enhanced: {}'.format(len(wrong_enhanced)))
             logger.debug('\t\tWrong json: {}'.format(len(wrong_json)))
-        clean_data = OutputRow(data)
+        clean_data = OutputRow(data, employer=employer)
         clean_data.clean_row()
         data_to_record = clean_data.to_dictionary()
         try:
