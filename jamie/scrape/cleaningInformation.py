@@ -21,7 +21,7 @@ class OutputRow:
     Return the cleaned dictionary and the key with the invalid code with it
     """
 
-    def __init__(self, input_row, employers='uk_uni'):
+    def __init__(self, input_row, employer='uk_uni'):
         """
         *Create attributes from the dict() input_row
         *Import the transformKey __init__() to have access to the key list
@@ -30,7 +30,7 @@ class OutputRow:
         """
         # Create attribute from the input_row
         self.input_row = input_row
-        self.employers = employers
+        self.employer = employer
 
         self.needed_keys = ['jobid',
                             'description',
@@ -72,14 +72,14 @@ class OutputRow:
         and create a set of strings
         """
         return set(' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
-                   for l in employers[self.employers].list)
+                   for l in employers[self.employer].list)
 
     def read_postcode(self):
         """
         Read the csv file containing university and postcode for UK only
         """
         return {row.PROVIDER_NAME: row.POSTCODE
-                for row in employers[self.employers].postcodes.itertuples()}
+                for row in employers[self.employer].postcodes.itertuples()}
 
     def matching_key(self, key):
         """
@@ -313,6 +313,9 @@ class OutputRow:
                     elif len(salary_values) == 3:
                         self.salary_min = salary_values[0]
                         self.salary_max = salary_values[1]
+                        # Check that the other salary value is actually
+                        # higher
+                        assert self.salary_values[2] > self.salary_values[1]
                     else:
                         self.add_invalid_code(fieldname)
         except TypeError:
