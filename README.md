@@ -16,14 +16,14 @@ In practice, it is possible to decompose the project into 3 distinct steps: **da
 
 Collecting the jobs ads in a naive way and store then into a file for further analysis.
 
-#### Data collection -- `jamie scrape`
+#### `scrape`: Data collection
 
 This uses an html scraper built using Python and [beautifulSoup](https://pypi.org/project/beautifulsoup4/) to parse the html content. It uses the search feature on the website to collect the links of all jobs posted on the website. With that information, it recreates the URL to download the html content of each job ads into a separate file. Each file is supposed to have an unique ID parsed from that website. It ensures that we do not store the same jobs twice.
 That file is preprocessed only to store the valuable sections (removes the header and footer) and there is no other transformation at this stage.
 
 The job collection spams from 2013 until today. Any details about the dataset, the raw data, the missing data, etc, can be found in the [dataCollection notebook](./notebooks/dataCollection.ipynb).
 
-#### Data import -- `jamie import`
+#### `import`: Data import
 
 After downloading and storing the jobs into the file, a cleaning operation is done over the files.
 
@@ -56,11 +56,11 @@ To classify the jobs in two categories we needed to have a training dataset. We 
 
 Each jobs ads were shown several times (up to three times) to different experts until a consensus emerged. The aggregation procedure is shown in detail here TODO.
 
-#### Building a model -- `jamie train`
-
-To build a model, the package [scikit-learn](http://scikit-learn.org/stable/) was used. The model creation implies a feature selection and then a model selection. The model (and diverse metrics and results) is then stored into a [file]('./outputs/dataPrediction/model.pkl') as well as the [feature pipeline]('./outputs/dataPrediction/features.pkl') and use to classify any new jobs.
+#### Building a model
 
 ##### Feature selection
+
+Various featuresets are allowed, we describe the default featureset here. Additional features can be added in `jamie.features`. Note that alternative job role types (such as Data Curator), which can be specified via different search terms by extending from the default `DefaultFeatureBase` class and specifying a different search term list. Thus, alternative job role types are alternative featuresets.
 
 The main key used for feature selection is the `description` key that contains the information about the jobs
 The second key used is `job title`  which is a text field that represents the title of the job ads and often contains the title of the job.
@@ -69,27 +69,25 @@ The third key used is the number of time a word from a pre-made list appears in 
 The text fields (`description` and `job title`) had their stop words removed, and were transformed using TF-IDF for both 1-gram and 2-grams.
 The count of words from the software list was transformed into a category. Each of the number associated representedcategories.
 
-A feature pipeline was build and fed to the model selection step.
-
 ##### Model selection and prediction
 
 Model selection comprises a few steps. For each step the corresponding command is shown in brackets:
 
-- **Training data snapshot** (`snapshot-training-data`): Before we run any models, we take a snapshot of the database subset used for training. The subset is chosen from the file `tags_summary.json`. We snapshot the data for reproducibility purposes. Snapshot data is stored in `snapshots/training/DATE`. Snapshots can be listed by running `jamie list-snapshots training`
-- **Model Selection** (`model-selection`): We run a series of models (to add a model, add a module under `jamie.models` using nested cross validation. The model outputs are stored in `snapshots/models/<codedate>_train<training-snapshot-date>_<code_githash>/<modelname>.pkl` for the pickled models and `<modelname>_features.npz` for the features. The current model configuration is also saved as `model.toml` in the folder. The best model files are symlinked as `best_model.pkl` and `best_model_params.json`. In case the links are lost, we also write a summary of the whole run in a `summary.json` file. By default, `model-selection` uses the latest training snapshot, but a specific snapshot can be specified by adding the training snapshot name:
+- **`snapshot-training-data`: Training data snapshot**. Before we run any models, we take a snapshot of the database subset used for training. The subset is chosen from the file `tags_summary.json`. We snapshot the data for reproducibility purposes. Snapshot data is stored in `snapshots/training/DATE`. Snapshots can be listed by running `jamie list-snapshots training`
+- **`model-selection`: Model Selection**.: We run a series of models (to add a model, add a module under `jamie.models` using nested cross validation. The model outputs are stored in `snapshots/models/<codedate>_train<training-snapshot-date>_<code_githash>/<featureset>/<modelname>.pkl` for the pickled models and `<modelname>_features.npz` for the features. The current model configuration is also saved as `model.toml` in the folder. The best model files are symlinked as `best_model.pkl` and `best_model_params.json`. In case the links are lost, we also write a summary of the whole run in a `summary.json` file. By default, `model-selection` uses the latest training snapshot and the `default` featureset, but a specific snapshot can be specified by adding the training snapshot name:
 
-    jamie model-selection training-snapshot  # use 'list-snapshots training' to see options
+        jamie model-selection training-snapshot [featureset] # use 'list-snapshots training' to see options
 
 The list of model snapshots can be obtained by `jamie list-snapshots models`.
 
-- **Prediction** (`predict`). The model training automatically produces scores (in our case using the precision metric) for the models under `jamie.models`. The best model is also picked in the model selection phase. For prediction, we run the chosen model against the live database and record the predictions in a separate collection called `predictions`, which is indexed by `jobid`. By default, the best model from the latest model snapshot (by code and training date) is selected for prediction. The predictions are tagged with the model snapshot. Specific snapshots can also be specified as follows:
+- **`predict`: Prediction**. The model training automatically produces scores (in our case using the precision metric) for the models under `jamie.models`. The best model is also picked in the model selection phase. For prediction, we run the chosen model against the live database and record the predictions in a separate collection called `predictions`, which is indexed by `jobid`. By default, the best model from the latest model snapshot (by code and training date) is selected for prediction. The predictions are tagged with the model snapshot. Specific snapshots can also be specified as follows:
 
-    jamie predict <model-snapshot>  # use 'list-snapshots models' to see options.
-    jamie predict <model-snapshot> <model-name>  # for a particular model
+        jamie predict <model-snapshot>  # use 'list-snapshots models' to see options.
+        jamie predict <model-snapshot> <model-name>  # for a particular model
 
 To obtain confidence intervals, we run an ensemble of `model.ensemble_size` (default: 100) models with different train-test splits. For ensemble runs, we store the predictions for each of the models along with a summary in `snapshots/predictions/<model-snapshot>`. Note that we assume the prediction code has not changed between training the model and the time when the prediction was run. We also do not expect reproducibility here, as the live database is changing all the time.
 
-### Reports (`report`)
+### `report`: Report and analysis
 
 Reporting is done using a web frontend written in Flask, running simple plots and summarising the information. The report is segmented into sections, each of which is a separate module under `jamie.report`. The frontend can be launched by typing
 
