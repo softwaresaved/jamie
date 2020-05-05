@@ -2,6 +2,8 @@
 
 This project aims to monitor and analyse the number of academic jobs, mainly in the UK, that require software skills. It does this by scraping jobs posted on the [job.ac.uk](https://www.jobs.ac.uk/) (academic jobs) website every week day and stores these as file fragments.  These files are then pushed into a database. A classifier is then run to determine whether each job is a `Software Research Job` or not.  By a `Software Research Job` we mean a job that requires some level of software development. A job that uses software as an end-user is not a Software Research job.
 
+**Note**: This branch (`jamie`) is a work in progress, so this README is constantly in flux.
+
 ## Description of the project
 
 The aim of this work is to understand what are the characteristics of the `Software Research Job` job in academia  and how it evolves over time.
@@ -14,14 +16,14 @@ In practice, it is possible to decompose the project into 3 distinct steps: **da
 
 Collecting the jobs ads in a naive way and store then into a file for further analysis.
 
-#### Data collection
+#### Data collection -- `jamie scrape`
 
 This uses an html scraper built using Python and [beautifulSoup](https://pypi.org/project/beautifulsoup4/) to parse the html content. It uses the search feature on the website to collect the links of all jobs posted on the website. With that information, it recreates the URL to download the html content of each job ads into a separate file. Each file is supposed to have an unique ID parsed from that website. It ensures that we do not store the same jobs twice.
 That file is preprocessed only to store the valuable sections (removes the header and footer) and there is no other transformation at this stage.
 
 The job collection spams from 2013 until today. Any details about the dataset, the raw data, the missing data, etc, can be found in the [dataCollection notebook](./notebooks/dataCollection.ipynb).
 
-#### Data cleaning
+#### Data import -- `jamie import`
 
 After downloading and storing the jobs into the file, a cleaning operation is done over the files.
 
@@ -52,20 +54,9 @@ To classify the jobs in two categories we needed to have a training dataset. We 
 * This jobs does not requires software development.
 * There is not enough information to decide.
 
-Each jobs ads were shown several times (up to three times) to different experts until a consensus emerged.
-A job is classified as *Software job* if two participants assigned *Most* or *Some* to the question: **How much of this person's time would be spent developing software?**. If no consensus emerged, the job was classified *Ambigous* and if there was not enough information the job was classified *Insufficient Evidence*.
-Only the Software Jobs and Not software jobs are kept for building the model.
+Each jobs ads were shown several times (up to three times) to different experts until a consensus emerged. The aggregation procedure is shown in detail here TODO.
 
-The dataset is composed of **1262** classified jobs. There are **335** jobs classified as Software Jobs and **813** as not *Software job*.
-
-|Type of classification | Count | Percentage|
-| :-: | :-: | :-: |
-No Software Job | 813 | 64%
-Software Job | 335 | 27%
-Ambiguous | 69 | 5%
-Insufficient Evidence | 45 | 4
-
-#### Building a model
+#### Building a model -- `jamie train`
 
 To build a model, the package [scikit-learn](http://scikit-learn.org/stable/) was used. The model creation implies a feature selection and then a model selection. The model (and diverse metrics and results) is then stored into a [file]('./outputs/dataPrediction/model.pkl') as well as the [feature pipeline]('./outputs/dataPrediction/features.pkl') and use to classify any new jobs.
 
@@ -80,51 +71,44 @@ The count of words from the software list was transformed into a category. Each 
 
 A feature pipeline was build and fed to the model selection step.
 
-##### Model selection
+##### Model selection and prediction
 
-We selected the best model with nested-cross validation. In the end, the model chosen was the `Gradient Boosting` as it was the most stable and the most precise model. To select the model, the `precision` metric was use rather than the `accuracy` ones due to the unbalanced dataset (more None Research Software Job).
+Model selection comprises a few steps. For each step the corresponding command is shown in brackets:
 
-Once the model was selected, we run it to an unseen dataset. This testing dataset was created at the beginning of the process by splitting the total dataset into two (using stratified sampling). The first subset (80% of the dataset) was used for the model selection and training. The second subset (20%) was used to check the model.
+- **Training data snapshot** (`snapshot-training-data`): Before we run any models, we take a snapshot of the database subset used for training. The subset is chosen from the file `tags_summary.json`. We snapshot the data for reproducibility purposes. Snapshot data is stored in `snapshots/training/DATE`. Snapshots can be listed by running `jamie list-snapshots training`
+- **Model Selection** (`model-selection`): We run a series of models (to add a model, add a module under `jamie.models` using nested cross validation. The model outputs are stored in `snapshots/models/<codedate>_train<training-snapshot-date>_<code_githash>/<modelname>.pkl` for the pickled models and `<modelname>_features.npz` for the features. The current model configuration is also saved as `model.toml` in the folder. The best model files are symlinked as `best_model.pkl` and `best_model_params.json`. In case the links are lost, we also write a summary of the whole run in a `summary.json` file. By default, `model-selection` uses the latest training snapshot, but a specific snapshot can be specified by adding the training snapshot name:
 
+    jamie model-selection training-snapshot  # use 'list-snapshots training' to see options
 
+The list of model snapshots can be obtained by `jamie list-snapshots models`.
 
+- **Prediction** (`predict`). The model training automatically produces scores (in our case using the precision metric) for the models under `jamie.models`. The best model is also picked in the model selection phase. For prediction, we run the chosen model against the live database and record the predictions in a separate collection called `predictions`, which is indexed by `jobid`. By default, the best model from the latest model snapshot (by code and training date) is selected for prediction. The predictions are tagged with the model snapshot. Specific snapshots can also be specified as follows:
 
-### [Analysis of the dataset](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/dataAnalysis)
+    jamie predict <model-snapshot>  # use 'list-snapshots models' to see options.
+    jamie predict <model-snapshot> <model-name>  # for a particular model
 
-This is a collection of scripts that parse the database to output different csv files containing all the information needed ([here](https://github.com/softwaresaved/jobs-analysis/tree/master/outputs)) for the [jupyter notebooks](https://github.com/softwaresaved/jobs-analysis/tree/master/notebooks) to display the statistiques and information about the project.
+To obtain confidence intervals, we run an ensemble of `model.ensemble_size` (default: 100) models with different train-test splits. For ensemble runs, we store the predictions for each of the models along with a summary in `snapshots/predictions/<model-snapshot>`. Note that we assume the prediction code has not changed between training the model and the time when the prediction was run. We also do not expect reproducibility here, as the live database is changing all the time.
 
-After subsetting the raw dataset for jobs ads that are **not** a `PhD` or a `Master` position, have a `salary field` cleaned and are from an `university` located in `United-Kingdom`, as well as a cleaned `date of publication` and it is classified either as a Software Jobs and Not Software jobs.
+### Reports (`report`)
 
-These classifications are made after using the [training-set-collector](https://github.com/softwaresaved/training-set-collector) to obtain a training set for building a model using the [modelCreation](https://github.com/softwaresaved/jobs-analysis/tree/master/jobAnalysis/modelCreation) scripts.
+Reporting is done using a web frontend written in Flask, running simple plots and summarising the information. The report is segmented into sections, each of which is a separate module under `jamie.report`. The frontend can be launched by typing
 
+    jamie report [--port=PORT]  # by default, launches on port 8080
 
 ## Automated process
 
-All these described steps are run every days using the [day_task.sh](day_task.sh) script. This script do the following steps in order
-1. Checkout into `reports branch`.
-1. Overwrite that branch with the `master branch` with a `pull --merge --theirs`.
-1. Run the [getJobs.py script](./jobAnalysis/dataCollection/getJobs.py) to collect new jobs from the [dataCollection folder](./jobAnalysis/dataCollection) .
-1. Run the [job2db.py script](./jobAnalysis/dataCollection/job2db.py) to clean the new jobs and store them into the MongoDB.
-1. Run the [run.py script](./jobAnalysis/dataPrediction/run.py) to predict the type of jobs it is and store the value into the document into the DB.
-1. Run the [collect_info.py script](./jobAnalysis/dataAnalysis/collect_info.py) to collect csv files from [dataAnalysis folder](./jobAnalysis/dataAnalysis) and store them into the [outputs folder]('./outputs/).
-1. Run all separated notebooks to update the results with the newly added jobs from the [notebooks folder](./notebooks/).
-1. Push the new updated documents to the `reports` branch by overwriting it.
-
-
-## Deployment
-
-For a detailed description to deploy this project, please read the [deployment plan](./Depolyment.md).
+TODO
 
 ## Branches
 
 This is the list of different branches present in the repository.
 * **Active branches**: Only these branches are currently used:
     * `master`: The master branch
-    * `dev_olivier`: Olivier's development branch.
+    * `jamie`: The development branch for the next version
+* **Legacy branches**: These branches remain in the repo but they are not used anymore:
     * `reports`: Branch were reports are automatically uploaded. It pull the master branch, overwrite it and then push the new reports -- Do not modify that branch, it is for read only
     * `legacy`: Right after the release [legacy](https://github.com/softwaresaved/jobs-analysis/releases/tag/legacy) the master branch has been copied in this branch. All the previous code is in there [Only for archive reason].
-
-* **Legacy branches**: These branches remain in the repo but they are not used anymore:
+    * `dev_olivier`: Olivier's development branch.
     * `dissertation`: MSc project work being undertaken by Shicheng Zhang.
     * `iaindev`: Iain's development branch.
     * `mariodev`: Mario's development branch.
