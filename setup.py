@@ -13,6 +13,8 @@ setup(name='jamie',
         'jamie.common',
         'jamie.scrape',
         'jamie.config',
+        'jamie.features',
+        'jamie.models',
         'jamie.data',
         'jamie.prediction'],
       install_requires = [
