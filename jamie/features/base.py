@@ -1,45 +1,17 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# Base file for features
 
-# __author__: 'Olivier Philippe'
-
-
-"""
-Pipeline to create some features and union them
-"""
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path('.').absolute().parent))
-
-import pickle
 
 import pandas as pd
 import numpy as np
-
-
+from pathlib import Path
 from sklearn.model_selection import train_test_split
-
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import TfidfVectorizer
-
-# from sklearn.pipeline import Pipeline, FeatureUnion
 from imblearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, LabelBinarizer, MultiLabelBinarizer, LabelEncoder
-
-
-from common.search_term_list import SEARCH_TERM_LIST
-from common.textClean import textClean
-
-## Remove some terms from SEARCH_TERM_LIST
-## Remove the words modelling/model/modeling from the list as they are too broad terms
-to_remove = ['model', 'modelling', 'modeling']
-SEARCH_TERM_LIST = [x for x in SEARCH_TERM_LIST if x not in to_remove]
-
-# Transform the list into a dictionary with the word matching a number for the pipeline
-# SEARCH_TERM_LIST = {k: i for i, k in enumerate(SEARCH_TERM_LIST)}
-
+from sklearn.preprocessing import StandardScaler, LabelBinarizer, MultiLabelBinarizer
+from .common.search_term_list import SEARCH_TERM_LIST
+from .common.textClean import textClean
 
 class TextSelector(BaseEstimator, TransformerMixin):
 
