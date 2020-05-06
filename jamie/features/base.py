@@ -83,16 +83,6 @@ def find_words(df):
     return df
 
 
-def load_data(path_to_df):
-
-    df = pd.read_csv(path_to_df)
-    # try:
-    #     df = df.loc[(df.SoftwareJob == 'Yes') | (df.SoftwareJob == 'None')]
-    # except TypeError:
-    #     pass
-    return df
-
-
 def check_if_research_software(df, cleaner):
     """
     Parse the description and check if there is a presence of research software in the text
@@ -178,7 +168,7 @@ def feature_union():
 def get_train_data(prediction_field, binary=True):
 
     path_to_df = './data/training_set/training_set.csv'
-    df = load_data(path_to_df)
+    df = pd.read_csv(path_to_df)
     # df = find_words(df)
     # df = len_txt(df)
     # clean the text and try to find if there is a research software word in it
