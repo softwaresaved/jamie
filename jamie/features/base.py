@@ -3,14 +3,13 @@
 
 import pandas as pd
 import numpy as np
-from pathlib import Path
+from slugify import slugify
 from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
-from sklearn.preprocessing import StandardScaler, LabelBinarizer, MultiLabelBinarizer
-from .common.search_term_list import SEARCH_TERM_LIST
+from sklearn.preprocessing import StandardScaler, LabelBinarizer
 from .common.textClean import textClean
 
 class TextSelector(BaseEstimator, TransformerMixin):
@@ -40,56 +39,61 @@ class LenSelector(IntSelector):
         return self.len_txt(X[self.key])
 
 
-def find_words(df):
+class FeatureBase:
+    """Base feature class"""
 
-    def return_which_word(row):
-        set_to_return = set()
-        for i in SEARCH_TERM_LIST:
-            if i in row:
-                set_to_return.add(i)
-        return set_to_return
+    def __init__(self, data, search_term_list, require_columns):
+        self.search_term_list = search_term_list
+        self.data = pd.read_csv(data)
+        if any(f not in self.data for f in require_columns):
+            raise ValueError("Missing one of required columns %r" % require_columns)
 
-    ## Create a columns to count the number of time one of the word from the list created in 'search_term.py' appears
-    df['search_terms'] = df['description'].apply(lambda x: return_which_word(x))
+    def find_searchterms(self, row):
+        return set(i for i in self.search_term_list if i in row)
 
-    ## Create a columns with the number of terms that appears in all the texts
-    df['number_terms'] = df['search_terms'].apply(lambda x: len(x))
-    # df.number_terms = df.number_terms.astype(str)
-    return df
+    def combine_features(self, features):
+        self.features = FeatureUnion(n_jobs=1, transformer_list=features)
+        return self
 
+    def add_searchterm(self, column):
+        self.data['searchterm_%s' % column] = self.data[column].apply(self.find_searchterms)
+        return self
 
-def check_if_research_software(df, cleaner):
-    """
-    Parse the description and check if there is a presence of research software in the text
-    """
+    def add_countterm(self, column):
+        if 'searchterm_%s' % column not in self.data:  # add searchterm field if not exists
+            self.add_searchterm(column)
+        self.data['nterm_%s' % column] = self.data['searchterm_%s' % column].apply(len)
+        return self
 
-    def check_if_rs(cleaner, txt):
-        txt = cleaner.clean_text(txt)
-        for pos, word in enumerate(txt):
-            try:
-                if word == 'research' and txt[pos+1] == 'software':
-                    return 1
-                elif word == 'research' and txt[pos] == 'software':
-                    return 1
-            except IndexError:
-                return 0
-        return 0
+    def add_textflag(self, text, column):
+        col = slugify(text).replace('-', '_')
+        cleaner = textClean(remove_stop=False)
 
-    df['research_software'] = df['description'].apply(lambda x: check_if_rs(cleaner, x))
-    return df
+        def textflag(text):
+            txt = cleaner.clean_text(text)
+            for pos, word in enumerate(txt):
+                try:
+                    if word == 'research' and text[pos + 1] == 'software':
+                        return 1
+                    elif word == 'research' and txt[pos] == 'software':
+                        return 1
+                except IndexError:
+                    return 0
+            return 0
 
+        self.data[col] = self.data[column].apply(textflag)
+        return self
 
-def prepare_labels(df, column):
+    def prepare_labels(self, column):
+        y = self.data[(self.data[column] == '0') | (self.data[column] == '1')][column]
+        if len(y) == 0:
+            y = self.data[(self.data[column] == 0) | (self.data[column] == 1)][column]
 
-    y = df[(df[column] == '0') | (df[column] == '1')][column]
-    if len(y) == 0:
-        y = df[(df[column] == 0) | (df[column] == 1)][column]
+        y = y.astype(np.float64)
 
-    y = y.astype(np.float64)
-
-    lb = LabelBinarizer()
-    # Need to apply the ravel otherwise it is not the right shape
-    return lb.fit_transform(y).ravel()
+        lb = LabelBinarizer()
+        self.labels = lb.fit_transform(y).ravel()
+        return self
 
 
 def feature_union():
@@ -135,7 +139,6 @@ def get_train_data(prediction_field):
     # df = find_words(df)
     # df = len_txt(df)
     # clean the text and try to find if there is a research software word in it
-    cleaner = textClean(remove_stop=False)
     df = check_if_research_software(df, cleaner)
 
     column_pred_field = '{}_tags'.format(prediction_field)

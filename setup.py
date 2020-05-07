@@ -27,6 +27,7 @@ setup(name='jamie',
           'tabulate', # pretty printing tabular data
           'python-box',  # access dict using dot notation
           'numpy>=1.12.0',
+          'python-slugify',
           'tqdm',  # progress bars
           'pytest',
           'requests',
