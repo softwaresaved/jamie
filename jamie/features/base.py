@@ -40,31 +40,6 @@ class LenSelector(IntSelector):
         return self.len_txt(X[self.key])
 
 
-class SoftTermSelector(IntSelector, textClean):
-
-    def __init__(self, key):
-        self.key = key
-        textClean.__init__(self)
-
-    def search_term(self, txt):
-
-        def search_per_cell(txt):
-            set_of_terms = set()
-            clean_txt = self.clean_text(txt)
-            for i in SEARCH_TERM_LIST:
-                if i in clean_txt:
-                    set_of_terms.add(i)
-            return list(i for i in set_of_terms)
-
-        return np.array([float(len(search_per_cell(i))) for i in txt]).reshape(-1, 1)
-
-    def transform(self, X):
-        return self.search_term(X[self.key])
-
-    def fit(self, X, y=None):
-        return self
-
-
 def find_words(df):
 
     def return_which_word(row):
