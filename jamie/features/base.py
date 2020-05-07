@@ -79,29 +79,17 @@ def check_if_research_software(df, cleaner):
     return df
 
 
-def prepare_labels(df, column, binary):
+def prepare_labels(df, column):
 
-    if binary == True:
-        y = df[(df[column] == '0') | (df[column] == '1')][column]
-        if len(y) == 0:
-            y = df[(df[column] == 0) | (df[column] == 1)][column]
+    y = df[(df[column] == '0') | (df[column] == '1')][column]
+    if len(y) == 0:
+        y = df[(df[column] == 0) | (df[column] == 1)][column]
 
-        y = y.astype(np.float64)
-    else:
-        y = df[column]
+    y = y.astype(np.float64)
 
-    if len(set(y)) > 2:
-        lb = MultiLabelBinarizer()
-        # raise('Not implemented yet')
-    else:
-        # Relabel the 'yes' to 1 and 'no' to 0
-        lb = LabelBinarizer()
-    y_train = lb.fit_transform(y)
+    lb = LabelBinarizer()
     # Need to apply the ravel otherwise it is not the right shape
-    print(y)
-    y = lb.fit_transform(y).ravel()
-    print(y)
-    return y
+    return lb.fit_transform(y).ravel()
 
 
 def feature_union():
@@ -140,7 +128,7 @@ def feature_union():
     # return X
 
 
-def get_train_data(prediction_field, binary=True):
+def get_train_data(prediction_field):
 
     path_to_df = './data/training_set/training_set.csv'
     df = pd.read_csv(path_to_df)
@@ -152,16 +140,11 @@ def get_train_data(prediction_field, binary=True):
 
     column_pred_field = '{}_tags'.format(prediction_field)
     # job_ids = df['jobid']
-    y = prepare_labels(df, column=column_pred_field, binary=binary)
+    y = prepare_labels(df, column=column_pred_field)
     features = feature_union()
-    if binary == True:
-        X = df[(df[column_pred_field] == '0') | (df[column_pred_field] == '1')][['description', 'job_title', 'research_software']]
-        if len(X) == 0:
-
-            X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title', 'research_software']]
-
-    else:
-        X = df[['description', 'job_title', 'research_software']]
+    X = df[(df[column_pred_field] == '0') | (df[column_pred_field] == '1')][['description', 'job_title', 'research_software']]
+    if len(X) == 0:  # Sometimes the labels are integers instead of strings
+        X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title', 'research_software']]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y)
     return X_train, X_test, y_train, y_test, features
