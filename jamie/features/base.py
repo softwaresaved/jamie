@@ -68,20 +68,8 @@ class FeatureBase:
     def add_textflag(self, text, column):
         col = slugify(text).replace('-', '_')
         cleaner = textClean(remove_stop=False)
-
-        def textflag(text):
-            txt = cleaner.clean_text(text)
-            for pos, word in enumerate(txt):
-                try:
-                    if word == 'research' and text[pos + 1] == 'software':
-                        return 1
-                    elif word == 'research' and txt[pos] == 'software':
-                        return 1
-                except IndexError:
-                    return 0
-            return 0
-
-        self.data[col] = self.data[column].apply(textflag)
+        self.data[col] = self.data[column].apply(
+            lambda x: 'research software' in ' '.join(cleaner.clean_text(x)))
         return self
 
     def prepare_labels(self, column):
