@@ -1,64 +1,90 @@
 # Default features for RSE jobs
+from sklearn.feature_extraction.text import TfidfVectorizer
+from imblearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from .feature import FeatureBase, TextSelector, LenSelector
+from sklearn.model_selection import train_test_split
 
-from .feature import FeatureBase
+SEARCH_TERM_LIST = [
+    'algorithm',
+    'big data',
+    'beautifulsoup',
+    'code',
+    'computation',
+    'computational',
+    'computed',
+    'computer',
+    'data analysis',
+    'data base',
+    'database',
+    'excel',
+    'fortran',
+    'geographic information science',
+    'geographic information systems',
+    'gis',
+    'git',
+    'github',
+    'graphics',
+    'high performance computing',
+    'hpc',
+    'imagej',
+    'implemented in',
+    'in silico',
+    'matlab',
+    'matplotlib',
+    'numpy',
+    'nvivo',
+    'open source',
+    'open-source',
+    'pipeline',
+    'python',
+    'quantitative',
+    'regression',
+    'r language',
+    'in r',
+    'scrapy',
+    'scipy',
+    'simulated',
+    'simulation',
+    'software',
+    'spss',
+    'sqlalchemy',
+    'stata',
+    'statistical'
+    'supercomputing',
+    'visualisation',
+    'visualization',
+    'Rcpp',
+    'ggplot2',
+    'plyr',
+    'stringr',
+    'reshape2',
+    'RColorBrewer',
+    'workflow',
+    'wxpython'
+]
 
+class RSEFeatures(FeatureBase):
+    def __init__(self, data):
+        super().__init__(data, SEARCH_TERM_LIST, require_columns=[
+            'description', 'job_title'])
+        self.combine_features([
+            ('description', Pipeline([('selector', TextSelector('description')),
+                                      ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
+                                       ngram_range=(1, 2), stop_words='english'))])),
+            ('job_title', Pipeline([('selector', TextSelector('job_title')),
+                                    ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
+                                     ngram_range=(1, 2), stop_words='english'))])),
+            ('size_txt', Pipeline([('selector', LenSelector('description')),
+                                   ('scaler', StandardScaler())])),
+        ])
 
-def feature_union():
-    """
-    Pipeline to create a feature union.
-    https://medium.com/bigdatarepublic/integrating-pandas-and-scikit-learn-with-pipelines-f70eb6183696
-    """
-    return FeatureUnion(n_jobs=1, transformer_list=[
-                                        ('description', Pipeline([('selector', TextSelector('description')),
-                                                        ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2', ngram_range=(1, 2), stop_words='english'))
-                                        ])),
-
-                                        ('job_title', Pipeline([('selector',
-                                                                   TextSelector('job_title')),
-                                                        ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2', ngram_range=(1, 2), stop_words='english'))
-                                        ])),
-                                       # ('num_terms_int', Pipeline([('selector', IntSelector('number_terms')),
-                                       #                              ('scaler', StandardScaler()),
-                                       #  ])),
-
-                                        # ('num_terms_cat', Pipeline([('selector', SoftTermSelector('description')),
-                                        # #                             ('encoder', MultiLabelBinarizer(classes=SEARCH_TERM_LIST)),
-                                        #                             ('encoder', OneHotEncoder(n_values=len(SEARCH_TERM_LIST)))
-                                        # ])),
-                                        ('size_txt', Pipeline([('selector', LenSelector('description')),
-                                            ('scaler', StandardScaler()),
-                                        ])),
-
-                                        # ('research_software', Pipeline([ ('selector', IntSelector('research_software')),
-                                        #     # ('labeler', LabelEncoder()),
-                                        #     ('encoder', OneHotEncoder())
-                                        # ]))
-                            # ])),
-                        ])
-    # X = transformer.fit_transform(df)
-    # return X
-
-
-def get_train_data(prediction_field):
-
-    path_to_df = './data/training_set/training_set.csv'
-    df = pd.read_csv(path_to_df)
-    # df = find_words(df)
-    # df = len_txt(df)
-    # clean the text and try to find if there is a research software word in it
-    df = check_if_research_software(df, cleaner)
-
-    column_pred_field = '{}_tags'.format(prediction_field)
-    # job_ids = df['jobid']
-    y = prepare_labels(df, column=column_pred_field)
-    features = feature_union()
-    X = df[(df[column_pred_field] == '0') | (df[column_pred_field] == '1')][['description', 'job_title', 'research_software']]
-    if len(X) == 0:  # Sometimes the labels are integers instead of strings
-        X = df[(df[column_pred_field] == 0) | (df[column_pred_field] == 1)][['description', 'job_title', 'research_software']]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, stratify=y)
-    return X_train, X_test, y_train, y_test, features
-
-
-if __name__ == "__main__":
-    get_train_data('aggregate')
+    def make_arrays(self, prediction_field):
+        self.prepare_labels(prediction_field)
+        self.data[prediction_field] = self.data[prediction_field].astype(str)
+        self.X = self.data[(self.data[prediction_field] == '0') |
+                           (self.data[prediction_field] == '1')][
+            ['description', 'job_title', 'research_software']]
+        self.X_train, self.X_test, self.y_train, self.y_test = \
+            train_test_split(self.X, self.labels, test_size=0.2,
+                             random_state=0, stratify=self.labels)

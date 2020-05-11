@@ -4,12 +4,9 @@
 import pandas as pd
 import numpy as np
 from slugify import slugify
-from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_extraction.text import TfidfVectorizer
-from imblearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
-from sklearn.preprocessing import StandardScaler, LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer
 from .common.textClean import textClean
 
 class TextSelector(BaseEstimator, TransformerMixin):
@@ -83,3 +80,5 @@ class FeatureBase:
         self.labels = lb.fit_transform(y).ravel()
         return self
 
+    def make_arrays(self, prediction_field):
+        pass
