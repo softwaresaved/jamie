@@ -82,6 +82,7 @@ class RSEFeatures(FeatureBase):
     def make_arrays(self, prediction_field):
         self.prepare_labels(prediction_field)
         self.data[prediction_field] = self.data[prediction_field].astype(str)
+        self.add_textflag(search_for='research software', in_column='description')
         self.X = self.data[(self.data[prediction_field] == '0') |
                            (self.data[prediction_field] == '1')][
             ['description', 'job_title', 'research_software']]

@@ -62,11 +62,11 @@ class FeatureBase:
         self.data['nterm_%s' % column] = self.data['searchterm_%s' % column].apply(len)
         return self
 
-    def add_textflag(self, text, column):
-        col = slugify(text).replace('-', '_')
+    def add_textflag(self, search_for, in_column):
+        col = slugify(search_for).replace('-', '_')
         cleaner = textClean(remove_stop=False)
-        self.data[col] = self.data[column].apply(
-            lambda x: 'research software' in ' '.join(cleaner.clean_text(x)))
+        self.data[col] = self.data[in_column].apply(
+            lambda x: search_for in ' '.join(cleaner.clean_text(x)))
         return self
 
     def prepare_labels(self, column):
