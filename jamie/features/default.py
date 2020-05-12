@@ -1,4 +1,5 @@
 # Default features for RSE jobs
+from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -89,7 +90,11 @@ class RSEFeatures(FeatureBase):
         self.X_train, self.X_test, self.y_train, self.y_test = \
             train_test_split(self.X, self.labels, test_size=0.2,
                              random_state=0, stratify=self.labels)
+        return self
 
 
 if __name__ == "__main__":
-    print(__file__)
+    data = Path(__file__).parent.parent / 'prediction' / 'data' / \
+        'training_set' / 'training_set.csv'
+    fs = RSEFeatures(data).make_arrays('aggregate_tags')
+    print(fs.X_train.shape, fs.X_test.shape, fs.y_train.shape, fs.y_test.shape)
