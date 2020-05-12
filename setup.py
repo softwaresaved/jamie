@@ -22,6 +22,7 @@ setup(name='jamie',
           'pytoml',  # read .toml configuration files
           'pandas==1.0.3',
           'scikit-learn==0.22.2',
+          'imbalanced-learn==0.6.2',
           'nltk==3.5',  # text cleaning
           'tabulate', # pretty printing tabular data
           'python-box==4.2.3',  # access dict using dot notation
