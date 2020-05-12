@@ -2,7 +2,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from .feature import FeatureBase, TextSelector, LenSelector
+from .base import FeatureBase, TextSelector, LenSelector
 from sklearn.model_selection import train_test_split
 
 SEARCH_TERM_LIST = [

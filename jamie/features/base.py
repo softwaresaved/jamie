@@ -7,7 +7,7 @@ from slugify import slugify
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import LabelBinarizer
-from .common.textClean import textClean
+from ..common.textClean import textClean
 
 class TextSelector(BaseEstimator, TransformerMixin):
 
