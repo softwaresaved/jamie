@@ -89,3 +89,7 @@ class RSEFeatures(FeatureBase):
         self.X_train, self.X_test, self.y_train, self.y_test = \
             train_test_split(self.X, self.labels, test_size=0.2,
                              random_state=0, stratify=self.labels)
+
+
+if __name__ == "__main__":
+    print(__file__)

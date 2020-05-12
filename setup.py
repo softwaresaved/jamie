@@ -20,16 +20,15 @@ setup(name='jamie',
       install_requires = [
           'pymongo>=3.4.0',
           'pytoml',  # read .toml configuration files
-          'pandas',
-          'mysql',
-          'mysql-connector-python',
-          'nltk',  # text cleaning
+          'pandas==1.0.3',
+          'scikit-learn==0.22.2',
+          'nltk==3.5',  # text cleaning
           'tabulate', # pretty printing tabular data
-          'python-box',  # access dict using dot notation
+          'python-box==4.2.3',  # access dict using dot notation
           'numpy>=1.12.0',
           'python-slugify',
           'tqdm',  # progress bars
           'pytest',
-          'requests',
-          'beautifulsoup4'],
+          'requests==2.22.0',
+          'beautifulsoup4==4.9.0'],
       zip_safe=False)
