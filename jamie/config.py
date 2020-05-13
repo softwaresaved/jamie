@@ -3,6 +3,7 @@ import pytoml as toml
 from tabulate import tabulate
 
 DEFAULTS = {
+    'common.snapshots': 'snapshots',
     'scrape.folder': 'input',
     'common.nltk-files': './nltk-files/',
     'scrape.njobs': 10000,
