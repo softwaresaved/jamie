@@ -4,47 +4,18 @@
 import pandas as pd
 import numpy as np
 
-
-# from sklearn.pipeline import Pipeline
-# from sklearn.base import BaseEstimator, TransformerMixin
 from imblearn.pipeline import Pipeline
-
-from imblearn.over_sampling import RandomOverSampler  # or: import RandomOverSampler
-
+from imblearn.over_sampling import RandomOverSampler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold
 
-
-from sklearn.model_selection import KFold, cross_val_score, GridSearchCV, LeaveOneOut, StratifiedKFold, RandomizedSearchCV
-from sklearn.model_selection import train_test_split
-
-#import dask_ml.model_selection as dcv
-
-
-from sklearn.externals import joblib
-# import distributed.joblib  # register the dask joblib backend
-
-from dask.distributed import Client, LocalCluster
-from dask_jobqueue import PBSCluster
-
-cluster = LocalCluster(processes=False)
-# cluster.scale(20)
-# cluster = PBSCluster(cores=32,
-#                      memory="100GB",
-#                      walltime='01:00:00')
-
-client = Client(cluster)
-# cluster.scale(10)  # Start 100 workers in 100 jobs that match the description above
-
-
-def set_up_models():
-    c_params = 10. ** np.arange(-3, 8)
-    gamma_params = 10. ** np.arange(-5, 4)
-
-    return  {'SVC': {'model': SVC(probability=True),
+c_params = 10. ** np.arange(-3, 8)
+gamma_params = 10. ** np.arange(-5, 4)
+models = Box(
+    {'SVC': {'model': SVC(probability=True),
                       'params': [{'clf__C': c_params,
                                   'clf__gamma': gamma_params,
                                   'clf__kernel': ['rbf'],
@@ -55,7 +26,7 @@ def set_up_models():
                                   }
                                  ],
                       'matrix': 'sparse'
-                      },
+            },
               'Logreg': {'model': LogisticRegression(),
                          'params': {'clf__penalty': ['l1', 'l2'],
                                     'clf__C': np.logspace(-4, 4, 20),
