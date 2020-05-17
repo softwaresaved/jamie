@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import json
+import pickle
 import pandas as pd
 import numpy as np
 
@@ -195,3 +197,18 @@ def nested_cross_validation(
     best_params["name"] = best_model_name
 
     return best_params, final_model, score_for_outer_cv
+
+
+def train(training_snapshot):
+    X, y = get_features(training_snapshot)
+    best_params, final_model, score_for_outer_cv = nested_cross_validation(
+        X, y, prediction_field, scorng_value)
+    timestamp = current_date + 't' + training_snapshot + '_' + current_git_hash
+    model_snapshot_folder = c['summary.snapshots'] / 'models' / timestamp
+    if not model_snapshot_folder.exists():
+        model_snapshot_folder.mkdir()
+    with (model_snapshot_folder / 'model.pkl').open('wb') as fp:
+        pickle.dump(final_model, fp)
+    with (model_snapshot_folder / 'parameters.json').open('w') as fp:
+        json.dump(best_params, fp)
+    score_for_outer_cv.to_csv(model_snapshot_folder / 'score_outer_cv.csv', index=False)
