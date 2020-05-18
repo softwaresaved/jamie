@@ -18,6 +18,8 @@ from sklearn.model_selection import (
     LeaveOneOut,
     StratifiedKFold,
 )
+from .snapshots import TrainingSnapshot
+from .features import select_features
 
 c_params = 10.0 ** np.arange(-3, 8)
 gamma_params = 10.0 ** np.arange(-5, 4)
@@ -199,10 +201,16 @@ def nested_cross_validation(
     return best_params, final_model, score_for_outer_cv
 
 
-def train(training_snapshot):
-    X, y = get_features(training_snapshot)
-    best_params, final_model, score_for_outer_cv = nested_cross_validation(
-        X, y, prediction_field, scorng_value)
+def train(snapshot, featureset):
+    Features = select_features(featureset)
+    training_snapshots = TrainingSnapshot(c['common.snapshots'])
+    feature_data = Features(training_snapshots[snapshot])
+    X_train = feature_data.features.fit_transform(feature_data.X_train)
+    X_test = feature_data.features.transform(features_data.X_test)
+    best_model_params, final_model, average_scores = nested_cross_validation(
+        X_train, y_train, prediction_field, scoring_value, oversampling, nbr_folds=nbr_folds)
+    y_pred = final_model.predict(X_test)
+    y_proba = final_model.predict_proba(X_test)
     timestamp = current_date + 't' + training_snapshot + '_' + current_git_hash
     model_snapshot_folder = c['summary.snapshots'] / 'models' / timestamp
     if not model_snapshot_folder.exists():
