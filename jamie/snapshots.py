@@ -13,7 +13,7 @@ class Snapshot:
     glob = '*'
 
     def __init__(self, root):
-        self.root = root
+        self.root = Path(root)
         self.instances = list((self.root / self.subpath).rglob(self.glob))
         self.root_instances = ['/'.join(k for k in s.parent.parts
                                if k not in ['snapshots', self.subpath])
