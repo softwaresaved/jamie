@@ -22,7 +22,9 @@ from .snapshots import TrainingSnapshot
 from .features import select_features
 from .common.lib import isodate, gitversion
 from .config import Config
+from .logger import logger
 
+logger = logger(name='models', stream_level='INFO')
 c_params = 10.0 ** np.arange(-3, 8)
 gamma_params = 10.0 ** np.arange(-5, 4)
 models = {
@@ -209,10 +211,14 @@ def train(
     oversampling=True, scoring='precision'
 ):
     Features = select_features(featureset)
+    timestamp = isodate() + '_i' + snapshot + '_' + gitversion()
+    logger.info("model-snapshot %s", timestamp)
     training_snapshots = TrainingSnapshot(config['common.snapshots'])
     feature_data = Features(training_snapshots[snapshot]).make_arrays(prediction_field)
+    logger.info("created features object")
     X_train = feature_data.features.fit_transform(feature_data.X_train)
     # X_test = feature_data.features.transform(feature_data.X_test)
+    logger.info("nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
         X_train, feature_data.y_train,
         prediction_field, scoring,
@@ -220,7 +226,7 @@ def train(
         nbr_folds=config['model.k-fold'])
     # y_pred = final_model.predict(X_test)
     # y_proba = final_model.predict_proba(X_test)
-    timestamp = isodate() + '_i' + snapshot + '_' + gitversion()
+    logger.info("saving models")
     model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
     if not model_snapshot_folder.exists():
         model_snapshot_folder.mkdir()

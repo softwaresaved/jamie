@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import os
+import json
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -12,7 +13,12 @@ def logger(name='logger', logger_level='DEBUG', file_level='INFO', stream_level=
     logger = logging.getLogger(name)
     logger_set_level = getattr(logging, logger_level)
     logger.setLevel(logger_set_level)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(name)s :: %(message)s')
+    formatter = logging.Formatter(json.dumps({
+        "@timestamp": "%(asctime)s",
+        "logger": "%(name)s",
+        "level": "%(levelname)s",
+        "message": "%(message)s"}),
+        datefmt="%Y-%m-%dT%H:%M:%S%z")
 
     stream_handler = logging.StreamHandler()
     stream_set_level = getattr(logging, stream_level)
@@ -34,11 +40,3 @@ def logger(name='logger', logger_level='DEBUG', file_level='INFO', stream_level=
         logger.addHandler(file_handler)
 
     return logger
-
-
-def main():
-    """ """
-    pass
-
-if __name__ == '__main__':
-    main()
