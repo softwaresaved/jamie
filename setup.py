@@ -14,13 +14,13 @@ setup(name='jamie',
         'jamie.scrape',
         'jamie.config',
         'jamie.features',
-        'jamie.models',
         'jamie.data',
         'jamie.prediction'],
       install_requires = [
           'pymongo>=3.4.0',
           'pytoml',  # read .toml configuration files
           'pandas==1.0.3',
+          'gitpython==3.1.2',
           'scikit-learn==0.22.2',
           'imbalanced-learn==0.6.2',
           'nltk==3.5',  # text cleaning
