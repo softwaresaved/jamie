@@ -20,6 +20,8 @@ from sklearn.model_selection import (
 )
 from .snapshots import TrainingSnapshot
 from .features import select_features
+from .common.lib import isodate, gitversion
+from .config import Config
 
 c_params = 10.0 ** np.arange(-3, 8)
 gamma_params = 10.0 ** np.arange(-5, 4)
@@ -171,12 +173,12 @@ def nested_cross_validation(
 
     # get the best model and its associated parameter grid
     try:
-        best_model, best_model_params = (
+        _, best_model_params = (
             models[best_model_name]["model"],
             models[best_model_name]["params"],
         )
     except KeyError:  # In case the model doesnt have parameters
-        best_model, best_model_params = models[best_model_name]["model"], None
+        _, best_model_params = models[best_model_name]["model"], None
     print(models[best_model_name])
 
     # now we refit this best model on the whole dataset so that we can start
@@ -201,22 +203,35 @@ def nested_cross_validation(
     return best_params, final_model, score_for_outer_cv
 
 
-def train(snapshot, featureset):
+def train(
+    config, snapshot, featureset,
+    prediction_field='aggregate_tags',
+    oversampling=True, scoring='precision'
+):
     Features = select_features(featureset)
-    training_snapshots = TrainingSnapshot(c['common.snapshots'])
-    feature_data = Features(training_snapshots[snapshot])
+    training_snapshots = TrainingSnapshot(config['common.snapshots'])
+    feature_data = Features(training_snapshots[snapshot]).make_arrays(prediction_field)
     X_train = feature_data.features.fit_transform(feature_data.X_train)
-    X_test = feature_data.features.transform(features_data.X_test)
+    # X_test = feature_data.features.transform(feature_data.X_test)
     best_model_params, final_model, average_scores = nested_cross_validation(
-        X_train, y_train, prediction_field, scoring_value, oversampling, nbr_folds=nbr_folds)
-    y_pred = final_model.predict(X_test)
-    y_proba = final_model.predict_proba(X_test)
-    timestamp = current_date + 't' + training_snapshot + '_' + current_git_hash
-    model_snapshot_folder = c['summary.snapshots'] / 'models' / timestamp
+        X_train, feature_data.y_train,
+        prediction_field, scoring,
+        oversampling=config['model.oversampling'],
+        nbr_folds=config['model.k-fold'])
+    # y_pred = final_model.predict(X_test)
+    # y_proba = final_model.predict_proba(X_test)
+    timestamp = isodate() + '_i' + snapshot + '_' + gitversion()
+    model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
     if not model_snapshot_folder.exists():
         model_snapshot_folder.mkdir()
     with (model_snapshot_folder / 'model.pkl').open('wb') as fp:
         pickle.dump(final_model, fp)
     with (model_snapshot_folder / 'parameters.json').open('w') as fp:
-        json.dump(best_params, fp)
-    score_for_outer_cv.to_csv(model_snapshot_folder / 'score_outer_cv.csv', index=False)
+        json.dump(best_model_params, fp)
+    average_scores.to_csv(model_snapshot_folder / 'scores.csv', index=False)
+
+
+if __name__ == "__main__":
+    config = Config()
+    ts = TrainingSnapshot(config['common.snapshots'])
+    train(config, ts.most_recent(), 'rse')
