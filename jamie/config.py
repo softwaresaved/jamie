@@ -21,6 +21,7 @@ DEFAULTS = {
 class Config:
     cf = DEFAULTS
     cache = Path("~/.cache/jamie").expanduser()
+    paths = ["common.snapshots", "scrape.folder", "common.nltk-files"]
 
     def __init__(self, filename=Path("~/.config/jamie/config.toml").expanduser(), who="jamie"):
         self.who = who
