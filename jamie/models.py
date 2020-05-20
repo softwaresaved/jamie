@@ -285,7 +285,7 @@ def train(
     logger.info("saving models")
     model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
     if not model_snapshot_folder.exists():
-        model_snapshot_folder.mkdir()
+        model_snapshot_folder.mkdir(parents=True)
     with (model_snapshot_folder / 'model.pkl').open('wb') as fp:
         pickle.dump(final_model, fp)
     with (model_snapshot_folder / 'parameters.json').open('w') as fp:

@@ -3,9 +3,9 @@ import pytoml as toml
 from tabulate import tabulate
 
 DEFAULTS = {
-    'common.snapshots': 'snapshots',
-    'scrape.folder': 'input',
-    'common.nltk-files': './nltk-files/',
+    'common.snapshots': Path('snapshots'),
+    'scrape.folder': Path('input'),
+    'common.nltk-files': Path('nltk-files'),
     'scrape.njobs': 10000,
     'db.name': 'jobsDB',
     'db.tags': 'tags',
