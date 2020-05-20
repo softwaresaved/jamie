@@ -22,7 +22,7 @@ class Config:
     cf = DEFAULTS
     cache = Path("~/.cache/jamie").expanduser()
 
-    def __init__(self, filename=Path("~/.config/jamie.toml").expanduser(), who="jamie"):
+    def __init__(self, filename=Path("~/.config/jamie/config.toml").expanduser(), who="jamie"):
         self.who = who
         self.filename = filename
         self.exists = Path(filename).exists()
