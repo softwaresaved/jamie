@@ -27,44 +27,99 @@ from .logger import logger
 logger = logger(name='models', stream_level='INFO')
 c_params = 10.0 ** np.arange(-3, 8)
 gamma_params = 10.0 ** np.arange(-5, 4)
-models = {
-    "SVC": {
-        "model": SVC(probability=True),
-        "params": [
-            {
-                "clf__C": c_params,
-                "clf__gamma": gamma_params,
-                "clf__kernel": ["rbf"],
-                "clf__class_weight": ["balanced", None],
-            },
-            {"clf__C": c_params, "clf__kernel": ["linear"]},
-        ],
-        "matrix": "sparse",
-    },
-    "Logreg": {
-        "model": LogisticRegression(),
-        "params": {
-            "clf__penalty": ["l1", "l2"],
-            "clf__C": np.logspace(-4, 4, 20),
-            "clf__solver": ["liblinear"],
+
+def get_model(n):
+    data = {
+        "SVC": {
+            "model": SVC,
+            "params": {"probability": True}
         },
-        "matrix": "sparse",
-    },
-    "RandomForest": {
-        "model": RandomForestClassifier(),
-        "params": {
-            "clf__n_estimators": list(range(10, 101, 10)),
-            "clf__max_features": list(range(6, 32, 5)),
-        },
-        "matrix": "sparse",
-    },
+        "LogReg": {"model": LogisticRegression},
+        "RandomForest": {"model": RandomForestClassifier},
+        "CART": {"model": DecisionTreeClassifier},
+        "Gradient Boosting": {"model": GradientBoostingClassifier}
+    }
+    if n in data:
+        if 'params' in data[n]:
+            return data[n]['model'](**params)
+        else:
+            return data[n]['model']()
+    else:
+        return None
+
+def parse_parameter_description(d):
+    if not isinstance(d, str):
+        return d
+    if not d.startswith("="):  # start parsing on equals
+        return d
+    d = d[1:]  # drop the =
+    if d.startswith("e"):  # logspace
+        d = [int(x) for x in d.split(":")]
+        if len(d) <= 3:
+            return np.logspace(*d)  # start, stop, [num]
+        else:
+            raise ValueError("Parameter parsing error: " + d)
+    else:  # normal range
+        d = [int(x) for x in d.split(":")]
+        if len(d) <= 3:
+            return list(range(*d))  # start, stop, [num]
+        else:
+            raise ValueError("Parameter parsing error: " + d)
+
+def parse_model_description(models):
+    k = dict()
+    for n in models:
+        k[n] = {"model": get_model(n), "matrix": models[n]["matrix"]}
+        if isinstance(models[n]["params"], list):
+            k[n]["params"] = []
+            for p in models[n]["params"]:
+                k[n]["params"].append({
+                    c: parse_parameter_description(v)
+                    for c, v in p.items()})
+        else:  # is a dict
+            k[n]["params"] = {
+                c: parse_parameter_description(v)
+                for c, v in models[n]["params"].items()
+            }
+    return k
+
+
+model_description = {
+    # "SVC": {
+    #     "model": SVC(probability=True),
+    #     "params": [
+    #         {
+    #              "clf__C": c_params,
+    #             "clf__gamma": gamma_params,
+    #             "clf__kernel": ["rbf"],
+    #             "clf__class_weight": ["balanced", None],
+    #         },
+    #         {"clf__C": c_params, "clf__kernel": ["linear"]},
+    #     ],
+    #     "matrix": "sparse",
+    # },
+    # "Logreg": {
+    #     "model": LogisticRegression(),
+    #     "params": {
+    #         "clf__penalty": ["l1", "l2"],
+    #         "clf__C": np.logspace(-4, 4, 20),
+    #         "clf__solver": ["liblinear"],
+    #     },
+    #     "matrix": "sparse",
+    # },
+    # "RandomForest": {
+    #     "model": RandomForestClassifier(),
+    #     "params": {
+    #         "clf__n_estimators": list(range(10, 101, 10)),
+    #         "clf__max_features": list(range(6, 32, 5)),
+    #     },
+    #     "matrix": "sparse",
+    # },
     "CART": {
-        "model": DecisionTreeClassifier(),
-        "params": [{"clf__max_depth": range(3, 20)}],
+        "params": [{"clf__max_depth": "=3:20"}],
         "matrix": "sparse",
     },
     "Gradient Boosting": {
-        "model": GradientBoostingClassifier(),
         "params": {
             "clf__learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
             "clf__min_samples_split": (2, 21),
@@ -89,6 +144,7 @@ def nested_cross_validation(
 
     # Get the models
     # When trained a certain fold, doing the second cross-validation split to choose hyper parameters
+    models = parse_model_description(model_description)
     if isinstance(nbr_folds, int):
         # outer_cv = KFold(nbr_folds)
         outer_cv = StratifiedKFold(nbr_folds)
