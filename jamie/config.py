@@ -81,6 +81,20 @@ class Config:
         with self.filename.open('w') as fp:
             toml.dump(cf, fp)
 
+    def save(self, folder, name="config.toml"):
+        cf = {}
+        for k in self.cf:
+            r, c = k.split('.')
+            if r not in cf:
+                cf[r] = {}
+            if k in self.paths:
+                cf[r][c] = str(self.cf[k])
+            else:
+                cf[r][c] = self.cf[k]
+
+        with (folder / name).open('w') as fp:
+            toml.dump(cf, fp)
+
     def __getitem__(self, key):
         return self.cf[key]
 
