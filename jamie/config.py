@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytoml as toml
-from tabulate import tabulate
+from .common.lib import arrow_table
 
 DEFAULTS = {
     'common.snapshots': Path('snapshots'),
@@ -47,7 +47,7 @@ class Config:
         return s in self.cf
 
     def __str__(self):
-        return tabulate(self.cf.items())
+        return arrow_table(self.cf.items())
 
     def get(self, s, default=None):
         if s in self.cf:

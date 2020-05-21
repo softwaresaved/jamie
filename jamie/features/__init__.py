@@ -1,7 +1,7 @@
 # Features
 
 from .default import RSEFeatures
-from ..common.lib import table
+from ..common.lib import arrow_table
 
 allowed_features = {
     "rse": {"description": "Features corresponding to RSE jobs", "class": RSEFeatures}
@@ -13,8 +13,6 @@ def select_features(f):
 
 
 def list_features():
-    return table(
+    return arrow_table(
         [(k, allowed_features[k]["description"]) for k in allowed_features],
-        align="rl",
-        sep="⯈",
     )

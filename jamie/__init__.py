@@ -21,11 +21,11 @@ class Jamie:
         "Version information for jamie"
         return __version__
 
-    def list_employers(self):
+    def employers(self):
         "List possible employer sets"
         return jamie.data.list_employers()
 
-    def _import(self, employer=None):  # NOQA
+    def load(self, employer=None):  # NOQA
         "Read scraped jobs into MongoDB"
         if employer:
             jamie.data.importer.main(employer=employer)
@@ -45,11 +45,13 @@ class Jamie:
         return jamie.snapshots.main(kind)
 
     def features(self):
+        "List possible features (job types)"
         return jamie.features.list_features()
 
     def train(self, snapshot='last', featureset='rse',
               prediction_field='aggregate_tags',
               oversampling=True, scoring='precision'):
+        "Train using specified snapshot (default: last)"
         ts = jamie.snapshots.TrainingSnapshot(self.cf['common.snapshots'])
         if snapshot == 'last':
             snapshot = ts.most_recent()
