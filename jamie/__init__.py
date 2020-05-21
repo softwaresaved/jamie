@@ -4,6 +4,7 @@ import jamie.config
 import jamie.scrape
 import jamie.snapshots
 import jamie.models
+import jamie.features
 import jamie.data
 import jamie.data.importer
 
@@ -42,6 +43,9 @@ class Jamie:
     def snapshots(self, kind):
         "Show saved snapshots (models/training)"
         return jamie.snapshots.main(kind)
+
+    def features(self):
+        return jamie.features.list_features()
 
     def train(self, snapshot='last', featureset='rse',
               prediction_field='aggregate_tags',
