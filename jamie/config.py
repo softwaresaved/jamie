@@ -95,6 +95,9 @@ class Config:
         with (folder / name).open('w') as fp:
             toml.dump(cf, fp)
 
+    def as_dict(self):
+        return self.cf
+
     def __getitem__(self, key):
         return self.cf[key]
 

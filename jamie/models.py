@@ -5,7 +5,10 @@ import json
 import pickle
 import pandas as pd
 import numpy as np
+import sklearn
 
+from box import Box
+from collections import namedtuple
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.svm import SVC
@@ -20,7 +23,7 @@ from sklearn.model_selection import (
 )
 from .snapshots import TrainingSnapshot
 from .features import select_features
-from .common.lib import isodate, gitversion
+from .common.lib import isotime_snapshot, gitversion
 from .config import Config
 from .logger import logger
 
@@ -266,8 +269,30 @@ def train(
     prediction_field,
     oversampling, scoring
 ):
+    filename = Box({'models': 'model.pkl', 'scores': 'scores.csv'})
     Features = select_features(featureset)
-    timestamp = isodate() + '_i' + snapshot + '_' + gitversion()
+    timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
+    metadata = {
+        'snapshot': timestamp,
+        'training': {
+            'training_snapshot': snapshot,
+            'featureset': featureset,
+            'prediction_field': prediction_field,
+            'oversampling': oversampling,
+            'scoring': scoring
+        },
+        'pickle_protocol': pickle.DEFAULT_PROTOCOL,  # used for saving models
+        'versions': {
+            'pandas': pd.__version__,
+            'numpy': np.__version__,
+            'scikit-learn': sklearn.__version__  # different sklearn versions may not have compatible pickles
+        },
+        'config': config.as_dict(),
+        'data': {
+            'models': filename.models,
+            'scores': filename.scores
+        }
+    }
     logger.info("model-snapshot %s", timestamp)
     training_snapshots = TrainingSnapshot(config['common.snapshots'])
     feature_data = Features(training_snapshots[snapshot]).make_arrays(prediction_field)
@@ -284,12 +309,14 @@ def train(
     # y_proba = final_model.predict_proba(X_test)
     logger.info("saving models")
     model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
+    # Save metadata, models list, models, parameters and scores
     if not model_snapshot_folder.exists():
         model_snapshot_folder.mkdir(parents=True)
-    with (model_snapshot_folder / 'model.pkl').open('wb') as fp:
+    metadata['best_parameters'] = best_model_params
+    metadata['models'] = model_description
+    with (model_snapshot_folder / 'metadata.json').open('w') as fp:
+        json.dump(metadata, fp, indent=2, sort_keys=True)
+    with (model_snapshot_folder / filename.models).open('wb') as fp:
         pickle.dump(final_model, fp)
-    with (model_snapshot_folder / 'parameters.json').open('w') as fp:
-        json.dump(best_model_params, fp)
-    average_scores.to_csv(model_snapshot_folder / 'scores.csv', index=False)
-
+    average_scores.to_csv(model_snapshot_folder / filename.scores, index=False)
 
