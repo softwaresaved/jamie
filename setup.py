@@ -19,6 +19,7 @@ setup(name='jamie',
       install_requires = [
           'pymongo>=3.4.0',
           'pytoml',  # read .toml configuration files
+          'fire',  # command line interface
           'pandas==1.0.3',
           'gitpython==3.1.2',
           'scikit-learn==0.22.2',

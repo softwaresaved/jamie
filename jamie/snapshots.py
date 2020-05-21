@@ -4,10 +4,6 @@ from pathlib import Path
 from .config import Config
 from tabulate import tabulate
 
-def usage():
-    print("usage: jamie list-snapshots [models|training]")
-    sys.exit(1)
-
 class Snapshot:
     subpath = ''
     glob = '*'
@@ -55,14 +51,9 @@ def main(arg):
     if not snapshot_path.exists():
         snapshot_path.mkdir()
     if arg == 'models':
-        print(ModelSnapshot(snapshot_path))
+        return str(ModelSnapshot(snapshot_path))
     elif arg == 'training':
-        print(TrainingSnapshot(snapshot_path))
+        return str(TrainingSnapshot(snapshot_path))
     else:
-        usage()
+        return "usage: jamie list-snapshots [models|training]"
 
-
-if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        usage()
-    main(sys.argv[1])

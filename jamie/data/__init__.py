@@ -17,8 +17,8 @@ employers = Box({
 })
 
 def list_employers():
-    print("\n".join("%s -- %s" % (x, employers[x]['description'])
-          for x in sorted(employers)))
+    return "\n".join("%s -- %s" % (x, employers[x]['description'])
+          for x in sorted(employers))
 
 def valid_employer(e):
     return e in employers

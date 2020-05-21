@@ -263,8 +263,8 @@ def nested_cross_validation(
 
 def train(
     config, snapshot, featureset,
-    prediction_field='aggregate_tags',
-    oversampling=True, scoring='precision'
+    prediction_field,
+    oversampling, scoring
 ):
     Features = select_features(featureset)
     timestamp = isodate() + '_i' + snapshot + '_' + gitversion()
@@ -293,7 +293,3 @@ def train(
     average_scores.to_csv(model_snapshot_folder / 'scores.csv', index=False)
 
 
-if __name__ == "__main__":
-    config = Config()
-    ts = TrainingSnapshot(config['common.snapshots'])
-    train(config, ts.most_recent(), 'rse')

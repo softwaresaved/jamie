@@ -84,10 +84,10 @@ class Config:
     def __getitem__(self, key):
         return self.cf[key]
 
-def main(args):
+def configurator(field=None, new_value=None):
     c = Config()
 
-    if len(args) == 0:
+    if field is None:
         print("jamie: configuration file %s -- %s\n"
               "  config               List current configuration\n"
               "  config <name>        Read value of configuration <name>\n"
@@ -96,7 +96,9 @@ def main(args):
               ("(not present, using defaults)" if not c.exists else "",
                   c.filename))
         print(c)
-    elif len(args) == 1:
-        print(str(c.get(args[0])))
+    elif field is not None and new_value is None:
+        return str(c.get(field))
+    elif field is not None and new_value is not None:
+        c.set(field, new_value)
     else:
-        c.set(args[0], args[1])
+        return "config: Can only set value for a known field"

@@ -1,49 +1,6 @@
 #!/usr/bin/env python
-# jamie main file
 
-import sys
+import fire
 import jamie
-import jamie.config
-import jamie.scrape
-import jamie.snapshots
-import jamie.data.importer
-
-maintxt = """jamie: Job Analysis by Machine Information Extraction
-syntax: jamie [command]
-
-where command is one of:
-  scrape          Scrapes jobs from jobs.ac.uk
-  import          Read scraped jobs into MongoDB
-  snapshots       List saved snapshots
-  train           Train new model using data from Bob
-  predict         Predict using saved models
-  report          Generate report with analysis of jobs
-  version         Version information for Jamie
-"""
-
-def main(args):
-    if args == []:
-        print(maintxt)
-        sys.exit(0)
-    elif args[0] == "version":
-        print("jamie version", jamie.__version__)
-        sys.exit(0)
-    elif args[0] == "list-employers":
-        jamie.data.list_employers()
-    elif args[0] == "import":
-        if len(args) == 2:
-            jamie.data.importer.main(employer=args[1])
-        else:
-            jamie.data.importer.main()
-    elif args[0] == "config":
-        jamie.config.main(args[1:])
-    elif args[0] == "scrape":
-        jamie.scrape.main(args[1:])
-    elif args[0] == 'snapshots':
-        jamie.snapshots.main(args[1])
-    else:
-        print("jamie: unknown or not implemented option")
-        sys.exit(1)
-
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    fire.Fire(jamie.Jamie)
