@@ -9,7 +9,10 @@ allowed_features = {
 
 
 def select_features(f):
-    return allowed_features.get(f, None)
+    if f in allowed_features:
+        return allowed_features[f]["class"]
+    else:
+        return None
 
 
 def list_features():

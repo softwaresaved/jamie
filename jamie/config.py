@@ -96,7 +96,11 @@ class Config:
             toml.dump(cf, fp)
 
     def as_dict(self):
-        return self.cf
+        cf = self.cf.copy()
+        for k in cf:
+            if k in self.paths:
+                cf[k] = str(cf[k])
+        return cf
 
     def __getitem__(self, key):
         return self.cf[key]

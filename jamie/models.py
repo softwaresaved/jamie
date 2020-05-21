@@ -8,7 +8,6 @@ import numpy as np
 import sklearn
 
 from box import Box
-from collections import namedtuple
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.svm import SVC
@@ -24,7 +23,6 @@ from sklearn.model_selection import (
 from .snapshots import TrainingSnapshot
 from .features import select_features
 from .common.lib import isotime_snapshot, gitversion
-from .config import Config
 from .logger import logger
 
 logger = logger(name='models', stream_level='INFO')
@@ -44,7 +42,7 @@ def get_model(n):
     }
     if n in data:
         if 'params' in data[n]:
-            return data[n]['model'](**params)
+            return data[n]['model'](**data[n]['params'])
         else:
             return data[n]['model']()
     else:
@@ -153,13 +151,13 @@ def nested_cross_validation(
         outer_cv = StratifiedKFold(nbr_folds)
         # inner_cv = KFold(nbr_folds)
         inner_cv = StratifiedKFold(nbr_folds)
-        name_outer_cv = "kfold".format(nbr_folds)
+        # name_outer_cv = "kfold".format(nbr_folds)
     else:
         if nbr_folds.lower() == "leaveoneout":
             inner_cv = LeaveOneOut()
             outer_cv = LeaveOneOut()
             nbr_folds = len(y)
-            name_outer_cv = "leaveoneout-{}".format(str(nbr_folds))
+            # name_outer_cv = "leaveoneout-{}".format(str(nbr_folds))
 
     # Creaging the dataframe for the different scores
     score_for_outer_cv = pd.DataFrame(index=range(len(models)), columns=["model"])
@@ -220,12 +218,7 @@ def nested_cross_validation(
         "Average score across the outer folds: ",
         average_scores_across_outer_folds_for_each_model,
     )
-    many_stars = "\n" + "*" * 100 + "\n"
-    print(
-        many_stars
-        + "Fitting the model on the training set Complete summary of the best model"
-        + many_stars
-    )
+    logger.info("Fitting the model on the training set")
 
     best_model_name, best_model_avg_score = max(
         average_scores_across_outer_folds_for_each_model.items(),
@@ -319,4 +312,3 @@ def train(
     with (model_snapshot_folder / filename.models).open('wb') as fp:
         pickle.dump(final_model, fp)
     average_scores.to_csv(model_snapshot_folder / filename.scores, index=False)
-
