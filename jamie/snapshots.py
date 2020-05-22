@@ -24,6 +24,10 @@ class Snapshot:
     def data(self):
         pass
 
+    def __str__(self):
+        m = self.metadata()
+        return json.dumps(m, indent=2, sort_keys=True) if m else self.instance
+
     def metadata(self):
         metadata_file = self.instance_location / 'metadata.json'
         if metadata_file.exists():
@@ -38,7 +42,7 @@ class SnapshotCollection:
     def __init__(self, root, startswith="", endswith=""):
         self.root = Path(root)
         self.glob = startswith + "*" + endswith
-        self.instances = [x.stem for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()]
+        self.instances = [x.name for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()]
 
     def list(self):
         return self.instances
@@ -67,7 +71,7 @@ class ModelSnapshotCollection(SnapshotCollection):
         if key in self.instances:
             return ModelSnapshot(key, self.root)
 
-def TrainingSnapshot(Snapshot):
+class TrainingSnapshot(Snapshot):
     subpath = "training"  # NOQA
 
     def data(self):
@@ -77,7 +81,7 @@ def TrainingSnapshot(Snapshot):
         else:
             return None
 
-def ModelSnapshot(Snapshot):
+class ModelSnapshot(Snapshot):
     subpath = "models"  # NOQA
 
     def data(self):
@@ -92,15 +96,21 @@ def ModelSnapshot(Snapshot):
         return Box(out)
 
 
-def main(arg):
+def main(kind, instance=None):
     c = Config()
     snapshot_path = Path(c['common.snapshots'])
     if not snapshot_path.exists():
         snapshot_path.mkdir()
-    if arg == 'models':
-        return ModelSnapshotCollection(snapshot_path)
-    elif arg == 'training':
-        return TrainingSnapshotCollection(snapshot_path)
+    if kind == 'models':
+        if instance is None:
+            return ModelSnapshotCollection(snapshot_path)
+        else:
+            return ModelSnapshotCollection(snapshot_path)[instance]
+    elif kind == 'training':
+        if instance is None:
+            return TrainingSnapshotCollection(snapshot_path)
+        else:
+            return TrainingSnapshotCollection(snapshot_path)[instance]
     else:
         return "usage: jamie snapshots [models|training]"
 

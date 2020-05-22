@@ -40,9 +40,9 @@ class Jamie:
         "Scrapes jobs from jobs.ac.uk"
         return jamie.scrape.main()
 
-    def snapshots(self, kind):
+    def snapshots(self, kind, instance=None):
         "Show saved snapshots (models/training)"
-        return jamie.snapshots.main(kind)
+        return jamie.snapshots.main(kind, instance)
 
     def features(self):
         "List possible features (job types)"
