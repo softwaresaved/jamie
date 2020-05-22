@@ -41,7 +41,7 @@ class FeatureBase:
 
     def __init__(self, data, search_term_list, require_columns):
         self.search_term_list = search_term_list
-        self.data = pd.read_csv(data)
+        self.data = data
         if any(f not in self.data for f in require_columns):
             raise ValueError("Missing one of required columns %r" % require_columns)
 

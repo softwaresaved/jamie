@@ -20,7 +20,7 @@ from sklearn.model_selection import (
     LeaveOneOut,
     StratifiedKFold,
 )
-from .snapshots import TrainingSnapshot
+from .snapshots import TrainingSnapshotCollection
 from .features import select_features
 from .common.lib import isotime_snapshot, gitversion
 from .logger import logger
@@ -287,8 +287,8 @@ def train(
         }
     }
     logger.info("model-snapshot %s", timestamp)
-    training_snapshots = TrainingSnapshot(config['common.snapshots'])
-    feature_data = Features(training_snapshots[snapshot]).make_arrays(prediction_field)
+    training_snapshots = TrainingSnapshotCollection(config['common.snapshots'])
+    feature_data = Features(training_snapshots[snapshot].data()).make_arrays(prediction_field)
     logger.info("created features object")
     X_train = feature_data.features.fit_transform(feature_data.X_train)
     # X_test = feature_data.features.transform(feature_data.X_test)

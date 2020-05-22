@@ -52,7 +52,7 @@ class Jamie:
               prediction_field='aggregate_tags',
               oversampling=True, scoring='precision'):
         "Train using specified snapshot (default: last)"
-        ts = jamie.snapshots.TrainingSnapshot(self.cf['common.snapshots'])
+        ts = jamie.snapshots.TrainingSnapshotCollection(self.cf['common.snapshots'])
         if snapshot == 'last':
             snapshot = ts.most_recent()
         jamie.models.train(self.cf, snapshot, featureset, prediction_field,

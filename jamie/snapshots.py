@@ -1,48 +1,95 @@
 # Get snapshots
-import sys
+import json
+import pickle
+import pandas as pd
 from pathlib import Path
 from .config import Config
-from tabulate import tabulate
+from box import Box
 
 class Snapshot:
-    subpath = ''
-    glob = '*'
+    subpath = ""
 
-    def __init__(self, root):
+    def __init__(self, instance, root=None):
+        self.instance = instance
+        if root is None:
+            cf = Config()
+            self.root = Path(cf['common.snapshots'])
+        else:
+            self.root = Path(root)
+        self.instance_location = self.root / self.subpath / self.instance
+
+    def exists(self):
+        return self.instance_location.exists()
+
+    def data(self):
+        pass
+
+    def metadata(self):
+        metadata_file = self.instance_location / 'metadata.json'
+        if metadata_file.exists():
+            with metadata_file.open() as fp:
+                return json.load(fp)
+        else:
+            return None
+
+class SnapshotCollection:
+    subpath = ''
+
+    def __init__(self, root, startswith="", endswith=""):
         self.root = Path(root)
-        self.instances = list((self.root / self.subpath).rglob(self.glob))
-        self.root_instances = ['/'.join(k for k in s.parent.parts
-                               if k not in ['snapshots', self.subpath])
-                               for s in self.instances]
-        self.instance_map = {k: v for k, v in zip(self.root_instances, self.instances)}
+        self.glob = startswith + "*" + endswith
+        self.instances = [x.stem for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()]
 
     def list(self):
-        return self.root_instances
-
-    def __getitem__(self, key):
-        return self.instance_map.get(key, None)
+        return self.instances
 
     def __contains__(self, key):
-        return key in self.instance_map
+        return key in self.instances
 
     def __str__(self):
         return '\n'.join(str(s) for s in self.list())
 
-    def table(self):
-        return tabulate(self.instance_map.items())
-
     def most_recent(self):
-        return sorted(self.root_instances)[0]
+        return sorted(self.instances)[0]
 
 
-class TrainingSnapshot(Snapshot):
+class TrainingSnapshotCollection(SnapshotCollection):
     subpath = 'training'
-    glob = '*.csv'
 
+    def __getitem__(self, key):
+        if key in self.instances:
+            return TrainingSnapshot(key, self.root)
 
-class ModelSnapshot(Snapshot):
+class ModelSnapshotCollection(SnapshotCollection):
     subpath = 'models'
-    glob = '*.pkl'
+
+    def __getitem__(self, key):
+        if key in self.instances:
+            return ModelSnapshot(key, self.root)
+
+def TrainingSnapshot(Snapshot):
+    subpath = "training"  # NOQA
+
+    def data(self):
+        fn = self.instance_location / 'training_set.csv'
+        if fn.exists():
+            return pd.read_csv(fn)
+        else:
+            return None
+
+def ModelSnapshot(Snapshot):
+    subpath = "models"  # NOQA
+
+    def data(self):
+        out = {}
+        model_fn = self.instance_location / 'model.pkl'
+        scores_fn = self.instance_location / 'scores.csv'
+        if model_fn.exists():
+            with model_fn.open('rb') as fp:
+                out['model'] = pickle.load(fp)
+        if scores_fn.exists():
+            out['scores'] = pd.read_csv(scores_fn)
+        return Box(out)
 
 
 def main(arg):
@@ -51,9 +98,9 @@ def main(arg):
     if not snapshot_path.exists():
         snapshot_path.mkdir()
     if arg == 'models':
-        return str(ModelSnapshot(snapshot_path))
+        return ModelSnapshotCollection(snapshot_path)
     elif arg == 'training':
-        return str(TrainingSnapshot(snapshot_path))
+        return TrainingSnapshotCollection(snapshot_path)
     else:
-        return "usage: jamie list-snapshots [models|training]"
+        return "usage: jamie snapshots [models|training]"
 

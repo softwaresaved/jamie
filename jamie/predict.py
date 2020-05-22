@@ -3,25 +3,133 @@
 
 import os
 import json
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path('.').absolute().parent))
-
-# from io import StringIO
-
 import numpy as np
-
-from include.features import get_train_data
-from include.model import nested_cross_validation
-from include.predicting import Predict
-
-from sklearn.externals.joblib  import dump, load
-#from pickle import dump, load
-from common.logger import logger
-from common.getArgs import getArgs
+from sklearn.externals.joblib import dump, load
+from .common.getConnection import connectMongo
+from .logger import logger
 
 logger = logger(name='prediction_run', stream_level='DEBUG')
+
+class Predict:
+
+    def __init__(self, config_values, prediction_field, features, model, oversampling, relaunch=False):
+        """
+        params:
+        ------
+            config_values dict(): values from the config.py file in ../config/
+            prediction_field str(): the name of the prediction to make
+            feature Pipeline(): of different transformation to do on the document as defined
+                in feature.py
+            model sklearn.model: the model to use for prediction
+            relaunch boo(): if had to redo all the prediction or not (Default=False)
+        return:
+        -------
+             None
+        """
+        self.config_values = config_values
+        self.prediction_field = prediction_field
+        self.features = features
+        self.model = model
+        self.oversampling = oversampling
+        self.relaunch = relaunch
+        self.db = self._connect_db()
+
+    def _connect_db(self):
+        """
+        connect to the db
+
+        return:
+        ------
+            db Mongodb(): connection to the specific collection
+        """
+        return connectMongo(self.config_values)
+
+    def _get_documents(self, relaunch=False):
+        """
+        Query the collection and return the documents for prediction as dataframe with the job_title and description
+        field
+        params:
+        -------
+            relaunch bool(): Decide if return all documents or only documents that does not have a prediction
+        return:
+        ------
+            _id ObjectID(): the unique id from the document, provided by MongoDB
+            doc dataframe() -- None: the dataframe containing the description and job_title field. None if Keyerror
+        """
+        if self.oversampling is True:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        else:
+            predicting_field = 'prediction_{}'.format(self.prediction_field)
+        if relaunch is True:
+            search = {}
+        else:
+            search = {self.prediction_field: {'$exists': False}}
+        for doc in self.db['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
+            _id = doc['_id']
+            try:
+                doc =  pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
+            except KeyError:
+                doc = None
+            yield _id, doc
+
+    def _prepare_X(self, df):
+        """
+        Transform X with the self.feature pipeline, prior to the prediction
+        params:
+        -------
+            document str(): containing the information to transform
+        return:
+        -------
+            transformed X: applied feature pipeline on the document
+        """
+        return self.features.transform(df)
+
+    def _predict(self, X):
+        """
+        Classify the X documents
+        params:
+        -------
+            X numpy array(): vector to predict
+        returns:
+        -------
+            prediction numpy_array(): Class predicted
+            pred_proba numpy_array(): probability of the prediction
+        """
+        return self.model.predict(X), self.model.predict_proba(X)
+
+    def _extract_prediction(self, pred_int, pred_proba):
+        """
+        Extract the unique classification and the proba for that classification
+        Right now, only tested for binary classification. If multilabel is used,
+        need to test it. #TODO
+        """
+        return int(pred_int[0]), float(pred_proba[0][0])
+
+    def _record_prediction(self, _id, pred_int, pred_proba):
+        """
+        Record the prediction in the original document in Mongodb
+        params:
+        -------
+            _id ObjectID(): document id to update
+            pred_int int(): class of given by the prediction
+            pred_proba float(): float of the probability of prediction
+        """
+        if self.oversampling is True:
+            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
+        else:
+            predicting_field = 'prediction_{}'.format(self.prediction_field)
+        self.db['jobs'].update({'_id': _id}, {'$set': {predicting_field: pred_int,
+                                                       '{}_proba'.format(predicting_field): pred_proba}})
+
+    def predict(self):
+        for _id, doc in self._get_documents(self.relaunch):
+            if doc is not None:
+                X = self._prepare_X(doc)
+                pred_int, pred_proba = self._predict(X)
+                pred_int, pred_proba = self._extract_prediction(pred_int, pred_proba)
+            else:
+                pred_int, pred_proba = None, None
+            self._record_prediction(_id, pred_int, pred_proba)
 
 
 def record_information(best_model_params,
@@ -35,88 +143,6 @@ def record_information(best_model_params,
 
     with open('{}{}'.format(directory, 'best_model_params.json'), 'w') as f:
         json.dump(best_model_params, f)
-
-
-def record_model(model, features, directory):
-    """
-    """
-    dump(features, '{}{}'.format(directory, 'features.pkl'))
-    dump(model, '{}{}'.format(directory, 'model.pkl'))
-
-
-def record_average_scores(scores, nbr_folds, directory):
-    """
-    Record the result of each outer_cv loop into a panda df and
-    then record it into a csv.
-    Before saving it checks if a similar csv file exists to append it instead
-    of overwritting it.
-    The name is based on the method to folds and just write the different models unders
-    """
-    filename = directory +'average_scores_' + str(nbr_folds) + '.csv'
-    scores.to_csv(filename)
-
-
-def load_model(directory):
-    try:
-        features = load('{}{}'.format(directory, 'features.pkl'))
-    except TypeError:
-        with open('{}{}'.format(directory, 'features.pkl')) as f:
-            features = load(f)
-    try:
-        model = load('{}{}'.format(directory, 'model.pkl'))
-    except TypeError:
-        with open('{}{}'.format(directory, 'model.pkl')) as f:
-            model = load(f)
-    return features, model
-
-
-def load_info_model(directory):
-    with open('{}{}'.format(directory, 'best_model_params.json')) as handle:
-        best_model_params = json.loads(handle.read())
-    return best_model_params
-
-
-def get_model(relaunch, nbr_folds, prediction_field, scoring_value, oversampling, directory):
-
-    if relaunch is True:
-
-        X_train, X_test, y_train, y_test, features = get_train_data(prediction_field)
-        X_train = features.fit_transform(X_train)
-
-        best_model_params, final_model, average_scores = nested_cross_validation(X_train, y_train, prediction_field, scoring_value, oversampling, nbr_folds=nbr_folds)
-
-        X_test = features.transform(X_test)
-        y_pred = final_model.predict(X_test)
-        y_proba = final_model.predict_proba(X_test)
-
-        record_model(final_model, features, directory)
-        record_information(best_model_params, final_model, features,
-                           y_test, y_pred, y_proba, directory)
-        record_average_scores(average_scores, nbr_folds, directory)
-
-    elif relaunch is False:
-        features, final_model = load_model(directory)
-        best_model_params = load_info_model(directory)
-
-    else:
-        raise('Not a proper command argument')
-
-    return final_model, features, best_model_params
-
-
-def _create_directory(prediction_field, scoring_value, oversampling):
-
-    root_folder = '../../outputs/dataPrediction/prediction/'
-    if oversampling:
-        directory = root_folder + prediction_field + '_' + scoring_value + '_oversampling' + '/'
-    else:
-        directory = root_folder + prediction_field  + '_' + scoring_value + '/'
-
-    # check folder if exists otherwise create it
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    return directory
 
 def main():
 
