@@ -168,8 +168,8 @@ def nested_cross_validation(
     X, y, scoring_value, oversampling=False, nbr_folds=5
 ):
     """Perform nested cross validation and return best model. The set of
-    models is defined in :ref:`jamie.models`. This function is generally
-    not invoked directly, and is called through :ref:`jamie.models.train`.
+    models is defined in :mod:`jamie.models`. This function is generally
+    not invoked directly, and is called through :func:`train`.
 
     Parameters
     ----------
