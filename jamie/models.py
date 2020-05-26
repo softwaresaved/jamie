@@ -165,11 +165,33 @@ model_description = {
 
 
 def nested_cross_validation(
-    X, y, prediction_field, scoring_value, oversampling=False, nbr_folds=5
+    X, y, scoring_value, oversampling=False, nbr_folds=5
 ):
-    """
-    Dev version of the training instance
-    Source: https://datascience.stackexchange.com/a/16856
+    """Perform nested cross validation and return best model. The set of
+    models is defined in :ref:`jamie.models`. This function is generally
+    not invoked directly, and is called through :ref:`jamie.models.train`.
+
+    Parameters
+    ----------
+    X : numpy.ndarray
+        Feature matrix. This can be obtained by calling fit_transform() on a Features object
+    y : numpy.ndarray
+        Binary labels, should have the same number of rows as X
+    scoring_value : score
+        Which score type to use, same as in GridSearchCV
+    oversampling : bool
+        Whether to perform oversampling to balance the dataset (default: True)
+    nbr_folds : int
+        Number of folds for cross validation (default: 5)
+
+    Returns
+    -------
+    best_params : dict
+        Best parameters for the final model
+    final_model : model
+        Final model
+    score_for_outer_cv : pd.DataFrame
+        Scores for outer cross validation for the various models
     """
 
     # Get the models
@@ -291,6 +313,23 @@ def train(
     prediction_field,
     oversampling, scoring
 ):
+    """Train models, called when using ``jamie train`` and save model snapshots.
+
+    Parameters
+    ----------
+    config : :class:`jamie.config.Config`
+        Configuration object
+    snapshot : str
+        Training snapshot to use
+    featureset : str
+        Featureset to use
+    prediction_field : str
+        Which column of the training set data to use for prediction.
+    oversampling : bool
+        Whether to oversample to form a balanced set, passed to :func:`nested_cross_validation`.
+    scoring : str
+        Scoring method to use for grid search, passed to :func:`nested_cross_validation`.
+    """
     filename = Box({'models': 'model.pkl', 'scores': 'scores.csv'})
     Features = select_features(featureset)
     timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
