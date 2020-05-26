@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 import pymongo
-import mysql.connector
 import pytoml as toml
 
 
@@ -47,32 +46,3 @@ def connectMongo(cfg):
     # Create the instance that connect to the db storing the training set
     mongoDB = connectDB(*args_to_connect)
     return mongoDB
-
-
-def connectMysql(cfg):
-    """
-    Connection to MySQL using MySQLdb module
-    and return a cursor
-    """
-    def connectDB(*args, **kwargs):
-        """
-        """
-        mdb = mysql.connector.connect(**kwargs)
-        # mdb = pymysql.connect(*args)
-        return mdb
-        # return connector.cursor(mdb.cursors.DictCursor)
-
-    # set up access credentials
-    kwargs_to_connect = {
-        'host': cfg['db.mysql-host'],
-        'db': cfg['db.mysql-name'],
-        'port': cfg['db.mysql-port']
-    }
-    if 'db.access' in cfg:
-        access_value = read_toml(cfg['db.access'])
-        kwargs_to_connect.update({
-            'user': access_value['MYSQL'].get('db_username', None),
-            'passwd': access_value['MYSQL'].get('db_password', None)
-        })
-
-    return connectDB(**kwargs_to_connect)
