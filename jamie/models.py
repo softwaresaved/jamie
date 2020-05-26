@@ -30,6 +30,17 @@ c_params = 10.0 ** np.arange(-3, 8)
 gamma_params = 10.0 ** np.arange(-5, 4)
 
 def get_model(n):
+    """Return model object corresponding to the named parameter.
+
+    Parameters
+    ----------
+    n : str
+        The name of the model
+
+    Returns
+    -------
+    Model object
+    """
     data = {
         "SVC": {
             "model": SVC,
@@ -68,6 +79,24 @@ def parse_parameter_description(d):
             raise ValueError("Parameter parsing error: " + d)
 
 def parse_model_description(models):
+    """Parse models description. This function expands configuration values
+    such as hyperparameter ranges from a string description to Python
+    objects. The following interpositions are supported for parameter types:
+
+    * ``=<start>:<stop>[:<step>]`` becomes **range** *(start,stop,step)*
+    * ``=e<start>:<stop>[:<step>]`` becomes **np.logspace** *(start,stop,num)*
+
+    Parameters
+    ----------
+    models : dict
+        Dictionary representing models with their configuration
+
+    Returns
+    -------
+    dict
+        Model description with parameters interposed using the above substitutions
+    """
+
     k = dict()
     for n in models:
         k[n] = {"model": get_model(n), "matrix": models[n]["matrix"]}
