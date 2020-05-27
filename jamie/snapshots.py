@@ -23,6 +23,8 @@ class Snapshot:
         Root path of snapshots (default : None)
     """
     subpath = ""
+    _data = None
+    _metadata = None
 
     def __init__(self, instance, root=None):
         self.instance = instance
@@ -37,6 +39,7 @@ class Snapshot:
         "Returns whether instance exists"
         return self.instance_location.exists()
 
+    @property
     def data(self):
         "Data corresponding to the snapshot"
         pass
@@ -46,14 +49,20 @@ class Snapshot:
         m = self.metadata()
         return json.dumps(m, indent=2, sort_keys=True) if m else self.instance
 
+    @property
     def metadata(self):
         "Snapshot metadata"
-        metadata_file = self.instance_location / 'metadata.json'
-        if metadata_file.exists():
-            with metadata_file.open() as fp:
-                return json.load(fp)
+        if self._metadata is None:
+            metadata_file = self.instance_location / 'metadata.json'
+            if metadata_file.exists():
+                with metadata_file.open() as fp:
+                    self._metadata = json.load(fp)
+                    return self._metadata
+            else:
+                self._metadata = dict()
+                return self._metadata
         else:
-            return None
+            return self._metadata
 
 class SnapshotCollection:
     """Base class for collection of snapshots. Instances of derived class
@@ -113,13 +122,18 @@ class TrainingSnapshot(Snapshot):
     "Represents a single training :class:`Snapshot`"
     subpath = "training"  # NOQA
 
+    @property
     def data(self):
         "Returns DataFrame corresponding to training snapshot"
-        fn = self.instance_location / 'training_set.csv'
-        if fn.exists():
-            return pd.read_csv(fn)
+        if self._data is None:
+            fn = self.instance_location / 'training_set.csv'
+            if fn.exists():
+                self._data = pd.read_csv(fn)
+                return self._data
+            else:
+                return None
         else:
-            return None
+            return self._data
 
 class ModelSnapshot(Snapshot):
     "Represents a single model :class:`Snapshot`"
@@ -168,4 +182,3 @@ def main(kind, instance=None):
             return TrainingSnapshotCollection(snapshot_path)[instance]
     else:
         return "usage: jamie snapshots [models|training]"
-
