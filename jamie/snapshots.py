@@ -40,6 +40,11 @@ class Snapshot:
         return self.instance_location.exists()
 
     @property
+    def name(self):
+        "Snapshot name"
+        return self.instance
+
+    @property
     def data(self):
         "Data corresponding to the snapshot"
         pass

@@ -1,60 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import json
 import numpy as np
-from sklearn.externals.joblib import dump, load
 from .common.getConnection import connectMongo
 from .logger import logger
+from .snapshot import ModelSnapshot
 
-logger = logger(name='prediction_run', stream_level='DEBUG')
+logger = logger(name='predict', stream_level='DEBUG')
 
 class Predict:
+    """Predict job classification using saved model snapshots.
 
-    def __init__(self, config_values, prediction_field, features, model, oversampling, relaunch=False):
-        """
-        params:
-        ------
-            config_values dict(): values from the config.py file in ../config/
-            prediction_field str(): the name of the prediction to make
-            feature Pipeline(): of different transformation to do on the document as defined
-                in feature.py
-            model sklearn.model: the model to use for prediction
-            relaunch boo(): if had to redo all the prediction or not (Default=False)
-        return:
-        -------
-             None
-        """
-        self.config_values = config_values
-        self.prediction_field = prediction_field
-        self.features = features
-        self.model = model
-        self.oversampling = oversampling
-        self.relaunch = relaunch
+    Parameters
+    ----------
+    model_snapshot : str
+        Model snapshot to use for prediction
+    oversampling : bool, optional
+        Whether to use oversampling to balance dataset, True by default
+    """
+
+    def __init__(self, model_snapshot):
+        self.model_snapshot = ModelSnapshot(self.model_snapshot)
+        self.model = self.model_snapshot.data.model
+        self.config = self.model_snapshot.metadata['config']
         self.db = self._connect_db()
 
     def _connect_db(self):
-        """
-        connect to the db
+        return connectMongo(self.config)
 
-        return:
-        ------
-            db Mongodb(): connection to the specific collection
-        """
-        return connectMongo(self.config_values)
+    def _get_documents(self):
+        """Query the collection and return the documents for prediction as
+        dataframe with the job_title and description field.
 
-    def _get_documents(self, relaunch=False):
-        """
-        Query the collection and return the documents for prediction as dataframe with the job_title and description
-        field
-        params:
-        -------
-            relaunch bool(): Decide if return all documents or only documents that does not have a prediction
-        return:
+        Yields
         ------
-            _id ObjectID(): the unique id from the document, provided by MongoDB
-            doc dataframe() -- None: the dataframe containing the description and job_title field. None if Keyerror
+        _id : ObjectID
+            Unique id from the document, provided by MongoDB
+        doc : pd.Dataframe
+            Dataframe containing the description and job_title field. None if KeyError
         """
         if self.oversampling is True:
             predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
@@ -72,48 +56,8 @@ class Predict:
                 doc = None
             yield _id, doc
 
-    def _prepare_X(self, df):
-        """
-        Transform X with the self.feature pipeline, prior to the prediction
-        params:
-        -------
-            document str(): containing the information to transform
-        return:
-        -------
-            transformed X: applied feature pipeline on the document
-        """
-        return self.features.transform(df)
-
-    def _predict(self, X):
-        """
-        Classify the X documents
-        params:
-        -------
-            X numpy array(): vector to predict
-        returns:
-        -------
-            prediction numpy_array(): Class predicted
-            pred_proba numpy_array(): probability of the prediction
-        """
-        return self.model.predict(X), self.model.predict_proba(X)
-
-    def _extract_prediction(self, pred_int, pred_proba):
-        """
-        Extract the unique classification and the proba for that classification
-        Right now, only tested for binary classification. If multilabel is used,
-        need to test it. #TODO
-        """
-        return int(pred_int[0]), float(pred_proba[0][0])
-
     def _record_prediction(self, _id, pred_int, pred_proba):
-        """
-        Record the prediction in the original document in Mongodb
-        params:
-        -------
-            _id ObjectID(): document id to update
-            pred_int int(): class of given by the prediction
-            pred_proba float(): float of the probability of prediction
-        """
+        "Record the prediction in the original document in Mongodb"
         if self.oversampling is True:
             predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
         else:
@@ -122,10 +66,13 @@ class Predict:
                                                        '{}_proba'.format(predicting_field): pred_proba}})
 
     def predict(self):
+        "Record predictions in MongoDB"
         for _id, doc in self._get_documents(self.relaunch):
             if doc is not None:
-                X = self._prepare_X(doc)
-                pred_int, pred_proba = self._predict(X)
+                X = self.features.transform(doc)
+                pred_int = self.model.predict(X)
+                pred_proba = self.model.predict_proba(X)
+                pred_int, pred_proba = self.model.predict(X), self.model.predict_proba(K
                 pred_int, pred_proba = self._extract_prediction(pred_int, pred_proba)
             else:
                 pred_int, pred_proba = None, None
