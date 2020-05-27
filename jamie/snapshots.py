@@ -54,15 +54,9 @@ class Snapshot:
         "Snapshot metadata"
         if self._metadata is None:
             metadata_file = self.instance_location / 'metadata.json'
-            if metadata_file.exists():
-                with metadata_file.open() as fp:
-                    self._metadata = json.load(fp)
-                    return self._metadata
-            else:
-                self._metadata = dict()
-                return self._metadata
-        else:
-            return self._metadata
+            with metadata_file.open() as fp:
+                self._metadata = json.load(fp)
+        return self._metadata
 
 class SnapshotCollection:
     """Base class for collection of snapshots. Instances of derived class
@@ -127,33 +121,31 @@ class TrainingSnapshot(Snapshot):
         "Returns DataFrame corresponding to training snapshot"
         if self._data is None:
             fn = self.instance_location / 'training_set.csv'
-            if fn.exists():
-                self._data = pd.read_csv(fn)
-                return self._data
-            else:
-                return None
-        else:
-            return self._data
+            self._data = pd.read_csv(fn)
+        return self._data
 
 class ModelSnapshot(Snapshot):
     "Represents a single model :class:`Snapshot`"
     subpath = "models"  # NOQA
 
+    @property
     def data(self):
-        """Returns Box corresponding to model snapshot. Box has
+        """Data corresponding to model snapshot. Returned in a Box:
 
         * model: The model object itself
         * scores: pd.DataFrame corresponding to best scores
         """
-        out = {}
-        model_fn = self.instance_location / 'model.pkl'
-        scores_fn = self.instance_location / 'scores.csv'
-        if model_fn.exists():
-            with model_fn.open('rb') as fp:
-                out['model'] = pickle.load(fp)
-        if scores_fn.exists():
-            out['scores'] = pd.read_csv(scores_fn)
-        return Box(out)
+        if self._data is None:
+            out = {}
+            model_fn = self.instance_location / 'model.pkl'
+            scores_fn = self.instance_location / 'scores.csv'
+            if model_fn.exists():
+                with model_fn.open('rb') as fp:
+                    out['model'] = pickle.load(fp)
+            if scores_fn.exists():
+                out['scores'] = pd.read_csv(scores_fn)
+            self._data = out
+        return Box(self._data)
 
 
 def main(kind, instance=None):
