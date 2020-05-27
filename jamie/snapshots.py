@@ -84,8 +84,9 @@ class SnapshotCollection:
         self.glob = startswith + "*" + endswith
         self.instances = [x.name for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()]
 
+    @property
     def list(self):
-        "Returns list of instances in collection"
+        "List of instances in collection"
         return self.instances
 
     def __contains__(self, key):
