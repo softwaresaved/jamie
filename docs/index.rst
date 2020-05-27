@@ -41,8 +41,8 @@ API documentation
 .. toctree::
    :maxdepth: 2
 
-   features/index
-   scrape/index
+   features
+   scrape
    snapshots
    models
    config

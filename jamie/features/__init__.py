@@ -2,6 +2,7 @@
 
 from .default import RSEFeatures
 from ..common.lib import arrow_table
+from .base import FeatureBase  # NOQA
 
 allowed_features = {
     "rse": {"description": "Features corresponding to RSE jobs", "class": RSEFeatures}
@@ -9,6 +10,7 @@ allowed_features = {
 
 
 def select_features(f):
+    "Select featureset"
     if f in allowed_features:
         return allowed_features[f]["class"]
     else:
@@ -16,6 +18,7 @@ def select_features(f):
 
 
 def list_features():
+    "List available featuresets"
     return arrow_table(
         [(k, allowed_features[k]["description"]) for k in allowed_features],
     )

@@ -66,10 +66,22 @@ SEARCH_TERM_LIST = [
 ]
 
 class RSEFeatures(FeatureBase):
+    """Default featureset for finding Research Software Engineering (RSE) jobs.
+    To see the methods, see :class:`FeatureBase`.
+    The featureset encodes the following features:
+
+    * *description*: Description text of job, transformed as below
+    * *job_title*: Job title, transformed as below
+    * *research_software*: Binary flag corresponding to whether the term
+      'research software' appears in the description
+
+    The text is transformed using TF-IDF to produce unigrams and bigrams
+    after removing stopwords, and using sublinear TF scaling.
+    """
     def __init__(self, data):
         super().__init__(data, SEARCH_TERM_LIST, require_columns=[
             'description', 'job_title'])
-        self.combine_features([
+        self._combine_features([
             ('description', Pipeline([('selector', TextSelector('description')),
                                       ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
                                        ngram_range=(1, 2), stop_words='english'))])),
@@ -81,7 +93,7 @@ class RSEFeatures(FeatureBase):
         ])
 
     def make_arrays(self, prediction_field):
-        self.prepare_labels(prediction_field)
+        self._prepare_labels(prediction_field)
         self.data[prediction_field] = self.data[prediction_field].astype(str)
         self.add_textflag(search_for='research software', in_column='description')
         self.X = self.data[(self.data[prediction_field] == '0') |
