@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
 import json
 import pickle
 import pandas as pd
@@ -367,7 +368,7 @@ def train(
 
     # Run ensemble by fitting best_estimator from final_model to
     # 100 different train test splits
-    estimator = final_model.best_estimator_.copy()
+    estimator = copy.deepcopy(final_model.best_estimator_)
     for random_state in tqdm(range(100), desc="Model ensemble"):
         X_train, _, y_train, _ = features.train_test_split(random_state)
         X_train = features.fit_transform(X_train)
