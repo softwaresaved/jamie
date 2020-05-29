@@ -172,3 +172,24 @@ class FeatureBase:
             Which column of the data to use as labels for prediction
         """
         pass
+
+   def train_test_split(self, random_state, test_size=0.2):
+       """Return different train test splits for ensemble by varying random_state.
+
+        Parameters
+        ----------
+        random_state : int or RandomState
+            Random state to use
+        test_size : float, default=0.2
+            Proportion of data to use for test
+
+        Returns
+        -------
+        numpy.ndarray tuple
+            Returns X_train, X_test, y_train, y_test
+        """
+
+        return model_selection.train_test_split(
+            self.X, self.labels, test_size=test_size,
+            random_state=random_state, stratify=self.labels
+        )

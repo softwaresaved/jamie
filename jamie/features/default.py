@@ -2,9 +2,9 @@
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
+import sklearn.model_selection as model_selection
 from sklearn.preprocessing import StandardScaler
 from .base import FeatureBase, TextSelector, LenSelector
-from sklearn.model_selection import train_test_split
 
 SEARCH_TERM_LIST = [
     'algorithm',
@@ -100,8 +100,10 @@ class RSEFeatures(FeatureBase):
                            (self.data[prediction_field] == '1')][
             ['description', 'job_title', 'research_software']]
         self.X_train, self.X_test, self.y_train, self.y_test = \
-            train_test_split(self.X, self.labels, test_size=0.2,
-                             random_state=0, stratify=self.labels)
+            model_selection.train_test_split(
+                self.X, self.labels, test_size=0.2,
+                random_state=0, stratify=self.labels
+            )
         return self
 
 
