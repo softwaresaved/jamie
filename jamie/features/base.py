@@ -69,6 +69,7 @@ class FeatureBase:
     """
 
     def __init__(self, data, search_term_list, require_columns):
+        self.features = None
         self.search_term_list = search_term_list
         self.data = data
         if any(f not in self.data for f in require_columns):
@@ -79,8 +80,49 @@ class FeatureBase:
 
     def _combine_features(self, features):
         "Combine features into a FeatureUnion"
-        self.features = FeatureUnion(n_jobs=1, transformer_list=features)
+        self._features = FeatureUnion(n_jobs=1, transformer_list=features)
         return self
+
+    def fit_transform(self, X, y=None):
+        """Fit the features and transform with the final estimator.
+        This calls the fit_transform() function of the underlying FeatureUnion object.
+        The transformation pipeline converts from a CSV file to a numpy.ndarray.
+        This method is usually called to create the training feature matrix
+        from the CSV file.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit, usually from a CSV file
+        y : array-like, optional
+            This is ignored but kept for compatibility with other
+            scikit-learn transformers
+
+        Returns
+        -------
+        numpy.ndarray
+            Feature matrix after applying pipeline
+        """
+        return self._features.fit_transform(X)
+
+    def transform(self, X):
+        """Transform X separately by each transformer in the FeatureUnion,
+        concatenate results. This method is usually called to transform the
+        test data X_test in a similar manner to X_train. Particularly for
+        text transformation this preserves the vocabulary fitted from the
+        training data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit, usually from a CSV file
+
+        Returns
+        -------
+        numpy.ndarray
+            Feature matrix after applying transformation
+        """
+        return self._features.transform(X)
 
     def add_searchterm(self, column):
         """Adds a search term column. This will add a column

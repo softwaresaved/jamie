@@ -351,13 +351,13 @@ def train(
     }
     logger.info("model-snapshot %s", timestamp)
     training_snapshots = TrainingSnapshotCollection(config['common.snapshots'])
-    feature_data = Features(training_snapshots[snapshot].data)\
+    features = Features(training_snapshots[snapshot].data)\
         .make_arrays(prediction_field)
     logger.info("created features object")
-    X_train = feature_data.features.fit_transform(feature_data.X_train)
+    X_train = features.fit_transform(features.X_train)
     logger.info("nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
-        X_train, feature_data.y_train, scoring,
+        X_train, features.y_train, scoring,
         oversampling=config['model.oversampling'],
         nbr_folds=config['model.k-fold'])
 
@@ -367,13 +367,13 @@ def train(
 
     # Run ensemble by fitting best_estimator from final_model to
     # 100 different train test splits
-    estimator = final_model.best_estimator_
+    estimator = final_model.best_estimator_.copy()
     for random_state in tqdm(range(100), desc="Model ensemble"):
-        X_train, _, y_train, _ = feature_data.train_test_split(random_state)
-        X_train = feature_data.features.fit_transform(X_train)
-        logger.info("X_train.shape %r, y_train shape %r" % (X_train.shape, y_train))
+        X_train, _, y_train, _ = features.train_test_split(random_state)
+        X_train = features.fit_transform(X_train)
         estimator.fit(X_train, y_train)
-        with (model_snapshot_folder / ('model_%d.pkl' % random_state)).open('wb') as fp:
+        with (model_snapshot_folder /
+                ('model_%d.pkl' % random_state)).open('wb') as fp:
             pickle.dump(estimator, fp)
 
     logger.info("saving models")
