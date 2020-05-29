@@ -277,13 +277,7 @@ def nested_cross_validation(
     )
 
     # get the best model and its associated parameter grid
-    try:
-        _, best_model_params = (
-            models[best_model_name]["model"],
-            models[best_model_name]["params"],
-        )
-    except KeyError:  # In case the model doesnt have parameters
-        _, best_model_params = models[best_model_name]["model"], None
+    best_model_params = models[best_model_name].get("params", None)
     print(models[best_model_name])
 
     # now we refit this best model on the whole dataset so that we can start
@@ -302,7 +296,7 @@ def nested_cross_validation(
     try:
         best_params = final_model.best_params_
     except AttributeError:
-        best_params = None
+        best_params = dict()
     best_params["name"] = best_model_name
 
     return best_params, final_model, score_for_outer_cv
