@@ -6,7 +6,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import sklearn
-
+from tqdm import tqdm
 from box import Box
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import RandomOverSampler
@@ -327,6 +327,7 @@ def train(
     filename = Box({'models': 'model.pkl', 'scores': 'scores.csv'})
     Features = select_features(featureset)
     timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
+    model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
     metadata = {
         'snapshot': timestamp,
         'training': {
@@ -350,23 +351,33 @@ def train(
     }
     logger.info("model-snapshot %s", timestamp)
     training_snapshots = TrainingSnapshotCollection(config['common.snapshots'])
-    feature_data = Features(training_snapshots[snapshot].data()).make_arrays(prediction_field)
+    feature_data = Features(training_snapshots[snapshot].data)\
+        .make_arrays(prediction_field)
     logger.info("created features object")
     X_train = feature_data.features.fit_transform(feature_data.X_train)
-    # X_test = feature_data.features.transform(feature_data.X_test)
     logger.info("nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
-        X_train, feature_data.y_train,
-        prediction_field, scoring,
+        X_train, feature_data.y_train, scoring,
         oversampling=config['model.oversampling'],
         nbr_folds=config['model.k-fold'])
-    # y_pred = final_model.predict(X_test)
-    # y_proba = final_model.predict_proba(X_test)
-    logger.info("saving models")
-    model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
-    # Save metadata, models list, models, parameters and scores
+
+    # Create model snapshot folder if needed
     if not model_snapshot_folder.exists():
         model_snapshot_folder.mkdir(parents=True)
+
+    # Run ensemble by fitting best_estimator from final_model to
+    # 100 different train test splits
+    estimator = final_model.best_estimator_
+    for random_state in tqdm(range(100), desc="Model ensemble"):
+        X_train, _, y_train, _ = feature_data.train_test_split(random_state)
+        X_train = feature_data.features.fit_transform(X_train)
+        logger.info("X_train.shape %r, y_train shape %r" % (X_train.shape, y_train))
+        estimator.fit(X_train, y_train)
+        with (model_snapshot_folder / ('model_%d.pkl' % random_state)).open('wb') as fp:
+            pickle.dump(estimator, fp)
+
+    logger.info("saving models")
+    # Save metadata, models list, models, parameters and scores
     metadata['best_parameters'] = best_model_params
     metadata['models'] = model_description
     with (model_snapshot_folder / 'metadata.json').open('w') as fp:
