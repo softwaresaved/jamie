@@ -1,6 +1,7 @@
 # Base file for features
 import numpy as np
 from slugify import slugify
+import sklearn.model_selection as model_selection
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import LabelBinarizer
@@ -173,8 +174,8 @@ class FeatureBase:
         """
         pass
 
-   def train_test_split(self, random_state, test_size=0.2):
-       """Return different train test splits for ensemble by varying random_state.
+    def train_test_split(self, random_state, test_size=0.2):
+        """Return different train test splits for ensemble by varying random_state.
 
         Parameters
         ----------
