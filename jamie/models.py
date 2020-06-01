@@ -376,7 +376,9 @@ def train(
         with (model_snapshot_folder /
                 ('model_%d.pkl' % random_state)).open('wb') as fp:
             pickle.dump(estimator, fp)
-
+        with (model_snapshot_folder /
+                ('features_%d.pkl' % random_state)).open('wb') as fp:
+            pickle.dump(features, fp)
     logger.info("saving models")
     # Save metadata, models list, models, parameters and scores
     metadata['best_parameters'] = best_model_params
