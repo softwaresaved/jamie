@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from .common.getConnection import connectMongo
 from .logger import logger
-from .snapshot import ModelSnapshot
+from .snapshots import ModelSnapshot
 
 logger = logger(name='predict', stream_level='DEBUG')
 
@@ -109,6 +109,7 @@ class Predict:
             Dictionary containing prediction information to save
             in database
         """
+        record['snapshot'] = self.model_snapshot.name
         self.db['predictions'].update({'_id': _id + '_' + self.model_snapshot_name},
                                       {'$set': record})
 
