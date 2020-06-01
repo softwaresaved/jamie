@@ -2,12 +2,56 @@
 # -*- coding: utf-8 -*-
 
 import json
+import pandas as pd
 import numpy as np
 from .common.getConnection import connectMongo
 from .logger import logger
 from .snapshot import ModelSnapshot
 
 logger = logger(name='predict', stream_level='DEBUG')
+
+class Bootstrap:
+    """Get bootstrap means and confidence intervals from a sample.
+
+    Parameters
+    ----------
+    random_state : int
+        Set initial random state
+    n : int, default=1000
+        Number of bootstrap samples
+    """
+    def __init__(self, random_state, n=1000):
+        self.random_state = random_state
+        self.n = n
+
+    def _single_sample_mean(self, array, random_state):
+        np.random.seed(self.random_state + random_state)
+        return np.random.choice(array, len(array)).mean()
+
+    def sample(self, array):
+        """Get bootstrap samples from array.
+
+        Parameters
+        ----------
+        array : array-like
+            Sample to perform bootstrap on
+
+        Returns
+        -------
+        dict
+            Dictionary containing probability, lower_ci, upper_ci
+            (95% confidence intervals).
+        """
+        bootstrap_means = np.array([
+            self._single_sample_mean(array, k)
+            for k in range(self.n)
+        ])
+        return {
+            'probability': bootstrap_means.mean(),
+            'lower_ci': np.percentile(bootstrap_means, 2.5),
+            'upper_ci': np.percentile(bootstrap_means, 97.5)
+        }
+
 
 class Predict:
     """Predict job classification using saved model snapshots.
@@ -16,12 +60,15 @@ class Predict:
     ----------
     model_snapshot : str
         Model snapshot to use for prediction
-    oversampling : bool, optional
-        Whether to use oversampling to balance dataset, True by default
+    random_state : int, default=0
+        Random state, passed to :class:`Bootstrap` instance
+    bootstrap_size : int, default=1000
+        Number of bootstrap draws, passed to :class:`Bootstrap` instance
     """
 
-    def __init__(self, model_snapshot):
+    def __init__(self, model_snapshot, random_state=0, bootstrap_size=1000):
         self.model_snapshot = ModelSnapshot(self.model_snapshot)
+        self.bootstrap = Bootstrap(random_state, bootstrap_size)
         self.model = self.model_snapshot.data.model
         self.config = self.model_snapshot.metadata['config']
         self.db = self._connect_db()
@@ -40,43 +87,43 @@ class Predict:
         doc : pd.Dataframe
             Dataframe containing the description and job_title field. None if KeyError
         """
-        if self.oversampling is True:
-            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
-        else:
-            predicting_field = 'prediction_{}'.format(self.prediction_field)
-        if relaunch is True:
-            search = {}
-        else:
-            search = {self.prediction_field: {'$exists': False}}
-        for doc in self.db['jobs'].find(search, {'job_title': True, 'description': True, 'jobid': True}).batch_size(5):
+        for doc in self.db['jobs'].find(
+                {}, {'job_title': True, 'description': True,
+                     'jobid': True}).batch_size(5):
             _id = doc['_id']
             try:
-                doc =  pd.DataFrame({'description': [doc['description']], 'job_title': [doc['job_title']]})
+                doc =  pd.DataFrame({'description': [doc['description']],
+                                    'job_title': [doc['job_title']]})
             except KeyError:
                 doc = None
             yield _id, doc
 
-    def _record_prediction(self, _id, pred_int, pred_proba):
-        "Record the prediction in the original document in Mongodb"
-        if self.oversampling is True:
-            predicting_field = 'prediction_{}_oversampling'.format(self.prediction_field)
-        else:
-            predicting_field = 'prediction_{}'.format(self.prediction_field)
-        self.db['jobs'].update({'_id': _id}, {'$set': {predicting_field: pred_int,
-                                                       '{}_proba'.format(predicting_field): pred_proba}})
+    def _record_prediction(self, _id, record):
+        """Record the prediction in the original document in Mongodb.
+
+        Parameters
+        ----------
+        _id : str
+            Job ID to record
+        record : dict
+            Dictionary containing prediction information to save
+            in database
+        """
+        self.db['predictions'].update({'_id': _id + '_' + self.model_snapshot_name},
+                                      {'$set': record})
 
     def predict(self):
         "Record predictions in MongoDB"
-        for _id, doc in self._get_documents(self.relaunch):
+        ids_list = []
+        for _id, doc in self._get_documents():
             if doc is not None:
                 X = self.features.transform(doc)
-                pred_int = self.model.predict(X)
-                pred_proba = self.model.predict_proba(X)
-                pred_int, pred_proba = self.model.predict(X), self.model.predict_proba(K
-                pred_int, pred_proba = self._extract_prediction(pred_int, pred_proba)
-            else:
-                pred_int, pred_proba = None, None
-            self._record_prediction(_id, pred_int, pred_proba)
+                ids_list.append()
+                probabilities = [
+                    m.predict_proba(X) for
+                    m in self.model_snapsdot.data.models
+                ]
+                self._record_prediction(_id, self.bootstrap.sample(probabilities))
 
 
 def record_information(best_model_params,
