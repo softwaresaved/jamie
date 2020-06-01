@@ -7,6 +7,7 @@ import jamie.models
 import jamie.features
 import jamie.data
 import jamie.data.importer
+import jamie.predict
 
 class Jamie:
     """jamie: Job Analysis by Machine Information Extraction"""
@@ -56,4 +57,12 @@ class Jamie:
         if snapshot == 'last':
             snapshot = ts.most_recent()
         jamie.models.train(self.cf, snapshot, featureset, prediction_field,
-              oversampling, scoring)
+                           oversampling, scoring)
+
+    def predict(self, snapshot=None):
+        "Predict using specified snapshot"
+        if snapshot is None:
+            model_snapshots = jamie.snapshots.ModelSnapshotCollection(
+                self.cf['common.snapshots'])
+            snapshot = model_snapshots.most_recent()
+        print(jamie.predict.Predict(snapshot).predict().dataframe)

@@ -45,6 +45,11 @@ class Snapshot:
         return self.instance
 
     @property
+    def path(self):
+        "Path to snapshot instance"
+        return self.instance_location
+
+    @property
     def data(self):
         "Data corresponding to the snapshot"
         pass

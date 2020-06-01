@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from .common.getConnection import connectMongo
 from .logger import logger
+from .common.lib import isotime_snapshot
 from .snapshots import ModelSnapshot
 
 logger = logger(name='predict', stream_level='DEBUG')
@@ -67,11 +68,11 @@ class Predict:
     """
 
     def __init__(self, model_snapshot, random_state=0, bootstrap_size=1000):
-        self.model_snapshot = ModelSnapshot(self.model_snapshot)
+        self.model_snapshot = ModelSnapshot(model_snapshot)
         self.bootstrap = Bootstrap(random_state, bootstrap_size)
-        self.model = self.model_snapshot.data.model
         self.config = self.model_snapshot.metadata['config']
         self.db = self._connect_db()
+        self._predictions = []
 
     def _connect_db(self):
         return connectMongo(self.config)
@@ -92,8 +93,8 @@ class Predict:
                      'jobid': True}).batch_size(5):
             _id = doc['_id']
             try:
-                doc =  pd.DataFrame({'description': [doc['description']],
-                                    'job_title': [doc['job_title']]})
+                doc = pd.DataFrame({'description': [doc['description']],
+                                   'job_title': [doc['job_title']]})
             except KeyError:
                 doc = None
             yield _id, doc
@@ -110,11 +111,24 @@ class Predict:
             in database
         """
         record['snapshot'] = self.model_snapshot.name
+        self._predictions.append(record)
         self.db['predictions'].update({'_id': _id + '_' + self.model_snapshot_name},
                                       {'$set': record})
 
-    def predict(self):
-        "Record predictions in MongoDB"
+    def predict(self, save=True):
+        """Record predictions in MongoDB
+
+        Parameters
+        ----------
+        save : bool, default=True
+            Whether to save results in model snapshot folder, on by default.
+            Results are always saved in the MongoDB instance
+
+        Returns
+        -------
+        self : :class:`Predict`
+            Returns copy of itself
+        """
         ids_list = []
         for _id, doc in self._get_documents():
             if doc is not None:
@@ -125,48 +139,18 @@ class Predict:
                     m in self.model_snapsdot.data.models
                 ]
                 self._record_prediction(_id, self.bootstrap.sample(probabilities))
+        if save:
+            self.save()
+        return self
 
+    def save(self, output=None):
+        "Save predictions in model snapshot folder"
+        with (self.model_snapshot.path / ('predict_%s.json' %
+              isotime_snapshot())).open('w') as fp:
+            for r in self._predictions:
+                fp.write(json.dumps(r, sort_keys=True))
 
-def record_information(best_model_params,
-                       final_model, feature_model,
-                       y_test, y_pred, y_proba, directory):
-
-    logger.info('Record the model information')
-    np.save('{}{}'.format(directory, 'y_test'), y_test)
-    np.save('{}{}'.format(directory, 'y_pred'), y_pred)
-    np.save('{}{}'.format(directory, 'y_proba'), y_proba)
-
-    with open('{}{}'.format(directory, 'best_model_params.json'), 'w') as f:
-        json.dump(best_model_params, f)
-
-def main():
-
-    description = 'Launch prediction modelling of jobs ads'
-
-    arguments = getArgs(description)
-    config_values = arguments.return_arguments()
-    prediction_field = config_values.prediction_field
-    oversampling = config_values.oversampling
-    scoring_value = config_values.prediction_metric
-    nb_folds = config_values.k_fold
-    # for prediction_field, oversampling, scoring_value in [('aggregate', True, 'f1_weighted'),
-    #                                                       ('aggregate', False, 'f1_weighted'),
-    #                                                       ('consensus', False, 'f1_weighted'),
-    #                                                       ('consensus', True, 'f1_weighted')]:
-    # Create the folder if not existing
-    directory = _create_directory(prediction_field, scoring_value, oversampling)
-
-    logger.info('Starting the predictions')
-    final_model, features, best_model_params = get_model(config_values.relaunch_model, nb_folds, prediction_field, scoring_value, oversampling, directory)
-    if config_values.record_prediction is True:
-        predict = Predict(config_values, prediction_field, features, final_model, oversampling, config_values.relaunch_model)
-        predict.predict()
-        final_count = dict()
-
-        logger.info('Summary of prediction for new jobs')
-        for k in final_count:
-            logger.info('  Number of job classified as {}: {}'.format(k, final_count[k]))
-
-
-if __name__ == "__main__":
-    main()
+    @property
+    def dataframe(self):
+        "Returns predictions as pd.DataFrame"
+        return pd.DataFrame(self._predictions)
