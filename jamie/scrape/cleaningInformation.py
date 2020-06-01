@@ -30,7 +30,7 @@ class OutputRow:
         """
         # Create attribute from the input_row
         self.input_row = input_row
-        self.employer = employer
+        self._employer = employer
 
         self.needed_keys = ['jobid',
                             'description',
@@ -72,14 +72,14 @@ class OutputRow:
         and create a set of strings
         """
         return set(' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
-                   for l in employers[self.employer].list)
+                   for l in employers[self._employer].list)
 
     def read_postcode(self):
         """
         Read the csv file containing university and postcode for UK only
         """
         return {row.PROVIDER_NAME: row.POSTCODE
-                for row in employers[self.employer].postcodes.itertuples()}
+                for row in employers[self._employer].postcodes.itertuples()}
 
     def matching_key(self, key):
         """
