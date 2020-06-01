@@ -142,12 +142,16 @@ class ModelSnapshot(Snapshot):
         * scores: pd.DataFrame corresponding to best scores
         """
         if self._data is None:
-            out = {}
+            out = {'models': []}
             model_fn = self.instance_location / 'model.pkl'
             scores_fn = self.instance_location / 'scores.csv'
             if model_fn.exists():
                 with model_fn.open('rb') as fp:
-                    out['model'] = pickle.load(fp)
+                    out['final_model'] = pickle.load(fp)
+            model_fns = sorted(self.instance_location.glob('model_*.pkl'))
+            for model in model_fns:
+                with model.open('rb') as fp:
+                    out['models'].append(pickle.load(fp))
             if scores_fn.exists():
                 out['scores'] = pd.read_csv(scores_fn)
             self._data = out
