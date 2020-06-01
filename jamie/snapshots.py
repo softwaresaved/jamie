@@ -100,7 +100,7 @@ class SnapshotCollection:
 
     def __str__(self):
         "String representation of collection"
-        return '\n'.join(str(s) for s in self.list())
+        return '\n'.join(str(s) for s in self.list)
 
     def most_recent(self):
         "Returns most recent instance in collection using lexicographical sorting"
