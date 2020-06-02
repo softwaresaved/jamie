@@ -91,7 +91,7 @@ class Predict:
         for doc in self.db['jobs'].find(
                 {}, {'job_title': True, 'description': True,
                      'jobid': True}).batch_size(5):
-            _id = doc['_id']
+            _id = doc['jobid']
             try:
                 doc = pd.DataFrame({'description': [doc['description']],
                                    'job_title': [doc['job_title']]})
@@ -111,9 +111,9 @@ class Predict:
             in database
         """
         record['snapshot'] = self.model_snapshot.name
+        record['_id'] = _id + '_' + self.model_snapshot.name
         self._predictions.append(record)
-        self.db['predictions'].update({'_id': _id + '_' + self.model_snapshot_name},
-                                      {'$set': record})
+        self.db['predictions'].update_one({'_id': record['_id'], {'$set': record}, upsert=True)
 
     def predict(self, save=True):
         """Record predictions in MongoDB
@@ -132,11 +132,14 @@ class Predict:
         ids_list = []
         for _id, doc in self._get_documents():
             if doc is not None:
-                X = self.features.transform(doc)
-                ids_list.append()
+                ids_list.append(_id)
                 probabilities = [
-                    m.predict_proba(X) for
-                    m in self.model_snapsdot.data.models
+                    # predict_proba() returns a tuple for class (0, 1)
+                    # we need the probability that class is 1, so we select
+                    # the second element
+                    self.model_snapshot.model(i).predict_proba(
+                        self.model_snapshot.features(i).transform(doc))[0][1]
+                    for i in self.model_snapshot.data.indices
                 ]
                 self._record_prediction(_id, self.bootstrap.sample(probabilities))
         if save:
@@ -148,7 +151,7 @@ class Predict:
         with (self.model_snapshot.path / ('predict_%s.json' %
               isotime_snapshot())).open('w') as fp:
             for r in self._predictions:
-                fp.write(json.dumps(r, sort_keys=True))
+                fp.write(json.dumps(r, sort_keys=True) + "\n")
 
     @property
     def dataframe(self):
