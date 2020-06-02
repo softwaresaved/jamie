@@ -4,6 +4,7 @@
 import json
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 from .common.getConnection import connectMongo
 from .logger import logger
 from .common.lib import isotime_snapshot
@@ -113,7 +114,7 @@ class Predict:
         record['snapshot'] = self.model_snapshot.name
         record['_id'] = _id + '_' + self.model_snapshot.name
         self._predictions.append(record)
-        self.db['predictions'].update_one({'_id': record['_id'], {'$set': record}, upsert=True)
+        self.db['predictions'].update_one({'_id': record['_id']}, {'$set': record}, upsert=True)
 
     def predict(self, save=True):
         """Record predictions in MongoDB
@@ -130,16 +131,17 @@ class Predict:
             Returns copy of itself
         """
         ids_list = []
-        for _id, doc in self._get_documents():
+        models = [self.model_snapshot.model(i) for i in self.model_snapshot.data.indices]
+        features = [self.model_snapshot.features(i) for i in self.model_snapshot.data.indices]
+        for _id, doc in tqdm(self._get_documents(), desc="Predicting"):
             if doc is not None:
                 ids_list.append(_id)
                 probabilities = [
                     # predict_proba() returns a tuple for class (0, 1)
                     # we need the probability that class is 1, so we select
                     # the second element
-                    self.model_snapshot.model(i).predict_proba(
-                        self.model_snapshot.features(i).transform(doc))[0][1]
-                    for i in self.model_snapshot.data.indices
+                    m.predict_proba(f.transform(doc))[0][1]
+                    for m, f in zip(models, features)
                 ]
                 self._record_prediction(_id, self.bootstrap.sample(probabilities))
         if save:
