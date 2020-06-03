@@ -1,10 +1,15 @@
 # Get snapshots
 import json
+import datetime
 import pickle
 import pandas as pd
 from pathlib import Path
+from typing import Optional, List
+from dataclasses import dataclass
 from .config import Config
 from box import Box
+
+Date = datetime.date
 
 class Snapshot:
     """Base class for a snapshot instance.
@@ -169,6 +174,46 @@ class ModelSnapshot(Snapshot):
         "Returns features at index"
         with (self.instance_location / ("features_%s.pkl" % index)).open('rb') as fp:
             return pickle.load(fp)
+
+@dataclass
+class JobPrediction:
+    """Represents prediction for a single job"""
+    jobid: str
+    snapshot: str
+    closes: Date
+    contract: str
+    department: str
+    employer: str
+    hours: List[str]
+    job_title: str
+    posted: Date
+    salary_exists: bool
+    location: str
+    salary_max: Optional[int]
+    salary_min: Optional[int]
+    salary_median: Optional[int]
+    probability: float
+    probability_lower: float
+    probability_upper: float
+    subject_area: Optional[str]
+    type_role: Optional[str]
+
+class PredictionSnapshot(Snapshot):
+    """Prediction Snapshot class"""
+    subpath = "predictions"
+
+    @property
+    def data(self):
+        "Returns data as dataframe"
+        pass
+
+class PredictionSnapshotCollection(SnapshotCollection):
+    "Prediction :class:`SnapshotCollection`, with subpath=predictions"
+    subpath = "predictions"
+
+    def __getitem__(self, key):
+        if key in self.instances:
+            return ModelSnapshot(key, self.root)
 
 
 def main(kind, instance=None):

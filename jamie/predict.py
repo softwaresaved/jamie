@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
 import pandas as pd
 import numpy as np
+import json
 from tqdm import tqdm
 from bson.json_util import dumps
 from .common.getConnection import connectMongo
 from .logger import logger
 from .common.lib import isotime_snapshot
 from .snapshots import ModelSnapshot
+
+Date = datetime.date
 
 logger = logger(name='predict', stream_level='DEBUG')
 
@@ -160,11 +164,15 @@ class Predict:
         return self
 
     def save(self, output=None):
-        "Save predictions in model snapshot folder"
-        with (self.model_snapshot.path / ('predict_%s.json' %
-              isotime_snapshot())).open('w') as fp:
+        "Save predictions in prediction snapshot folder"
+        snapshot_root = self.model_snapshot.path.parent / 'predictions' / isotime_snapshot()
+        if not snapshot_root.exists():
+            snapshot_root.mkdir()
+        with (snapshot_root / 'predictions.jsonl').open('w') as fp:
             for r in self._predictions:
                 fp.write(dumps(r, sort_keys=True) + "\n")
+        with (snapshot_root / 'metadata.json').open('w') as fp:
+            json.dump(self.model_snapshot.metadata, fp, indent=True, sort_keys=True)
 
     @property
     def dataframe(self):
