@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+from bson.json_util import dumps
 from .common.getConnection import connectMongo
 from .logger import logger
 from .common.lib import isotime_snapshot
@@ -111,10 +111,18 @@ class Predict:
             Dictionary containing prediction information to save
             in database
         """
-        record['snapshot'] = self.model_snapshot.name
-        record['_id'] = _id + '_' + self.model_snapshot.name
-        self._predictions.append(record)
-        self.db['predictions'].update_one({'_id': record['_id']}, {'$set': record}, upsert=True)
+        record.update({
+            'snapshot': self.model_snapshot.name,
+            'jobid': _id,
+            '_id': _id + '_' + self.model_snapshot.name
+        })
+        self.db.predictions.update_one({'_id': record['_id']}, {'$set': record}, upsert=True)
+        job = self.db.jobs.find_one({'jobid': _id})
+        if job:
+            record.update(job)
+            self._predictions.append(record)
+        else:
+            logger.info("Job not found in database, but prediction exists: {}".format(_id))
 
     def predict(self, save=True):
         """Record predictions in MongoDB
@@ -153,7 +161,7 @@ class Predict:
         with (self.model_snapshot.path / ('predict_%s.json' %
               isotime_snapshot())).open('w') as fp:
             for r in self._predictions:
-                fp.write(json.dumps(r, sort_keys=True) + "\n")
+                fp.write(dumps(r, sort_keys=True) + "\n")
 
     @property
     def dataframe(self):
