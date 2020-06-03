@@ -120,6 +120,9 @@ class Predict:
         job = self.db.jobs.find_one({'jobid': _id})
         if job:
             record.update(job)
+            record['_id'] = _id + '_' + self.model_snapshot.name  # fix _id as it's overwritten
+            del record['json']['description']  # remove verbose attributes
+            del record['description']  # remove verbose attributes
             self._predictions.append(record)
         else:
             logger.info("Job not found in database, but prediction exists: {}".format(_id))
