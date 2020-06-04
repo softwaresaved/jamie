@@ -235,12 +235,12 @@ class JobPrediction:
     job_title: str
     posted: Date
     location: str
-    salary_max: Optional[int] = None
-    salary_min: Optional[int] = None
-    salary_median: Optional[int] = None
     probability: float
     probability_lower: float
     probability_upper: float
+    salary_max: Optional[int] = None
+    salary_min: Optional[int] = None
+    salary_median: Optional[int] = None
 
     def __init__(self, prediction):
         self.jobid = prediction['jobid']
