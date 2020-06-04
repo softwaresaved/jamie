@@ -6,7 +6,7 @@ import pandas as pd
 from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, List
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from .config import Config
 from box import Box
 
@@ -62,8 +62,8 @@ class Snapshot:
 
     def __str__(self):
         "String representation of snapshot"
-        m = self.metadata()
-        return json.dumps(m, indent=2, sort_keys=True) if m else self.instance
+        return json.dumps(self.metadata, indent=2, sort_keys=True) \
+            if self.metadata else self.instance
 
     @property
     def metadata(self):
@@ -274,7 +274,14 @@ class PredictionSnapshot(Snapshot):
     @property
     def data(self):
         "Returns data as dataframe"
-        pass
+        if self._data is None:
+            self._predictions = []
+            fn = self.instance_location / 'predictions.jsonl'
+            with fn.open() as fp:
+                for pred in fp.readlines():
+                    self._predictions.append(JobPrediction(pred))
+            self._data = pd.DataFrame([asdict(x) for x in self._predictions])
+        return self._data
 
 class PredictionSnapshotCollection(SnapshotCollection):
     "Prediction :class:`SnapshotCollection`, with subpath=predictions"
@@ -282,7 +289,7 @@ class PredictionSnapshotCollection(SnapshotCollection):
 
     def __getitem__(self, key):
         if key in self.instances:
-            return ModelSnapshot(key, self.root)
+            return PredictionSnapshot(key, self.root)
 
 
 def main(kind, instance=None):
@@ -309,5 +316,10 @@ def main(kind, instance=None):
             return TrainingSnapshotCollection(snapshot_path)
         else:
             return TrainingSnapshotCollection(snapshot_path)[instance]
+    elif kind == 'predictions':
+        if instance is None:
+            return PredictionSnapshotCollection(snapshot_path)
+        else:
+            return PredictionSnapshotCollection(snapshot_path)[instance]
     else:
-        return "usage: jamie snapshots [models|training]"
+        return "usage: jamie snapshots [training|models|predictions]"
