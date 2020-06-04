@@ -80,8 +80,8 @@ class SnapshotCollection:
 
     Parameters
     ----------
-    root : str
-        Root path of snapshots
+    root : str, optional
+        Root path of snapshots, uses default config to find if not specified
     startswith : str, optional
         If specified, restricts collection to instances that start with this string
     endswith : str, optional
@@ -90,8 +90,12 @@ class SnapshotCollection:
 
     subpath = ''
 
-    def __init__(self, root, startswith="", endswith=""):
-        self.root = Path(root)
+    def __init__(self, root=None, startswith="", endswith=""):
+        if root is None:
+            cf = Config()
+            self.root = Path(cf['common.snapshots'])
+        else:
+            self.root = Path(root)
         self.glob = startswith + "*" + endswith
         self.instances = [x.name for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()]
 
@@ -229,15 +233,15 @@ class JobPrediction:
     jobid: str
     snapshot: str
     contract: str
-    department: str
     employer: str
     hours: List[str]
     job_title: str
     posted: Date
-    location: str
     probability: float
     probability_lower: float
     probability_upper: float
+    department: Optional[str] = None
+    location: Optional[str] = None
     salary_max: Optional[int] = None
     salary_min: Optional[int] = None
     salary_median: Optional[int] = None
@@ -250,13 +254,11 @@ class JobPrediction:
         self.employer = prediction['employer']
         self.hours = prediction['hours']
         self.job_title = prediction['job_title']
-        self.location = prediction['location']
-        if 'salary_max' in prediction:
-            self.salary_max = prediction['salary_max']
-        if 'salary_min' in prediction:
-            self.salary_max = prediction['salary_min']
-        if 'salary_median' in prediction:
-            self.salary_median = prediction['salary_median']
+        self.department = prediction.get('department', None)
+        self.location = prediction.get('location', None)
+        self.salary_max = prediction.get('salary_max', None)
+        self.salary_min = prediction.get('salary_min', None)
+        self.salary_median = prediction.get('salary_median', None)
         for p in ['probability', 'lower_ci', 'upper_ci']:
             if not 0 <= prediction[p] <= 1:
                 raise ValueError("Tried reading invalid {}={}.".format(
@@ -279,7 +281,7 @@ class PredictionSnapshot(Snapshot):
             fn = self.instance_location / 'predictions.jsonl'
             with fn.open() as fp:
                 for pred in fp.readlines():
-                    self._predictions.append(JobPrediction(pred))
+                    self._predictions.append(JobPrediction(json.loads(pred)))
             self._data = pd.DataFrame([asdict(x) for x in self._predictions])
         return self._data
 
