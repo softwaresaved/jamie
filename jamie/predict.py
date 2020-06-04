@@ -165,9 +165,10 @@ class Predict:
 
     def save(self, output=None):
         "Save predictions in prediction snapshot folder"
-        snapshot_root = self.model_snapshot.path.parent / 'predictions' / isotime_snapshot()
+        snapshot_root = self.model_snapshot.path.parent.parent \
+            / 'predictions' / isotime_snapshot()
         if not snapshot_root.exists():
-            snapshot_root.mkdir()
+            snapshot_root.mkdir(parents=True)
         with (snapshot_root / 'predictions.jsonl').open('w') as fp:
             for r in self._predictions:
                 fp.write(dumps(r, sort_keys=True) + "\n")
