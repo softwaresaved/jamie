@@ -17,6 +17,7 @@ setup(name='jamie',
         'jamie.data',
         'jamie.prediction'],
       install_requires = [
+          'chevron',  # mustache templating
           'pymongo>=3.4.0',
           'pytoml',  # read .toml configuration files
           'fire',  # command line interface
