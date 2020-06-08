@@ -49,6 +49,7 @@ class Snapshot:
         "Create instance location if it does not exist"
         if not self.exists():
             self.instance_location.mkdir(parents=True)
+        return self
 
     @property
     def name(self):
