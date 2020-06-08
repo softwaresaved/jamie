@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Jobs analysis report">
+    <meta name="author" content="jamie">
+
+    <title>Jobs analysis report {{ date }}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="style.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <div class="container">
+
+      <h1>Jobs Analysis Report</h1>
+      <p class="lead">Basic grid layouts to get you familiar with building within the Bootstrap grid system.</p>
+
+      <h3>Number and proportion of jobs by year</h3>
+      <div class="row">
+        <div class="col-md-6">
+        <img src="{{ njobs_year_fig }}" alt="Number of RSE jobs by year"></img>
+        </div>
+        <div class="col-md-6">
+        <img src="{{ propjobs_year_fig }}" alt="Proportion of RSE jobs by year"></img>
+        </div>
+      </div>
+
+      <h3>Number and proportion of jobs by month</h3>
+      <div class="row">
+   	<div class="col-md-6">
+        <img src="{{ njobs_month_fig }}" alt="Number of RSE jobs by month"></img>
+        </div>
+        <div class="col-md-6">
+        <img src="{{ propjobs_month_fig }}" alt="Proportion of RSE jobs by month"></img>
+        </div>
+      </div>
+
+      <h3>Mean salary</h3>
+      <div class="row">
+       <img src="{{ mean_salary_fig }}" alt="Mean salary of RSE jobs (in GBP)"></img>
+      </div>
+    </div> <!-- /container -->
+  </body>
+</html>
+
