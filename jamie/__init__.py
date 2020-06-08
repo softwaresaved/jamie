@@ -8,6 +8,7 @@ import jamie.features
 import jamie.data
 import jamie.data.importer
 import jamie.predict
+import jamie.reports
 
 class Jamie:
     """jamie: Job Analysis by Machine Information Extraction"""

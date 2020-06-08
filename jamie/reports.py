@@ -20,8 +20,13 @@ class Report:
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
-        self._monthly = self.monthly()
-        self._yearly = self.yearly()
+        self.data = self.prediction_snapshot.data
+        # Drop jobs without salary information
+        self.data = self.data[~pd.isna(self.data.salary_median)]
+        # Convert to datetime format to allow pandas operations
+        self.data['posted'] = pd.DatetimeIndex(self.data.posted)
+        # Drop PhD jobs, this should ideally be done earlier
+        self.data = self.data[~self.data.job_title.str.contains("PhD")]
 
     @staticmethod
     def metrics(df):
@@ -40,36 +45,34 @@ class Report:
     @property
     def by_month(self):
         "Returns pd.DataFrame having data grouped by month"
-        df = self.prediction_snapshot.data
         if self._monthly is None:
             self._monthly = pd.DataFrame({'group': i, **self.metrics(data)} for i, data
-                                         in df.groupby(df.posted.dt.month))
+                                         in self.data.groupby(self.data.posted.dt.month))
         return self._monthly
 
     @property
     def by_year(self):
         "Returns pd.DataFrame having data grouped by year"
-        df = self.prediction_snapshot.data
         if self._yearly is None:
             self._yearly = pd.DataFrame({'group': i, **self.metrics(data)} for i, data
-                                        in df.groupby(df.posted.dt.year))
+                                        in self.data.groupby(self.data.posted.dt.year))
         return self._yearly
 
     def _graph_njobs(self, df, fn):
         fig, ax = plt.subplots()
         ax.plot(df.group, df.npos)
         ax.fill_between(df.group, df.npos_lower, df.npos_upper, color='b', alpha=.1)
-        plt.savefig(self.snapshot / fn)
+        plt.savefig(self.snapshot.path / fn)
 
     def _graph_propjobs(self, df, fn):
         plt.ylim(0, 1)
         plt.plot(df.group, df.proportion_pos)
-        plt.savefig(self.snapshot / fn)
+        plt.savefig(self.snapshot.path / fn)
 
     def _graph_salary_mean(self):
         df = self.by_year
         plt.plot(df.group, df.salary_mean_pos)
-        plt.savefig(self.snapshot / "mean_salary.png")
+        plt.savefig(self.snapshot.path / "mean_salary.png")
 
     def _graph_njobs_yearly(self):
         self._graph_njobs(self.by_year, "njobs_yearly.png")
@@ -94,8 +97,8 @@ class Report:
         "Create a report and store in a report snapshot"
         self.make_graphs()
         templates = Path(__file__).parent / 'templates'
-        copyfile(templates / 'style.css', self.snapshot.path)
-        copyfile(templates / 'bootstrap.min.css', self.snapshot.path)
+        copyfile(templates / 'style.css', self.snapshot.path / 'style.css')
+        copyfile(templates / 'bootstrap.min.css', self.snapshot.path / 'bootstrap.min.css')
         data = {
             "date": self.snapshot.name,
             "njobs_year_fig": "njobs_yearly.png",
@@ -105,4 +108,4 @@ class Report:
             "mean_salary_fig": "mean_salary.png"
         }
         with (templates / 'default_index.mustache').open() as fp:
-            (self.snapshot / "index.html").write_text(chevron.render(fp, data))
+            (self.snapshot.path / "index.html").write_text(chevron.render(fp, data))
