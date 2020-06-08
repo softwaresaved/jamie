@@ -18,6 +18,7 @@ setup(name='jamie',
         'jamie.prediction'],
       install_requires = [
           'chevron',  # mustache templating
+          'matplotlib',
           'pymongo>=3.4.0',
           'pytoml',  # read .toml configuration files
           'fire',  # command line interface
