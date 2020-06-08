@@ -45,6 +45,11 @@ class Snapshot:
         "Returns whether instance exists"
         return self.instance_location.exists()
 
+    def create(self):
+        "Create instance location if it does not exist"
+        if not self.exists():
+            self.instance_location.mkdir(parents=True)
+
     @property
     def name(self):
         "Snapshot name"
