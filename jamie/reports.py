@@ -1,5 +1,9 @@
 """Generate reports from :class:`PredictionSnapshot`"""
+import chevron
 import pandas as pd
+from pathlib import Path
+import matplotlib.pyplot as plt
+from shutil import copyfile
 from .snapshots import ReportSnapshot
 
 class Report:
@@ -15,7 +19,7 @@ class Report:
 
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
-        self.report_snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
+        self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
         self._monthly = self.monthly()
         self._yearly = self.yearly()
 
@@ -51,17 +55,54 @@ class Report:
                                         in df.groupby(df.posted.dt.year))
         return self._yearly
 
+    def _graph_njobs(self, df, fn):
+        fig, ax = plt.subplots()
+        ax.plot(df.group, df.npos)
+        ax.fill_between(df.group, df.npos_lower, df.npos_upper, color='b', alpha=.1)
+        plt.savefig(self.snapshot / fn)
+
+    def _graph_propjobs(self, df, fn):
+        plt.ylim(0, 1)
+        plt.plot(df.group, df.proportion_pos)
+        plt.savefig(self.snapshot / fn)
+
+    def _graph_salary_mean(self):
+        df = self.by_year
+        plt.plot(df.group, df.salary_mean_pos)
+        plt.savefig(self.snapshot / "mean_salary.png")
+
     def _graph_njobs_yearly(self):
-        pass
+        self._graph_njobs(self.by_year, "njobs_yearly.png")
 
     def _graph_njobs_monthly(self):
-        pass
+        self._graph_njobs(self.by_month, "njobs_monthly.png")
 
     def _graph_propjobs_yearly(self):
-        pass
+        self._graph_propjobs(self.by_year, "propjobs_yearly.png")
 
     def _graph_propjobs_monthly(self):
-        pass
+        self._graph_propjobs(self.by_year, "propjobs_monthly.png")
 
-    def _graph_salary_mean_yearly(self):
-        pass
+    def make_graphs(self):
+        self._graph_njobs_yearly()
+        self._graph_njobs_monthly()
+        self._graph_propjobs_yearly()
+        self._graph_propjobs_monthly()
+        self._graph_salary_mean()
+
+    def create(self):
+        "Create a report and store in a report snapshot"
+        self.make_graphs()
+        templates = Path(__file__).parent / 'templates'
+        copyfile(templates / 'style.css', self.snapshot.path)
+        copyfile(templates / 'bootstrap.min.css', self.snapshot.path)
+        data = {
+            "date": self.snapshot.name,
+            "njobs_year_fig": "njobs_yearly.png",
+            "propjobs_year_fig": "propjobs_yearly.png",
+            "njobs_month_fig": "njobs_monthly.png",
+            "propjobs_month_fig": "propjobs_monthly.png",
+            "mean_salary_fig": "mean_salary.png"
+        }
+        with (templates / 'default_index.mustache').open() as fp:
+            (self.snapshot / "index.html").write_text(chevron.render(fp, data))

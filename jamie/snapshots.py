@@ -348,5 +348,10 @@ def main(kind, instance=None):
             return PredictionSnapshotCollection(snapshot_path)
         else:
             return PredictionSnapshotCollection(snapshot_path)[instance]
+    elif kind == 'reports':
+        if instance is None:
+            return ReportSnapshotCollection(snapshot_path)
+        else:
+            return ReportSnapshotCollection(snapshot_path)[instance]
     else:
-        return "usage: jamie snapshots [training|models|predictions]"
+        return "usage: jamie snapshots [training|models|predictions|reports]"

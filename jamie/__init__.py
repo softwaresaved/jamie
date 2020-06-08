@@ -66,3 +66,11 @@ class Jamie:
                 self.cf['common.snapshots'])
             snapshot = model_snapshots.most_recent()
         print(jamie.predict.Predict(snapshot).predict().dataframe)
+
+    def report(self, snapshot=None):
+        "Generate report using specified snapshot"
+        if snapshot is None:
+            predictions = jamie.snapshots.PredictionSnapshotCollection(
+                self.cf['common.snapshots'])
+            snapshot = predictions.most_recent()
+            jamie.reports.Report(jamie.snapshots.PredictionSnapshot(snapshot)).create()
