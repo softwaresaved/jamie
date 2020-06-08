@@ -121,6 +121,13 @@ class SnapshotCollection:
         "Returns most recent instance in collection using lexicographical sorting"
         return sorted(self.instances)[0]
 
+class ReportSnapshotCollection(SnapshotCollection):
+    "Training :class:`SnapshotCollection`, with subpath=reports"
+    subpath = 'reports'
+
+    def __getitem__(self, key):
+        if key in self.instances:
+            return ReportSnapshot(key, self.root)
 
 class TrainingSnapshotCollection(SnapshotCollection):
     "Training :class:`SnapshotCollection`, with subpath=training"
@@ -137,6 +144,18 @@ class ModelSnapshotCollection(SnapshotCollection):
     def __getitem__(self, key):
         if key in self.instances:
             return ModelSnapshot(key, self.root)
+
+class ReportSnapshot(Snapshot):
+    "Represents a single report :class:`Snapshot`"
+    subpath = "reports"  # NOQA
+
+    @property
+    def data(self):
+        "Returns index.html of the report"
+        if self._data is None:
+            fn = self.instance_location / 'index.html'
+            self._data = fn.read_text()
+        return self._data
 
 class TrainingSnapshot(Snapshot):
     "Represents a single training :class:`Snapshot`"
