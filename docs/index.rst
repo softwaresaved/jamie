@@ -31,12 +31,17 @@ Jamie is available on GNU/Linux, MacOS and Windows. To install using **pip**:
    cd jobs-analysis
    python3 -m venv venv
    source venv/bin/activate
-   pip install . 
+   pip install .
+
+See the workflow for more information about how to use Jamie, or look at the API documentation if you want to use Jamie from a Python environment (such as a Jupyter notebook):
+
+.. toctree::
+   :maxdepth: 2
+
+   workflow
 
 API documentation
 =================
-
-.. module:: jamie
 
 .. toctree::
    :maxdepth: 2
