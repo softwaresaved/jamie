@@ -11,7 +11,7 @@ import jamie.predict
 import jamie.reports
 
 class Jamie:
-    """jamie: Job Analysis by Machine Information Extraction"""
+    """Job Analysis by Machine Information Extraction"""
 
     def __init__(self, config=None):
         if config:
