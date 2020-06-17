@@ -125,7 +125,8 @@ class Predict:
         if job:
             record.update(job)
             record['_id'] = _id + '_' + self.model_snapshot.name  # fix _id as it's overwritten
-            del record['json']['description']  # remove verbose attributes
+            if 'json' in record:
+                del record['json']['description']  # remove verbose attributes
             del record['description']  # remove verbose attributes
             self._predictions.append(record)
         else:
