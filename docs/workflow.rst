@@ -8,7 +8,7 @@ import it into a local MongoDB.
 
 .. figure:: workflow.svg
    
-   Workflow pipeline: The multiple document icon indicates snapshots.
+   Workflow pipeline
    
 
 In the following *positive class job* refers to the job that we are trying to
