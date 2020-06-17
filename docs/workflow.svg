@@ -101,13 +101,13 @@
       <g class="com.sun.star.drawing.TextShape">
        <g id="id3">
         <rect class="BoundingBox" stroke="none" fill="none" x="6664" y="700" width="2361" height="1014"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="6914" y="1447"><tspan fill="rgb(0,0,0)" stroke="none">scrape</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="-apple-system,system-ui,Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="6914" y="1447"><tspan fill="rgb(0,0,0)" stroke="none">scrape</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.TextShape">
        <g id="id4">
         <rect class="BoundingBox" stroke="none" fill="none" x="6967" y="2538" width="1801" height="1014"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="7217" y="3285"><tspan fill="rgb(0,0,0)" stroke="none">load</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="-apple-system,system-ui,Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="7217" y="3285"><tspan fill="rgb(0,0,0)" stroke="none">load</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.CustomShape">
@@ -117,7 +117,7 @@
         <path fill="none" stroke="rgb(0,0,0)" d="M 9867,2367 L 9867,2368 C 9867,2321 9899,2275 9961,2234 10022,2193 10111,2159 10217,2136 10324,2112 10445,2100 10568,2100 L 10568,2100 C 10690,2100 10811,2112 10918,2136 11024,2159 11113,2193 11174,2234 11236,2275 11268,2321 11268,2368 L 11268,2368 11267,3533 11268,3533 C 11268,3580 11236,3626 11174,3667 11113,3708 11024,3742 10918,3765 10811,3789 10690,3801 10568,3801 L 10568,3801 C 10445,3801 10324,3789 10217,3765 10111,3742 10022,3708 9961,3667 9899,3626 9867,3580 9867,3533 L 9867,2367 Z"/>
         <path fill="rgb(255,255,255)" stroke="none" d="M 9867,2367 L 9867,2368 C 9867,2415 9899,2461 9961,2502 10022,2542 10111,2576 10217,2600 10324,2623 10445,2636 10568,2636 L 10568,2636 C 10690,2636 10811,2623 10918,2600 11024,2576 11113,2542 11174,2502 11236,2461 11268,2415 11268,2368 L 9867,2367 Z"/>
         <path fill="none" stroke="rgb(0,0,0)" d="M 9867,2367 L 9867,2368 C 9867,2415 9899,2461 9961,2502 10022,2542 10111,2576 10217,2600 10324,2623 10445,2636 10568,2636 L 10568,2636 C 10690,2636 10811,2623 10918,2600 11024,2576 11113,2542 11174,2502 11236,2461 11268,2415 11268,2368"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Cantarell" font-size="423px" font-weight="400"><tspan class="TextPosition" x="10273" y="3245"><tspan fill="rgb(0,0,0)" stroke="none">DB</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="-apple-system,system-ui,Cantarell" font-size="423px" font-weight="400"><tspan class="TextPosition" x="10273" y="3245"><tspan fill="rgb(0,0,0)" stroke="none">DB</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.LineShape">
@@ -139,19 +139,19 @@
       <g class="com.sun.star.drawing.TextShape">
        <g id="id8">
         <rect class="BoundingBox" stroke="none" fill="none" x="6967" y="4400" width="1820" height="1014"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="7217" y="5147"><tspan fill="rgb(0,0,0)" stroke="none">train</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="-apple-system,system-ui,Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="7217" y="5147"><tspan fill="rgb(0,0,0)" stroke="none">train</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.TextShape">
        <g id="id9">
         <rect class="BoundingBox" stroke="none" fill="none" x="6569" y="7700" width="2632" height="1014"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="6819" y="8447"><tspan fill="rgb(0,0,0)" stroke="none">predict </tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="-apple-system,system-ui,Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="6819" y="8447"><tspan fill="rgb(0,0,0)" stroke="none">predict </tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.TextShape">
        <g id="id10">
         <rect class="BoundingBox" stroke="none" fill="none" x="6762" y="9392" width="2273" height="1014"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="7012" y="10139"><tspan fill="rgb(0,0,0)" stroke="none">report</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="-apple-system,system-ui,Cantarell" font-size="635px" font-weight="400"><tspan class="TextPosition" x="7012" y="10139"><tspan fill="rgb(0,0,0)" stroke="none">report</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.ConnectorShape">
