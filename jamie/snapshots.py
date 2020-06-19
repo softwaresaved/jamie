@@ -120,7 +120,7 @@ class SnapshotCollection:
 
     def most_recent(self):
         "Returns most recent instance in collection using lexicographical sorting"
-        return sorted(self.instances)[0]
+        return sorted(self.instances)[-1]
 
 class ReportSnapshotCollection(SnapshotCollection):
     "Training :class:`SnapshotCollection`, with subpath=reports"
