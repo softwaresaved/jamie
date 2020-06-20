@@ -7,6 +7,11 @@ import matplotlib.pyplot as plt
 from shutil import copyfile
 from .snapshots import ReportSnapshot
 
+def label(x):
+    # "2017-01-01" -> "Jan 2017"
+    year, month, _ = x.split("-")
+    return calendar.month_name[int(month)][:3] + " " + year
+
 class Report:
     """Report generator
 
@@ -26,6 +31,8 @@ class Report:
         self.data = self.data[~pd.isna(self.data.salary_median)]
         # Convert to datetime format to allow pandas operations
         self.data['posted'] = pd.DatetimeIndex(self.data.posted)
+        self.data['year_month'] = self.data.posted.dt.year.astype(str) + "-" + \
+            self.data.posted.dt.month.astype(str) + "-01"
         # Drop PhD jobs, this should ideally be done earlier
         self.data = self.data[~self.data.job_title.str.contains("PhD")]
 
@@ -43,28 +50,26 @@ class Report:
                                   (df.probability > 0.5)].salary_median.mean()
         }
 
-    @property
-    def by_month(self):
-        "Returns pd.DataFrame having data grouped by month"
+    def by_month(self, as_dataframe=True):
+        "Returns list of dicts or dataframe having data grouped by month"
         if self._monthly is None:
-            self._monthly = pd.DataFrame({'group': i, **self.metrics(data)} for i, data
-                                         in self.data.groupby(self.data.posted.dt.month))
-        return self._monthly
+            self._monthly = [{'group': i, **self.metrics(data)} for i, data
+                             in self.data.groupby(self.data.year_month)]
+        return pd.DataFrame(self._monthly) if as_dataframe else self._monthly
 
-    @property
-    def by_year(self):
-        "Returns pd.DataFrame having data grouped by year"
+    def by_year(self, as_dataframe=True):
+        "Returns list of dicts or dataframe having data grouped by year"
         if self._yearly is None:
-            self._yearly = pd.DataFrame({'group': i, **self.metrics(data)} for i, data
-                                        in self.data.groupby(self.data.posted.dt.year))
-        return self._yearly
+            self._yearly = [{'group': i, **self.metrics(data)} for i, data
+                            in self.data.groupby(self.data.posted.dt.year)]
+        return pd.DataFrame(self._yearly) if as_dataframe else self._yearly
 
     def _graph_njobs(self, df, fn, monthly):
         plt.clf()
         fig, ax = plt.subplots()
-        xax = "month" if monthly else "group"
+        xax = "label_month" if monthly else "group"
         if monthly:   # months
-            df['month'] = df.group.map(lambda x: calendar.month_name[x][:3])
+            df['label_month'] = df.group.map(label)
         ax.plot(df[xax], df.npos)
         ax.fill_between(df[xax], df.npos_lower, df.npos_upper, color='b', alpha=.1)
         plt.savefig(self.snapshot.path / fn)
@@ -72,31 +77,32 @@ class Report:
     def _graph_propjobs(self, df, fn, monthly):
         plt.clf()
         plt.ylim(0, 1)
+
         if monthly:
-            df['month'] = df.group.map(lambda x: calendar.month_name[x][:3])
-            plt.plot(df['month'], df.proportion_pos)
+            df['label_month'] = df.group.map(label)
+            plt.plot(df['label_month'], df.proportion_pos)
         else:
             plt.plot(df.group, df.proportion_pos)
         plt.savefig(self.snapshot.path / fn)
 
     def _graph_salary_mean(self):
         plt.clf()
-        df = self.by_year
+        df = self.by_year()
         print(df)
         plt.plot(df.group, df.salary_mean_pos)
         plt.savefig(self.snapshot.path / "mean_salary.png")
 
     def _graph_njobs_yearly(self):
-        self._graph_njobs(self.by_year, "njobs_yearly.png", monthly=False)
+        self._graph_njobs(self.by_year(), "njobs_yearly.png", monthly=False)
 
     def _graph_njobs_monthly(self):
-        self._graph_njobs(self.by_month, "njobs_monthly.png", monthly=True)
+        self._graph_njobs(self.by_month(), "njobs_monthly.png", monthly=True)
 
     def _graph_propjobs_yearly(self):
-        self._graph_propjobs(self.by_year, "propjobs_yearly.png", monthly=False)
+        self._graph_propjobs(self.by_year(), "propjobs_yearly.png", monthly=False)
 
     def _graph_propjobs_monthly(self):
-        self._graph_propjobs(self.by_month, "propjobs_monthly.png", monthly=True)
+        self._graph_propjobs(self.by_month(), "propjobs_monthly.png", monthly=True)
 
     def make_graphs(self):
         self._graph_njobs_yearly()
