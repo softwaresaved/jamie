@@ -1,4 +1,5 @@
 """Generate reports from :class:`PredictionSnapshot`"""
+import json
 import chevron
 import calendar
 import pandas as pd
@@ -115,6 +116,10 @@ class Report:
         "Create a report and store in a report snapshot"
         self.make_graphs()
         templates = Path(__file__).parent / 'templates'
+        with (self.snapshot.path / "by_year.json").open("w") as fp:
+            json.dump(self.by_year(as_dataframe=False), fp, indent=2, sort_keys=True)
+        with (self.snapshot.path / "by_month.json").open("w") as fp:
+            json.dump(self.by_month(as_dataframe=False), fp, indent=2, sort_keys=True)
         copyfile(templates / 'style.css', self.snapshot.path / 'style.css')
         copyfile(templates / 'bootstrap.min.css', self.snapshot.path / 'bootstrap.min.css')
         data = {
