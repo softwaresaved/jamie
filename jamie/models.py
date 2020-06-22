@@ -116,36 +116,36 @@ def parse_model_description(models):
 
 
 model_description = {
-    # "SVC": {
-    #     "model": SVC(probability=True),
-    #     "params": [
-    #         {
-    #              "clf__C": c_params,
-    #             "clf__gamma": gamma_params,
-    #             "clf__kernel": ["rbf"],
-    #             "clf__class_weight": ["balanced", None],
-    #         },
-    #         {"clf__C": c_params, "clf__kernel": ["linear"]},
-    #     ],
-    #     "matrix": "sparse",
-    # },
-    # "Logreg": {
-    #     "model": LogisticRegression(),
-    #     "params": {
-    #         "clf__penalty": ["l1", "l2"],
-    #         "clf__C": np.logspace(-4, 4, 20),
-    #         "clf__solver": ["liblinear"],
-    #     },
-    #     "matrix": "sparse",
-    # },
-    # "RandomForest": {
-    #     "model": RandomForestClassifier(),
-    #     "params": {
-    #         "clf__n_estimators": list(range(10, 101, 10)),
-    #         "clf__max_features": list(range(6, 32, 5)),
-    #     },
-    #     "matrix": "sparse",
-    # },
+    "SVC": {
+        "model": SVC(probability=True),
+        "params": [
+            {
+                "clf__C": c_params,
+                "clf__gamma": gamma_params,
+                "clf__kernel": ["rbf"],
+                "clf__class_weight": ["balanced", None],
+            },
+            {"clf__C": c_params, "clf__kernel": ["linear"]},
+        ],
+        "matrix": "sparse",
+    },
+    "Logreg": {
+        "model": LogisticRegression(),
+        "params": {
+            "clf__penalty": ["l1", "l2"],
+            "clf__C": np.logspace(-4, 4, 20),
+            "clf__solver": ["liblinear"],
+        },
+        "matrix": "sparse",
+    },
+    "RandomForest": {
+        "model": RandomForestClassifier(),
+        "params": {
+            "clf__n_estimators": list(range(10, 101, 10)),
+            "clf__max_features": list(range(6, 32, 5)),
+        },
+        "matrix": "sparse",
+    },
     "CART": {
         "params": [{"clf__max_depth": "=3:20"}],
         "matrix": "sparse",
