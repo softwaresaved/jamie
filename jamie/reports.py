@@ -40,15 +40,15 @@ class Report:
     @staticmethod
     def metrics(df):
         "Return summary metrics for prediction snapshot data"
+        salary = df[(~pd.isna(df.salary_median)) & (df.probability > 0.5)]
         return {
             'total': len(df),
             'npos': len(df[df.probability > 0.5]),
             'proportion_pos': len(df[df.probability > 0.5]) / len(df),
             'npos_lower': len(df[df.probability_upper > 0.5]),
             'npos_upper': len(df[df.probability_lower > 0.5]),
-            'salary_mean': df[~pd.isna(df.salary_median)].salary_median.mean(),
-            'salary_mean_pos': df[(~pd.isna(df.salary_median)) &
-                                  (df.probability > 0.5)].salary_median.mean()
+            'salary_mean': df.salary_median.mean(skipna=True),
+            'salary_mean_pos': None if salary.empty else salary.salary_median.mean()
         }
 
     def by_month(self, as_dataframe=True):
