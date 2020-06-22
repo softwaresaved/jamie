@@ -6,12 +6,37 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
+from enum import Enum
+from box import Box
 from .snapshots import ReportSnapshot
 
 def label(x):
     # "2017-01-01" -> "Jan 2017"
     year, month, _ = x.split("-")
     return calendar.month_name[int(month)][:3] + " " + year
+
+class Confidence(Enum):
+    High = Box({
+        "alert_level": "alert-success",
+        "text": "High confidence is defined to be above a score of 0.80"
+    })
+    Medium = Box({
+        "alert_level": "alert-warning",
+        "text": "Medium confidence is defined to be for scores from 0.60 to 0.80"
+    })
+    Low = Box({
+        "alert_level": "alert-danger",
+        "text": "Low confidence is defined for a score below 0.60"
+    })
+
+    @staticmethod
+    def level(n):
+        if n > 0.80:
+            return Confidence.High
+        elif n > 0.60:
+            return Confidence.Medium
+        else:
+            return Confidence.Low
 
 class Report:
     """Report generator
@@ -115,6 +140,8 @@ class Report:
     def create(self):
         "Create a report and store in a report snapshot"
         self.make_graphs()
+        score = self.prediction_snapshot.metadata['best_model_average_score']
+        confidence = Confidence.level(score)
         templates = Path(__file__).parent / 'templates'
         with (self.snapshot.path / "by_year.json").open("w") as fp:
             json.dump(self.by_year(as_dataframe=False), fp, indent=2, sort_keys=True)
@@ -122,8 +149,10 @@ class Report:
             json.dump(self.by_month(as_dataframe=False), fp, indent=2, sort_keys=True)
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
-            "score_value": "{:.2f}".format(
-                self.prediction_snapshot.metadata['best_model_average_score']),
+            "alert_level": confidence.value.alert_level,
+            "confidence": confidence.name,
+            "confidence_text": confidence.value.text,
+            "score_value": "{:.2f}".format(score),
             "score_type": self.prediction_snapshot.metadata['training']['scoring'],
             "date": self.snapshot.name,
             "njobs_year_fig": "njobs_yearly.png",

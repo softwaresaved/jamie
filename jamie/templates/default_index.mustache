@@ -23,9 +23,12 @@
     <div class="container">
 
       <h1>Jobs Analysis Report</h1>
-<div class="alert alert-success" role="alert">
-    <strong>Confidence</strong> {{ score_value }} ({{ score_type }})
-</div>
+      <div class="alert {{ alert_level }}" role="alert">
+          <strong>Confidence</strong>:
+              <strong>{{ confidence }}</strong>
+              [{{ score_value }}, {{ score_type }}]
+              <em>{{ confidence_text }}</em>
+    </div>
       <div class="row">
         <div class="col-md-6" id="njobsyear"></div>
         <div class="col-md-6" id="propjobsyear"></div>
