@@ -6,37 +6,13 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
-from enum import Enum
-from box import Box
 from .snapshots import ReportSnapshot
+from .types import Confidence, JobType
 
 def label(x):
     # "2017-01-01" -> "Jan 2017"
     year, month, _ = x.split("-")
     return calendar.month_name[int(month)][:3] + " " + year
-
-class Confidence(Enum):
-    High = Box({
-        "alert_level": "alert-success",
-        "text": "High confidence is defined to be above a score of 0.80"
-    })
-    Medium = Box({
-        "alert_level": "alert-warning",
-        "text": "Medium confidence is defined to be for scores from 0.60 to 0.80"
-    })
-    Low = Box({
-        "alert_level": "alert-danger",
-        "text": "Low confidence is defined for a score below 0.60"
-    })
-
-    @staticmethod
-    def level(n):
-        if n > 0.80:
-            return Confidence.High
-        elif n > 0.60:
-            return Confidence.Medium
-        else:
-            return Confidence.Low
 
 class Report:
     """Report generator
@@ -52,6 +28,7 @@ class Report:
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
+        self.featureset = self.prediction_snapshot.metadata['training']['featureset']
         self.data = self.prediction_snapshot.data
         # Drop jobs without salary information
         self.data = self.data[~pd.isna(self.data.salary_median)]
@@ -61,6 +38,11 @@ class Report:
             self.data.posted.dt.month.astype(str) + "-01"
         # Drop PhD jobs, this should ideally be done earlier
         self.data = self.data[~self.data.job_title.str.contains("PhD")]
+        # job_title_match contains True or False depending on whether the
+        # job_title contained the target job type
+        # (such as "Research Software Engineer")
+        self.data['job_title_match'] = self.data.job.str.lower.contains(
+            JobType(self.featureset).value, case=False)
 
     @staticmethod
     def metrics(df):
@@ -70,6 +52,7 @@ class Report:
             'total': len(df),
             'npos': len(df[df.probability > 0.5]),
             'proportion_pos': len(df[df.probability > 0.5]) / len(df),
+            'njob_match': df.job_title_match.sum(),
             'npos_lower': len(df[df.probability_upper > 0.5]),
             'npos_upper': len(df[df.probability_lower > 0.5]),
             'salary_mean': df.salary_median.mean(skipna=True),
