@@ -123,7 +123,8 @@ class Report:
         copyfile(templates / 'style.css', self.snapshot.path / 'style.css')
         copyfile(templates / 'bootstrap.min.css', self.snapshot.path / 'bootstrap.min.css')
         data = {
-            "score_value": self.prediction_snapshot.metadata['best_model_average_score'],
+            "score_value": "{:.2f}".format(
+                self.prediction_snapshot.metadata['best_model_average_score']),
             "score_type": self.prediction_snapshot.metadata['training']['scoring'],
             "date": self.snapshot.name,
             "njobs_year_fig": "njobs_yearly.png",
