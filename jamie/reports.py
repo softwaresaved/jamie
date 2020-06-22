@@ -132,6 +132,7 @@ class Report:
             json.dump(self.by_month(as_dataframe=False), fp, indent=2, sort_keys=True)
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
+            "job_type": JobType[self.featureset].value,
             "alert_level": confidence.value.alert_level,
             "confidence": confidence.name,
             "confidence_text": confidence.value.text,
