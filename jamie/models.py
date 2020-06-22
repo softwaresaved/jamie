@@ -198,18 +198,9 @@ def nested_cross_validation(
     # Get the models
     # When trained a certain fold, doing the second cross-validation split to choose hyper parameters
     models = parse_model_description(model_description)
-    if isinstance(nbr_folds, int):
-        # outer_cv = KFold(nbr_folds)
-        outer_cv = StratifiedKFold(nbr_folds)
-        # inner_cv = KFold(nbr_folds)
-        inner_cv = StratifiedKFold(nbr_folds)
-        # name_outer_cv = "kfold".format(nbr_folds)
-    else:
-        if nbr_folds.lower() == "leaveoneout":
-            inner_cv = LeaveOneOut()
-            outer_cv = LeaveOneOut()
-            nbr_folds = len(y)
-            # name_outer_cv = "leaveoneout-{}".format(str(nbr_folds))
+    # Use stratified folds as we have imbalanced dataset
+    outer_cv = StratifiedKFold(nbr_folds)
+    inner_cv = StratifiedKFold(nbr_folds)
 
     # Creaging the dataframe for the different scores
     score_for_outer_cv = pd.DataFrame(index=range(len(models)), columns=["model"])
