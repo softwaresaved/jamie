@@ -120,8 +120,7 @@ class Report:
             json.dump(self.by_year(as_dataframe=False), fp, indent=2, sort_keys=True)
         with (self.snapshot.path / "by_month.json").open("w") as fp:
             json.dump(self.by_month(as_dataframe=False), fp, indent=2, sort_keys=True)
-        copyfile(templates / 'style.css', self.snapshot.path / 'style.css')
-        copyfile(templates / 'bootstrap.min.css', self.snapshot.path / 'bootstrap.min.css')
+        copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
             "score_value": "{:.2f}".format(
                 self.prediction_snapshot.metadata['best_model_average_score']),
