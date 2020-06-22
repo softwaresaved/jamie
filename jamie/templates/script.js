@@ -70,4 +70,18 @@ d3.json('by_year.json', function(data) {
         brush: 'x'
     })
 })
+d3.json('by_month.json', function(data) {
+    MG.data_graphic({
+        title: "Number of jobs matching target job title",
+        data: data,
+        width: 450,
+        height: 250,
+        area: false,
+        color: "#2155a8",
+        target: '#njobsmatch',
+        x_accessor: 'group',
+        y_accessor: 'njob_match',
+        brush: 'x'
+    })
+})
 
