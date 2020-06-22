@@ -41,8 +41,8 @@ class Report:
         # job_title_match contains True or False depending on whether the
         # job_title contained the target job type
         # (such as "Research Software Engineer")
-        self.data['job_title_match'] = self.data.job.str.lower.contains(
-            JobType(self.featureset).value, case=False)
+        self.data['job_title_match'] = self.data.job_title.str.contains(
+            JobType[self.featureset].value, case=False)
 
     @staticmethod
     def metrics(df):
@@ -52,7 +52,7 @@ class Report:
             'total': len(df),
             'npos': len(df[df.probability > 0.5]),
             'proportion_pos': len(df[df.probability > 0.5]) / len(df),
-            'njob_match': df.job_title_match.sum(),
+            'njob_match': int(df.job_title_match.sum()),
             'npos_lower': len(df[df.probability_upper > 0.5]),
             'npos_upper': len(df[df.probability_lower > 0.5]),
             'salary_mean': df.salary_median.mean(skipna=True),
