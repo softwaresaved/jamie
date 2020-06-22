@@ -27,8 +27,6 @@ from .common.lib import isotime_snapshot, gitversion
 from .logger import logger
 
 logger = logger(name='models', stream_level='INFO')
-c_params = 10.0 ** np.arange(-3, 8)
-gamma_params = 10.0 ** np.arange(-5, 4)
 
 def get_model(n):
     """Return model object corresponding to the named parameter.
@@ -79,7 +77,7 @@ def parse_parameter_description(d):
         else:
             raise ValueError("Parameter parsing error: " + d)
 
-def parse_model_description(models):
+def parse_model_description(model_description, models=None):
     """Parse models description. This function expands configuration values
     such as hyperparameter ranges from a string description to Python
     objects. The following interpositions are supported for parameter types:
@@ -89,8 +87,10 @@ def parse_model_description(models):
 
     Parameters
     ----------
-    models : dict
+    model_description : dict
         Dictionary representing models with their configuration
+    models : Optional[List[str]]
+        List of models to parse, by default parses all models
 
     Returns
     -------
@@ -99,50 +99,52 @@ def parse_model_description(models):
     """
 
     k = dict()
-    for n in models:
-        k[n] = {"model": get_model(n), "matrix": models[n]["matrix"]}
-        if isinstance(models[n]["params"], list):
+    if models is None:
+        models = model_description.keys()
+    for n in model_description:
+        if n not in models:
+            continue
+        print("MODEL", n)
+        k[n] = {"model": get_model(n), "matrix": model_description[n]["matrix"]}
+        if isinstance(model_description[n]["params"], list):
             k[n]["params"] = []
-            for p in models[n]["params"]:
+            for p in model_description[n]["params"]:
                 k[n]["params"].append({
                     c: parse_parameter_description(v)
                     for c, v in p.items()})
         else:  # is a dict
             k[n]["params"] = {
                 c: parse_parameter_description(v)
-                for c, v in models[n]["params"].items()
+                for c, v in model_description[n]["params"].items()
             }
     return k
 
 
 model_description = {
     "SVC": {
-        "model": SVC(probability=True),
         "params": [
             {
-                "clf__C": c_params,
-                "clf__gamma": gamma_params,
+                "clf__C": "=e-3:8:12",
+                "clf__gamma": "=e-5:4:10",
                 "clf__kernel": ["rbf"],
                 "clf__class_weight": ["balanced", None],
             },
-            {"clf__C": c_params, "clf__kernel": ["linear"]},
+            {"clf__C": "=e-3:8:12", "clf__kernel": ["linear"]},
         ],
         "matrix": "sparse",
     },
     "Logreg": {
-        "model": LogisticRegression(),
         "params": {
             "clf__penalty": ["l1", "l2"],
-            "clf__C": np.logspace(-4, 4, 20),
+            "clf__C": "=e-4:4:20",
             "clf__solver": ["liblinear"],
         },
         "matrix": "sparse",
     },
     "RandomForest": {
-        "model": RandomForestClassifier(),
         "params": {
-            "clf__n_estimators": list(range(10, 101, 10)),
-            "clf__max_features": list(range(6, 32, 5)),
+            "clf__n_estimators": "=10:101:10",
+            "clf__max_features": "=6:32:5",
         },
         "matrix": "sparse",
     },
@@ -166,7 +168,7 @@ model_description = {
 
 
 def nested_cross_validation(
-    X, y, scoring_value, oversampling=False, nbr_folds=5
+    models, X, y, scoring_value, oversampling=False, nbr_folds=5
 ):
     """Perform nested cross validation and return best model. The set of
     models is defined in :mod:`jamie.models`. This function is generally
@@ -174,6 +176,8 @@ def nested_cross_validation(
 
     Parameters
     ----------
+    models : List[str]
+        List of models to use, specify None for all models
     X : numpy.ndarray
         Feature matrix. This can be obtained by calling fit_transform() on a Features object
     y : numpy.ndarray
@@ -197,7 +201,7 @@ def nested_cross_validation(
 
     # Get the models
     # When trained a certain fold, doing the second cross-validation split to choose hyper parameters
-    models = parse_model_description(model_description)
+    models = parse_model_description(model_description, models)
     # Use stratified folds as we have imbalanced dataset
     outer_cv = StratifiedKFold(nbr_folds)
     inner_cv = StratifiedKFold(nbr_folds)
@@ -296,7 +300,7 @@ def nested_cross_validation(
 
 def train(
     config, snapshot, featureset,
-    prediction_field,
+    models, prediction_field,
     oversampling, scoring
 ):
     """Train models, called when using ``jamie train`` and save model snapshots.
@@ -309,6 +313,8 @@ def train(
         Training snapshot to use
     featureset : str
         Featureset to use
+    models : Optional[List[str]]
+        List of models to train on, by default all models are selected
     prediction_field : str
         Which column of the training set data to use for prediction.
     oversampling : bool
@@ -324,6 +330,7 @@ def train(
         'snapshot': timestamp,
         'training': {
             'training_snapshot': snapshot,
+            'models': models,
             'featureset': featureset,
             'prediction_field': prediction_field,
             'oversampling': oversampling,
@@ -349,6 +356,7 @@ def train(
     X_train = features.fit_transform(features.X_train)
     logger.info("nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
+        models,
         X_train, features.y_train, scoring,
         oversampling=config['model.oversampling'],
         nbr_folds=config['model.k-fold'])

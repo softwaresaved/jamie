@@ -35,6 +35,8 @@ latest snapshots; see below for more details of how snapshots are organised.
 
    * *snapshot*: Which training snapshot to use
    * *features*: Which feature set to use (default "rse")
+   * *models*: Specify a comma separated list of models. If not specified,
+     runs all models.
    * *prediction-field*: Which column in the training set to use as the label for classification (default "aggregate_tags")
    * *oversampling*: Whether to use oversampling, default True
    * *scoring*: Scoring method to use, default "precision" which is the F1 score

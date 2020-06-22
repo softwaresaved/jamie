@@ -51,13 +51,16 @@ class Jamie:
         return jamie.features.list_features()
 
     def train(self, snapshot='last', featureset='rse',
+              models = None,
               prediction_field='aggregate_tags',
               oversampling=True, scoring='f1'):
         "Train using specified snapshot (default: last)"
         ts = jamie.snapshots.TrainingSnapshotCollection(self.cf['common.snapshots'])
         if snapshot == 'last':
             snapshot = ts.most_recent()
-        jamie.models.train(self.cf, snapshot, featureset, prediction_field,
+        if models is not None:
+            models = models.split(",")
+        jamie.models.train(self.cf, snapshot, featureset, models, prediction_field,
                            oversampling, scoring)
 
     def predict(self, snapshot=None):
