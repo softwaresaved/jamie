@@ -72,8 +72,6 @@ class RSEFeatures(FeatureBase):
 
     * *description*: Description text of job, transformed as below
     * *job_title*: Job title, transformed as below
-    * *research_software*: Binary flag corresponding to whether the term
-      'research software' appears in the description
 
     The text is transformed using TF-IDF to produce unigrams and bigrams
     after removing stopwords, and using sublinear TF scaling.
@@ -87,18 +85,15 @@ class RSEFeatures(FeatureBase):
                                        ngram_range=(1, 2), stop_words='english'))])),
             ('job_title', Pipeline([('selector', TextSelector('job_title')),
                                     ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
-                                     ngram_range=(1, 2), stop_words='english'))])),
-            ('size_txt', Pipeline([('selector', LenSelector('description')),
-                                   ('scaler', StandardScaler())])),
+                                     ngram_range=(1, 2), stop_words='english'))]))
         ])
 
     def make_arrays(self, prediction_field):
         self._prepare_labels(prediction_field)
         self.data[prediction_field] = self.data[prediction_field].astype(str)
-        self.add_textflag(search_for='research software', in_column='description')
         self.X = self.data[(self.data[prediction_field] == '0') |
                            (self.data[prediction_field] == '1')][
-            ['description', 'job_title', 'research_software']]
+            ['description', 'job_title']]
         return self
 
 
