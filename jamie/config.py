@@ -14,7 +14,6 @@ DEFAULTS = {
     'db.mysql-host': '127.0.0.1',
     'db.mysql-port': None,
     'db.mysql-name': 'classify',
-    'model.oversampling': False,
     'model.k-fold': 5
 }
 
