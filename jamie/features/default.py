@@ -2,9 +2,7 @@
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
-import sklearn.model_selection as model_selection
-from sklearn.preprocessing import StandardScaler
-from .base import FeatureBase, TextSelector, LenSelector
+from .base import FeatureBase, TextSelector
 
 SEARCH_TERM_LIST = [
     'algorithm',
