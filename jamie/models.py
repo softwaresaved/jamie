@@ -4,6 +4,7 @@
 import copy
 import json
 import pickle
+import itertools
 import pandas as pd
 import numpy as np
 import sklearn
@@ -16,9 +17,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import (
-    cross_val_score,
+    cross_validate,
     GridSearchCV,
-    LeaveOneOut,
     StratifiedKFold,
 )
 from .snapshots import TrainingSnapshotCollection
@@ -27,6 +27,14 @@ from .common.lib import isotime_snapshot, gitversion
 from .logger import logger
 
 logger = logger(name='models', stream_level='INFO')
+
+SCORES = [
+    "precision",
+    "balanced_accuracy",
+    "f1",
+    "recall",
+    "roc_auc"
+]
 
 def get_model(n):
     """Return model object corresponding to the named parameter.
@@ -209,7 +217,11 @@ def nested_cross_validation(
     # Creaging the dataframe for the different scores
     score_for_outer_cv = pd.DataFrame(index=range(len(models)), columns=["model"])
     score_for_outer_cv["model"] = [name for name in models]
-    columns_to_add = ["fold-{}".format(int(i) + 1) for i in range(nbr_folds)]
+
+    # Add nbr_folds for each score type
+    columns_to_add = ["{}_{}".format(scoretype, int(i) + 1)
+                      for scoretype, i in itertools.product(SCORES, range(nbr_folds))] + \
+        ["mean_" + scoretype for scoretype in SCORES]
     score_for_outer_cv = score_for_outer_cv.reindex(
         columns=score_for_outer_cv.columns.tolist() + columns_to_add
     )
@@ -238,17 +250,21 @@ def nested_cross_validation(
 
         # estimate generalization error on the K-fold splits of the data
         # with joblib.parallel_backend('dask'):
-        scores_across_outer_folds = cross_val_score(
-            estimator, X, y, cv=outer_cv, scoring=scoring_value, n_jobs=-1
+        scores_across_outer_folds = cross_validate(
+            estimator, X, y, cv=outer_cv, scoring=SCORES, n_jobs=-1
         )
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
-        score_for_outer_cv.iloc[i, -nbr_folds:] = scores_across_outer_folds
-        #
-        # get the mean MSE across each of outer_cv's K-folds
-        average_scores_across_outer_folds_for_each_model[name] = np.mean(
-            scores_across_outer_folds.mean()
-        )
+        score_list = []
+        for scoretype in SCORES:
+            score_list.extend(scores_across_outer_folds["test_" + scoretype])
+        score_for_outer_cv.iloc[i, 1:] = score_list
+
+        # Get the mean MSE across each of outer_cv's K-folds
+        # While we report various scores, we only compare models
+        # on scoring_value
+        average_scores_across_outer_folds_for_each_model[name] = scores_across_outer_folds[
+            "test_" + scoring_value].mean()
         error_summary = "Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}"
 
         print(
@@ -256,7 +272,7 @@ def nested_cross_validation(
                 name=name,
                 nbr_folds=nbr_folds,
                 scores=scores_across_outer_folds,
-                avg=np.mean(scores_across_outer_folds),
+                avg=scores_across_outer_folds["test_" + scoring_value].mean(),
             )
         )
         print()
