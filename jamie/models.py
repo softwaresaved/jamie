@@ -86,7 +86,7 @@ def parse_parameter_description(d):
         else:
             raise ValueError("Parameter parsing error: " + d)
 
-def parse_model_description(model_description, models=None):
+def parse_model_description(model_description, models=None, random_state=100):
     """Parse models description. This function expands configuration values
     such as hyperparameter ranges from a string description to Python
     objects. The following interpositions are supported for parameter types:
@@ -100,6 +100,8 @@ def parse_model_description(model_description, models=None):
         Dictionary representing models with their configuration
     models : Optional[List[str]]
         List of models to parse, by default parses all models
+    random_state : int
+        Random state to initialise seed, default: 100
 
     Returns
     -------
@@ -118,14 +120,13 @@ def parse_model_description(model_description, models=None):
         if isinstance(model_description[n]["params"], list):
             k[n]["params"] = []
             for p in model_description[n]["params"]:
-                k[n]["params"].append({
-                    c: parse_parameter_description(v)
-                    for c, v in p.items()})
+                k[n]["params"].append({"clf__random_state": [random_state],
+                                       **{c: parse_parameter_description(v)
+                                          for c, v in p.items()}})
         else:  # is a dict
-            k[n]["params"] = {
-                c: parse_parameter_description(v)
-                for c, v in model_description[n]["params"].items()
-            }
+            k[n]["params"] = {"clf__random_state": [random_state],
+                              **{c: parse_parameter_description(v)
+                                 for c, v in model_description[n]["params"].items()}}
     return k
 
 
@@ -177,7 +178,7 @@ model_description = {
 
 
 def nested_cross_validation(
-    models, X, y, scoring_value, oversampling=False, nbr_folds=5
+    models, X, y, scoring_value, oversampling=False, nbr_folds=5, random_state=100
 ):
     """Perform nested cross validation and return best model. The set of
     models is defined in :mod:`jamie.models`. This function is generally
@@ -197,6 +198,8 @@ def nested_cross_validation(
         Whether to perform oversampling to balance the dataset (default: True)
     nbr_folds : int
         Number of folds for cross validation (default: 5)
+    random_state : int
+        Seed to initialise the random state (default: 100)
 
     Returns
     -------
@@ -210,9 +213,10 @@ def nested_cross_validation(
 
     # Get the models
     # When trained a certain fold, doing the second cross-validation split to choose hyper parameters
-    models = parse_model_description(model_description, models)
+    models = parse_model_description(model_description, models, random_state)
     # Use stratified folds as we have imbalanced dataset
     outer_cv = StratifiedKFold(nbr_folds)
+    # Offset random_state by a fixed amount to create different shuffle
     inner_cv = StratifiedKFold(nbr_folds)
 
     # Creaging the dataframe for the different scores
@@ -221,7 +225,8 @@ def nested_cross_validation(
 
     # Add nbr_folds for each score type
     columns_to_add = ["{}_{}".format(scoretype, int(i) + 1)
-                      for scoretype, i in itertools.product(SCORES, range(nbr_folds))] + \
+                      for scoretype, i in itertools.product(
+                          SCORES, range(nbr_folds))] + \
         ["mean_" + scoretype for scoretype in SCORES]
     score_for_outer_cv = score_for_outer_cv.reindex(
         columns=score_for_outer_cv.columns.tolist() + columns_to_add
@@ -231,7 +236,8 @@ def nested_cross_validation(
     for i, name in enumerate(models):
         if oversampling is True:
             estimator = Pipeline(
-                [("sampling", RandomOverSampler()), ("clf", models[name]["model"])]
+                [("sampling", RandomOverSampler(random_state=random_state)),
+                 ("clf", models[name]["model"])]
             )
         else:
             estimator = Pipeline([("clf", models[name]["model"])])
@@ -260,14 +266,19 @@ def nested_cross_validation(
         pprint(scores_across_outer_folds)
         for scoretype in SCORES:
             score_list.extend(scores_across_outer_folds["test_" + scoretype])
+        # Add mean scores
+        score_list.extend([scores_across_outer_folds["test_" + scoretype].mean()
+                           for scoretype in SCORES])
         score_for_outer_cv.iloc[i, 1:] = score_list
 
         # Get the mean MSE across each of outer_cv's K-folds
         # While we report various scores, we only compare models
         # on scoring_value
-        average_scores_across_outer_folds_for_each_model[name] = scores_across_outer_folds[
-            "test_" + scoring_value].mean()
-        error_summary = "Model: {name}\nMSE in the {nbr_folds} outer folds: {scores}.\nAverage error: {avg}"
+        average_scores_across_outer_folds_for_each_model[name] = \
+            scores_across_outer_folds["test_" + scoring_value].mean()
+        error_summary = "Model: {name}\n" + \
+            "MSE in the {nbr_folds} outer folds: {scores}.\n" + \
+            "Average error: {avg}"
 
         print(
             error_summary.format(
@@ -319,7 +330,8 @@ def nested_cross_validation(
 def train(
     config, snapshot, featureset,
     models, prediction_field,
-    oversampling, scoring
+    oversampling, scoring,
+    random_state=100
 ):
     """Train models, called when using ``jamie train`` and save model snapshots.
 
@@ -339,6 +351,8 @@ def train(
         Whether to oversample to form a balanced set, passed to :func:`nested_cross_validation`.
     scoring : str
         Scoring method to use for grid search, passed to :func:`nested_cross_validation`.
+    random_state : int
+        Seed to initialise the random state (default: 100)
     """
     filename = Box({'models': 'model.pkl', 'scores': 'scores.csv'})
     Features = select_features(featureset)
@@ -347,6 +361,7 @@ def train(
     metadata = {
         'snapshot': timestamp,
         'training': {
+            'random_state': random_state,
             'training_snapshot': snapshot,
             'models': models,
             'featureset': featureset,
@@ -368,16 +383,17 @@ def train(
     }
     logger.info("model-snapshot %s", timestamp)
     training_snapshots = TrainingSnapshotCollection(config['common.snapshots'])
-    features = Features(training_snapshots[snapshot].data)\
-        .make_arrays(prediction_field)
+    features = Features(training_snapshots[snapshot].data).make_arrays(prediction_field)
     logger.info("created features object")
-    X_train = features.fit_transform(features.X_train)
+    X_train = features.fit_transform(features.X)
     logger.info("nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
         models,
-        X_train, features.y_train, scoring,
+        X_train, features.labels, scoring,
         oversampling=config['model.oversampling'],
-        nbr_folds=config['model.k-fold'])
+        nbr_folds=config['model.k-fold'],
+        random_state=random_state
+    )
 
     # Create model snapshot folder if needed
     if not model_snapshot_folder.exists():
@@ -386,15 +402,15 @@ def train(
     # Run ensemble by fitting best_estimator from final_model to
     # 100 different train test splits
     estimator = copy.deepcopy(final_model.best_estimator_)
-    for random_state in tqdm(range(100), desc="Model ensemble"):
-        X_train, _, y_train, _ = features.train_test_split(random_state)
+    for ensemble_state in tqdm(range(100), desc="Model ensemble"):
+        X_train, _, y_train, _ = features.train_test_split(ensemble_state)
         X_train = features.fit_transform(X_train)
         estimator.fit(X_train, y_train)
         with (model_snapshot_folder /
-                ('model_%d.pkl' % random_state)).open('wb') as fp:
+                ('model_%d.pkl' % ensemble_state)).open('wb') as fp:
             pickle.dump(estimator, fp)
         with (model_snapshot_folder /
-                ('features_%d.pkl' % random_state)).open('wb') as fp:
+                ('features_%d.pkl' % ensemble_state)).open('wb') as fp:
             pickle.dump(features, fp)
     logger.info("saving models")
     # Save metadata, models list, models, parameters and scores

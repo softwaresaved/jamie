@@ -99,11 +99,6 @@ class RSEFeatures(FeatureBase):
         self.X = self.data[(self.data[prediction_field] == '0') |
                            (self.data[prediction_field] == '1')][
             ['description', 'job_title', 'research_software']]
-        self.X_train, self.X_test, self.y_train, self.y_test = \
-            model_selection.train_test_split(
-                self.X, self.labels, test_size=0.2,
-                random_state=0, stratify=self.labels
-            )
         return self
 
 
@@ -111,4 +106,3 @@ if __name__ == "__main__":
     data = Path(__file__).parent.parent / 'prediction' / 'data' / \
         'training_set' / 'training_set.csv'
     fs = RSEFeatures(data).make_arrays('aggregate_tags')
-    print(fs.X_train.shape, fs.X_test.shape, fs.y_train.shape, fs.y_test.shape)
