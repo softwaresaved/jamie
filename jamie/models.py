@@ -390,7 +390,7 @@ def train(
     best_model_params, final_model, average_scores = nested_cross_validation(
         models,
         X_train, features.labels, scoring,
-        oversampling=config['model.oversampling'],
+        oversampling=oversampling,
         nbr_folds=config['model.k-fold'],
         random_state=random_state
     )
