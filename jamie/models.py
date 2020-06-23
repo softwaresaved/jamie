@@ -10,6 +10,7 @@ import numpy as np
 import sklearn
 from tqdm import tqdm
 from box import Box
+from pprint import pprint
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.svm import SVC
@@ -256,6 +257,7 @@ def nested_cross_validation(
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
         score_list = []
+        pprint(scores_across_outer_folds)
         for scoretype in SCORES:
             score_list.extend(scores_across_outer_folds["test_" + scoretype])
         score_for_outer_cv.iloc[i, 1:] = score_list
