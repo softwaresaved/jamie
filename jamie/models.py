@@ -162,7 +162,7 @@ model_description = {
         "params": [{"clf__max_depth": "=3:20"}],
         "matrix": "sparse",
     },
-    "Gradient Boosting": {
+    "GradientBoosting": {
         "params": {
             "clf__learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
             "clf__min_samples_split": (2, 21),
