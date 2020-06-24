@@ -386,6 +386,7 @@ def train(
     features = Features(training_snapshots[snapshot].data).make_arrays(prediction_field)
     logger.info("created features object")
     X_train = features.fit_transform(features.X)
+    print("Data: {} jobs, {} features".format(*X_train.shape))
     logger.info("nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
         models,
