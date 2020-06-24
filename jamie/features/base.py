@@ -61,6 +61,8 @@ class FeatureBase:
         depending on the particular featureset used
     require_columns : list of str
         List of required columns in DataFrame.
+    clean_columns : list of str, optional
+        List of columns to apply text cleaning to
 
     Raises
     ------
@@ -68,12 +70,17 @@ class FeatureBase:
         If any of the required columns are missing
     """
 
-    def __init__(self, data, search_term_list, require_columns):
+    def __init__(self, data, search_term_list, require_columns, clean_columns=None):
         self.features = None
         self.search_term_list = search_term_list
         self.data = data
         if any(f not in self.data for f in require_columns):
             raise ValueError("Missing one of required columns %r" % require_columns)
+        if clean_columns:
+            cleaner = textClean()
+            for tc in clean_columns:
+                self.data[tc] = self.data[tc].apply(
+                    lambda x: ' '.join(cleaner.clean_text(x)))
 
     def _find_searchterms(self, row):
         return set(i for i in self.search_term_list if i in row)

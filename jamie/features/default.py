@@ -76,7 +76,7 @@ class RSEFeatures(FeatureBase):
     """
     def __init__(self, data):
         super().__init__(data, SEARCH_TERM_LIST, require_columns=[
-            'description', 'job_title'])
+            'description', 'job_title'], clean_columns=['description', 'job_title'])
         self._combine_features([
             ('description', Pipeline([('selector', TextSelector('description')),
                                       ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
