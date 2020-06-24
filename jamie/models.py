@@ -234,7 +234,9 @@ def nested_cross_validation(
     average_scores_across_outer_folds_for_each_model = dict()
 
     for i, name in enumerate(models):
+        print("[{}] Begin training".format(name))
         if oversampling is True:
+            print("Oversampling: ON")
             estimator = Pipeline(
                 [("sampling", RandomOverSampler(random_state=random_state)),
                  ("clf", models[name]["model"])]
@@ -247,6 +249,7 @@ def nested_cross_validation(
         except KeyError:
             params = None
         if params:
+            print("[{}] GridSearchCV".format(name))
             estimator = GridSearchCV(
                 estimator,
                 param_grid=params,
@@ -257,13 +260,13 @@ def nested_cross_validation(
 
         # estimate generalization error on the K-fold splits of the data
         # with joblib.parallel_backend('dask'):
+        print("[{}] Error estimation".format(name))
         scores_across_outer_folds = cross_validate(
             estimator, X, y, cv=outer_cv, scoring=SCORES, n_jobs=-1
         )
 
         # score_for_outer_cv.loc[score_for_outer_cv['model'] == name, ['feature_type']] = feature_type
         score_list = []
-        pprint(scores_across_outer_folds)
         for scoretype in SCORES:
             score_list.extend(scores_across_outer_folds["test_" + scoretype])
         # Add mean scores
@@ -276,18 +279,23 @@ def nested_cross_validation(
         # on scoring_value
         average_scores_across_outer_folds_for_each_model[name] = \
             scores_across_outer_folds["test_" + scoring_value].mean()
-        error_summary = "Model: {name}\n" + \
-            "MSE in the {nbr_folds} outer folds: {scores}.\n" + \
-            "Average error: {avg}"
+        print("[{}]   Fit time ".format(name), scores_across_outer_folds["fit_time"])
+        print("[{}] Score time ".format(name), scores_across_outer_folds["score_time"])
+        print()
+        for scoretype in scores_across_outer_folds:
+            if not scoretype.startswith("test_"):
+                continue
+            print("[{}]  Fold scores {:18s} [{}]".format(
+                name, scoretype[5:],
+                ", ".join("{:.5f}".format(s) for s in scores_across_outer_folds[scoretype])
+            ))
+        print()
+        for scoretype in scores_across_outer_folds:
+            if not scoretype.startswith("test_"):
+                continue
+            print("[{}]  Mean score  {:18s} {:.5f}".format(
+                name, scoretype[5:], scores_across_outer_folds[scoretype].mean()))
 
-        print(
-            error_summary.format(
-                name=name,
-                nbr_folds=nbr_folds,
-                scores=scores_across_outer_folds,
-                avg=scores_across_outer_folds["test_" + scoring_value].mean(),
-            )
-        )
         print()
 
     print(
