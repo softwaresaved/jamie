@@ -80,10 +80,10 @@ class RSEFeatures(FeatureBase):
         self._combine_features([
             ('description', Pipeline([('selector', TextSelector('description')),
                                       ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
-                                       ngram_range=(1, 3), stop_words='english'))])),
+                                       ngram_range=(1, 2), stop_words='english'))])),
             ('job_title', Pipeline([('selector', TextSelector('job_title')),
                                     ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
-                                     ngram_range=(1, 3), stop_words='english'))]))
+                                     ngram_range=(1, 2), stop_words='english'))]))
         ])
 
     def make_arrays(self, prediction_field):
