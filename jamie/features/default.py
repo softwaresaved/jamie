@@ -3,6 +3,7 @@ from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from .base import FeatureBase, TextSelector
+# from .base import CountTerm
 
 SEARCH_TERM_LIST = [
     'algorithm',
@@ -77,13 +78,16 @@ class RSEFeatures(FeatureBase):
     def __init__(self, data):
         super().__init__(data, SEARCH_TERM_LIST, require_columns=[
             'description', 'job_title'], clean_columns=['description', 'job_title'])
-        self._combine_features([
+        self.set_features([
             ('description', Pipeline([('selector', TextSelector('description')),
                                       ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
                                        ngram_range=(1, 2), stop_words='english'))])),
             ('job_title', Pipeline([('selector', TextSelector('job_title')),
                                     ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
                                      ngram_range=(1, 2), stop_words='english'))]))
+            # ('count_term', Pipeline([('selector', TextSelector('description')),
+            #                          ('count', CountTerm(self.search_term_list)),
+            #                          ('scale', StandardScaler()]))
         ])
 
     def make_arrays(self, prediction_field):

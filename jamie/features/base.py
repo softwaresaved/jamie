@@ -25,6 +25,25 @@ class TextSelector(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
+class CountTerm(BaseEstimator, TransformerMixin):
+    """Add count of terms from a search term list
+
+    Parameters
+    ----------
+    search_terms : list of str
+        List of search terms
+    """
+
+    def __init__(self, search_terms):
+        self.search_terms = search_terms
+
+    def transform(self, X):
+        return np.array([
+            len(set(i for i in self.search_terms if i in text)) for text in X],
+            dtype=int, ndmin=2).T
+
+    def fit(self, X, y=None):
+        return self
 
 class IntSelector(TextSelector):
 
@@ -82,11 +101,8 @@ class FeatureBase:
                 self.data[tc] = self.data[tc].apply(
                     lambda x: ' '.join(cleaner.clean_text(x)))
 
-    def _find_searchterms(self, row):
-        return set(i for i in self.search_term_list if i in row)
-
-    def _combine_features(self, features):
-        "Combine features into a FeatureUnion"
+    def set_features(self, features):
+        "Set features using a FeatureUnion"
         self._features = FeatureUnion(n_jobs=1, transformer_list=features)
         return self
 
@@ -130,72 +146,6 @@ class FeatureBase:
             Feature matrix after applying transformation
         """
         return self._features.transform(X)
-
-    def add_searchterm(self, column):
-        """Adds a search term column. This will add a column
-        which will contain a list of search terms that have been found
-        in that column.
-
-        Parameters
-        ----------
-        column : str
-            Column to apply search term flag to. This will create a new
-            column called ``searchterm_<column>``
-
-        Returns
-        -------
-        :class:`FeatureBase`
-            Returns a copy of self with added column
-        """
-        self.data['searchterm_%s' % column] = self.data[column].apply(self._find_searchterms)
-        return self
-
-    def add_countterm(self, column):
-        """Adds a countterm column. Similar to :meth:`add_searchterm`, except it adds
-        a count of the number of unique search terms found in the column.
-
-        Parameters
-        ----------
-        column : str
-            Column to apply search term flag to. This will create a new
-            column called ``countterm_<column>``
-
-        Returns
-        -------
-        :class:`FeatureBase`
-            Returns a copy of self with added column
-        """
-
-        if 'searchterm_%s' % column not in self.data:  # add searchterm field if not exists
-            self.add_searchterm(column)
-        self.data['nterm_%s' % column] = self.data['searchterm_%s' % column].apply(len)
-        return self
-
-    def add_textflag(self, search_for, in_column):
-        """Adds a text flag column. This will add a binary column which
-        contains 1 if a particular phrase is located in the text of
-        a particular column
-
-        Parameters
-        ----------
-        search_for : str
-            Phrase to search for. The phrase is slugified before
-            searching, i.e. converted to lowercase, and all spaces
-            and special characters replaced by hyphens
-        in_column : str
-            Which column to search for phrase
-
-        Returns
-        -------
-        :class:`FeatureBase`
-            Returns a copy of self with added column
-        """
-
-        col = slugify(search_for).replace('-', '_')
-        cleaner = textClean(remove_stop=False)
-        self.data[col] = self.data[in_column].apply(
-            lambda x: search_for in ' '.join(cleaner.clean_text(x)))
-        return self
 
     def _prepare_labels(self, column):
         "Assign labels from column"
