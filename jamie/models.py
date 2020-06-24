@@ -74,7 +74,7 @@ def parse_parameter_description(d):
         return d
     d = d[1:]  # drop the =
     if d.startswith("e"):  # logspace
-        d = [int(x) for x in d.split(":")]
+        d = [int(x) for x in d[1:].split(":")]
         if len(d) <= 3:
             return np.logspace(*d)  # start, stop, [num]
         else:
@@ -115,7 +115,7 @@ def parse_model_description(model_description, models=None, random_state=100):
     for n in model_description:
         if n not in models:
             continue
-        print("MODEL", n)
+        print("Adding model:", n)
         k[n] = {"model": get_model(n), "matrix": model_description[n]["matrix"]}
         if isinstance(model_description[n]["params"], list):
             k[n]["params"] = []
