@@ -57,7 +57,7 @@ def get_model(n):
         "LogReg": {"model": LogisticRegression},
         "RandomForest": {"model": RandomForestClassifier},
         "CART": {"model": DecisionTreeClassifier},
-        "Gradient Boosting": {"model": GradientBoostingClassifier}
+        "GradientBoosting": {"model": GradientBoostingClassifier}
     }
     if n in data:
         if 'params' in data[n]:
@@ -143,7 +143,7 @@ model_description = {
         ],
         "matrix": "sparse",
     },
-    "Logreg": {
+    "LogReg": {
         "params": {
             "clf__penalty": ["l1", "l2"],
             "clf__C": "=e-4:4:20",
