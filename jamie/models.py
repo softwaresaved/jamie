@@ -145,9 +145,9 @@ model_description = {
     },
     "LogReg": {
         "params": {
-            "clf__penalty": ["l1", "l2"],
             "clf__C": "=e-4:4:20",
-            "clf__solver": ["liblinear"],
+            "clf__solver": ["lbfgs"],
+            "clf__max_iter": [1000],
         },
         "matrix": "sparse",
     },
