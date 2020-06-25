@@ -8,9 +8,9 @@ import itertools
 import pandas as pd
 import numpy as np
 import sklearn
+import scipy.sparse
 from tqdm import tqdm
 from box import Box
-from pprint import pprint
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.svm import SVC
@@ -179,7 +179,8 @@ model_description = {
 
 
 def nested_cross_validation(
-    models, X, y, scoring_value, oversampling=False, nbr_folds=5, random_state=100
+    models, X, y, scoring_value, snapshot, oversampling=False,
+    nbr_folds=5, random_state=100,
 ):
     """Perform nested cross validation and return best model. The set of
     models is defined in :mod:`jamie.models`. This function is generally
@@ -201,6 +202,8 @@ def nested_cross_validation(
         Number of folds for cross validation (default: 5)
     random_state : int
         Seed to initialise the random state (default: 100)
+    snapshot : str
+        Snapshot within which this is being run, used only for logging.
 
     Returns
     -------
@@ -235,9 +238,8 @@ def nested_cross_validation(
     average_scores_across_outer_folds_for_each_model = dict()
 
     for i, name in enumerate(models):
-        print("[{}] Begin training".format(name))
         if oversampling is True:
-            print("Oversampling: ON")
+            logger.info("Oversampling: ON")
             estimator = Pipeline(
                 [("sampling", RandomOverSampler(random_state=random_state)),
                  ("clf", models[name]["model"])]
@@ -250,7 +252,6 @@ def nested_cross_validation(
         except KeyError:
             params = None
         if params:
-            print("[{}] GridSearchCV".format(name))
             estimator = GridSearchCV(
                 estimator,
                 param_grid=params,
@@ -261,7 +262,7 @@ def nested_cross_validation(
 
         # estimate generalization error on the K-fold splits of the data
         # with joblib.parallel_backend('dask'):
-        print("[{}] Error estimation".format(name))
+        logger.info("[{}] Model training ({})".format(name, snapshot))
         scores_across_outer_folds = cross_validate(
             estimator, X, y, cv=outer_cv, scoring=SCORES, n_jobs=-1
         )
@@ -280,27 +281,23 @@ def nested_cross_validation(
         # on scoring_value
         average_scores_across_outer_folds_for_each_model[name] = \
             scores_across_outer_folds["test_" + scoring_value].mean()
-        print("[{}]   Fit time ".format(name), scores_across_outer_folds["fit_time"])
-        print("[{}] Score time ".format(name), scores_across_outer_folds["score_time"])
-        print()
+        logger.info("[{}]   Fit time %s".format(name), scores_across_outer_folds["fit_time"])
+        logger.info("[{}] Score time %s".format(name), scores_across_outer_folds["score_time"])
         for scoretype in scores_across_outer_folds:
             if not scoretype.startswith("test_"):
                 continue
-            print("[{}]  Fold scores {:18s} [{}]".format(
+            logger.info("[{}]  Fold {:18s} [{}]".format(
                 name, scoretype[5:],
                 ", ".join("{:.5f}".format(s) for s in scores_across_outer_folds[scoretype])
             ))
-        print()
         for scoretype in scores_across_outer_folds:
             if not scoretype.startswith("test_"):
                 continue
-            print("[{}]  Mean score  {:18s} {:.5f}".format(
+            logger.info("[{}]  Mean {:18s} {:.5f}".format(
                 name, scoretype[5:], scores_across_outer_folds[scoretype].mean()))
 
-        print()
-
-    print(
-        "Average score across the outer folds: ",
+    logger.info(
+        "Mean score %s",
         average_scores_across_outer_folds_for_each_model,
     )
     logger.info("Fitting the model on the training set")
@@ -312,7 +309,7 @@ def nested_cross_validation(
 
     # get the best model and its associated parameter grid
     best_model_params = models[best_model_name].get("params", None)
-    print(models[best_model_name])
+    logger.info("Best model %s", models[best_model_name])
 
     # now we refit this best model on the whole dataset so that we can start
     # making predictions on other data, and now we have a reliable estimate of
@@ -363,7 +360,12 @@ def train(
     random_state : int
         Seed to initialise the random state (default: 100)
     """
-    filename = Box({'models': 'model.pkl', 'scores': 'scores.csv'})
+    filename = Box({
+        'models': 'model.pkl',
+        'scores': 'scores.csv',
+        'features_original': 'features.csv',
+        'features_transformed': 'features.npz'
+    })
     Features = select_features(featureset)
     timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
     model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
@@ -390,24 +392,34 @@ def train(
             'scores': filename.scores
         }
     }
-    logger.info("model-snapshot %s", timestamp)
+    logger.info("Snapshot %s", timestamp)
     training_snapshots = TrainingSnapshotCollection(config['common.snapshots'])
     features = Features(training_snapshots[snapshot].data).make_arrays(prediction_field)
-    logger.info("created features object")
     X_train = features.fit_transform(features.X)
-    print("Data: {} jobs, {} features".format(*X_train.shape))
-    logger.info("nested cross validation")
+    logger.info("Saving features")
+    if not model_snapshot_folder.exists():
+        model_snapshot_folder.mkdir(parents=True)
+    features.X.to_csv(model_snapshot_folder / filename.features_original)
+    scipy.sparse.save_npz(
+        model_snapshot_folder / filename.features_transformed, X_train)
+    logger.info("Features: {} jobs, {} features".format(*X_train.shape))
+    logger.info("Nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
         models,
         X_train, features.labels, scoring,
+        snapshot=timestamp,
         oversampling=oversampling,
         nbr_folds=config['model.k-fold'],
         random_state=random_state
     )
-
-    # Create model snapshot folder if needed
-    if not model_snapshot_folder.exists():
-        model_snapshot_folder.mkdir(parents=True)
+    logger.info("Saving scores and models")
+    metadata['best_parameters'] = best_model_params
+    metadata['models'] = model_description
+    with (model_snapshot_folder / 'metadata.json').open('w') as fp:
+        json.dump(metadata, fp, indent=2, sort_keys=True)
+    with (model_snapshot_folder / filename.models).open('wb') as fp:
+        pickle.dump(final_model, fp)
+    average_scores.to_csv(model_snapshot_folder / filename.scores, index=False)
 
     # Run ensemble by fitting best_estimator from final_model to
     # 100 different train test splits
@@ -419,15 +431,4 @@ def train(
         with (model_snapshot_folder /
                 ('model_%d.pkl' % ensemble_state)).open('wb') as fp:
             pickle.dump(estimator, fp)
-        with (model_snapshot_folder /
-                ('features_%d.pkl' % ensemble_state)).open('wb') as fp:
-            pickle.dump(features, fp)
-    logger.info("saving models")
-    # Save metadata, models list, models, parameters and scores
-    metadata['best_parameters'] = best_model_params
-    metadata['models'] = model_description
-    with (model_snapshot_folder / 'metadata.json').open('w') as fp:
-        json.dump(metadata, fp, indent=2, sort_keys=True)
-    with (model_snapshot_folder / filename.models).open('wb') as fp:
-        pickle.dump(final_model, fp)
-    average_scores.to_csv(model_snapshot_folder / filename.scores, index=False)
+
