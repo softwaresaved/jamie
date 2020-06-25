@@ -147,7 +147,8 @@ model_description = {
         "params": {
             "clf__C": "=e-4:4:20",
             "clf__solver": ["lbfgs"],
-            "clf__max_iter": [1000],
+            "clf__class_weight": ["balanced", None],
+            "clf__max_iter": [1000],  # higher max_iter needed for convergence
         },
         "matrix": "sparse",
     },
