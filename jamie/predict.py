@@ -132,7 +132,7 @@ class Predict:
         else:
             logger.info("Job not found in database, but prediction exists: {}".format(_id))
 
-    def predict(self, save=True):
+    def predict(self, save=True, skip_existing=True):
         """Record predictions in MongoDB
 
         Parameters
@@ -140,6 +140,10 @@ class Predict:
         save : bool, default=True
             Whether to save results in model snapshot folder, on by default.
             Results are always saved in the MongoDB instance
+        skip_existing : bool, default=True
+            Whether to skip existing predictions or overwrite them. You can set
+            this to False to force prediction of the entire dataset. Note that different
+            model snapshots correspond to different prediction snapshots.
 
         Returns
         -------
@@ -151,6 +155,10 @@ class Predict:
         features = [self.model_snapshot.features(i) for i in self.model_snapshot.data.indices]
         for _id, doc in tqdm(self._get_documents(), desc="Predicting"):
             if doc is not None:
+                # Check if it has already been predicted
+                if skip_existing and self.db.predictions.find_one(
+                        {'_id': _id + '_' + self.model_snapshot.name}):
+                    continue
                 ids_list.append(_id)
                 probabilities = [
                     # predict_proba() returns a tuple for class (0, 1)
