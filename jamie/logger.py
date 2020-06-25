@@ -13,11 +13,11 @@ def logger(name='logger', logger_level='DEBUG', file_level='INFO', stream_level=
     logger = logging.getLogger(name)
     logger_set_level = getattr(logging, logger_level)
     logger.setLevel(logger_set_level)
-    formatter = logging.Formatter(json.dumps({
-        "@timestamp": "%(asctime)s",
-        "logger": "%(name)s",
-        "level": "%(levelname)s",
-        "message": "%(message)s"}),
+    formatter = logging.Formatter(" ".join([
+        "%(asctime)s",
+        "%(levelname)s",
+        "[%(name)s]",
+        "%(message)s"]),
         datefmt="%Y-%m-%dT%H:%M:%S%z")
 
     stream_handler = logging.StreamHandler()
