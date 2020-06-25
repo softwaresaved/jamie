@@ -91,7 +91,7 @@ class FeatureBase:
 
     def __init__(self, data, search_term_list, require_columns, clean_columns=None):
         self.features = None
-        self.search_term_list = search_term_list
+        self.search_term_list = [s.lower() for s in search_term_list]
         self.data = data
         if any(f not in self.data for f in require_columns):
             raise ValueError("Missing one of required columns %r" % require_columns)
