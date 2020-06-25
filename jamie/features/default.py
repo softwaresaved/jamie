@@ -4,7 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from .base import FeatureBase, TextSelector
 from sklearn.preprocessing import StandardScaler
-from .base import CountTerm
+from .base import CountTerm, LenSelector
 
 SEARCH_TERM_LIST = [
     'algorithm',
@@ -88,8 +88,9 @@ class RSEFeatures(FeatureBase):
                                      ngram_range=(1, 2), stop_words='english'))])),
             ('count_term', Pipeline([('selector', TextSelector('description')),
                                      ('count', CountTerm(self.search_term_list)),
-                                     ('scale', StandardScaler())
-                                     ]))
+                                     ('scale', StandardScaler())])),
+            # ('len_txt', Pipeline([('length', LenSelector('description')),
+            #                       ('scale', StandardScaler())]))
         ])
 
     def make_arrays(self, prediction_field):
