@@ -423,6 +423,7 @@ def train(
 
     # Run ensemble by fitting best_estimator from final_model to
     # 100 different train test splits
+    logger.info("Saving model and feature pipeline ensemble")
     estimator = copy.deepcopy(final_model.best_estimator_)
     for ensemble_state in tqdm(range(100), desc="Model ensemble"):
         X_train, _, y_train, _ = features.train_test_split(ensemble_state)
@@ -431,4 +432,8 @@ def train(
         with (model_snapshot_folder /
                 ('model_%d.pkl' % ensemble_state)).open('wb') as fp:
             pickle.dump(estimator, fp)
+        # Save feature pipeline instead of the entire features object
+        with (model_snapshot_folder /
+                ('features_%d.pkl' % ensemble_state)).open('wb') as fp:
+            pickle.dump(features._features, fp)
 
