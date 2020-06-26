@@ -82,7 +82,7 @@ class RSEFeatures(FeatureBase):
         self.set_features([
             ('description', Pipeline([('selector', TextSelector('description')),
                                       ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
-                                       max_features=25000,
+                                       max_features=24000,
                                        ngram_range=(1, 2), stop_words='english'))])),
             ('job_title', Pipeline([('selector', TextSelector('job_title')),
                                     ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
