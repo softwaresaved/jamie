@@ -86,9 +86,9 @@ class RSEFeatures(FeatureBase):
             ('job_title', Pipeline([('selector', TextSelector('job_title')),
                                     ('tfidf', TfidfVectorizer(sublinear_tf=True, norm='l2',
                                      ngram_range=(1, 2), stop_words='english'))])),
-            ('count_term', Pipeline([('selector', TextSelector('description')),
-                                     ('count', CountTerm(self.search_term_list)),
-                                     ('scale', StandardScaler())])),
+            # ('count_term', Pipeline([('selector', TextSelector('description')),
+            #                          ('count', CountTerm(self.search_term_list)),
+            #                          ('scale', StandardScaler())])),
             # ('len_txt', Pipeline([('length', LenSelector('description')),
             #                       ('scale', StandardScaler())]))
         ])
