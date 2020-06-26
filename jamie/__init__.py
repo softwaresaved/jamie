@@ -9,6 +9,7 @@ import jamie.data
 import jamie.data.importer
 import jamie.predict
 import jamie.reports
+from jamie.common.information_gain import _information_gain
 
 class Jamie:
     """Job Analysis by Machine Information Extraction"""
@@ -79,3 +80,11 @@ class Jamie:
                 self.cf['common.snapshots'])
             snapshot = predictions.most_recent()
             jamie.reports.Report(jamie.snapshots.PredictionSnapshot(snapshot)).create()
+
+    def information_gain(self, training_snapshot="last",
+                         text_column="description", output_column="aggregate_tags"):
+        "Calculates information gain for text ngrams in training snapshot"
+        ts = jamie.snapshots.TrainingSnapshotCollection()
+        if training_snapshot == "last":
+            training_snapshot = ts.most_recent()
+        return _information_gain(training_snapshot, text_column, output_column)
