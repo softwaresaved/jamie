@@ -54,7 +54,7 @@ class Jamie:
     def train(self, snapshot='last', featureset='rse',
               models = None,
               prediction_field='aggregate_tags',
-              oversampling=False, scoring='f1',
+              oversampling=False, scoring='precision',
               random_state=100):
         "Train using specified snapshot (default: last)"
         ts = jamie.snapshots.TrainingSnapshotCollection(self.cf['common.snapshots'])
