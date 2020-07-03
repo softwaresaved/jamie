@@ -87,7 +87,7 @@ class Report:
     def by_year(self, as_dataframe=True):
         "Returns list of dicts or dataframe having data grouped by year"
         if self._yearly is None:
-            self._yearly = [{'group': i, **self.metrics(data)} for i, data
+            self._yearly = [{'group': str(i), **self.metrics(data)} for i, data
                             in self.data.groupby(self.data.posted.dt.year)]
         return pd.DataFrame(self._yearly) if as_dataframe else self._yearly
 
