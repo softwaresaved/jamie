@@ -70,7 +70,7 @@ d3.json('by_year.json', function(data) {
         brush: 'x'
     })
 })
-d3.json('by_month.json', function(data) {
+d3.json('by_year.json', function(data) {
     data = MG.convert.date(data, 'group');
     MG.data_graphic({
         title: "Number of jobs matching target job title",
