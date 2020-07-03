@@ -1,4 +1,6 @@
 # Custom types and enums for use in Jamie
+import json
+from bson.json_util import loads
 import datetime
 from enum import Enum, auto
 from box import Box
@@ -101,10 +103,13 @@ class JobPrediction:
     def __init__(self, prediction):
         self.jobid = prediction['jobid']
         self.snapshot = prediction['snapshot']
-        self.contract = Contract.Permanent if prediction['contract'] == 'Permanent' \
-            else Contract.FixedTerm
-        self.employer = prediction['employer']
-        self.hours = prediction['hours']
+        if "contract" in prediction:
+            self.contract = Contract.Permanent if prediction['contract'] == 'Permanent' \
+                else Contract.FixedTerm
+        else:
+            self.contract = None
+        self.employer = prediction.get('employer', None)
+        self.hours = prediction.get('hours', None)
         self.job_title = prediction['job_title']
         self.department = prediction.get('department', None)
         self.location = prediction.get('location', None)
@@ -118,5 +123,7 @@ class JobPrediction:
         self.probability = prediction['probability']
         self.probability_lower = prediction['lower_ci']
         self.probability_upper = prediction['upper_ci']
-        self.posted = datetime.datetime.fromisoformat(
-            prediction['json']['datePosted']).date()
+        if "placed_on" in prediction:
+            self.posted = loads(json.dumps(prediction['placed_on'])).date()
+        else:
+            self.posted = None

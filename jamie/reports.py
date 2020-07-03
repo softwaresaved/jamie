@@ -6,13 +6,23 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
+from .logger import logger
 from .snapshots import ReportSnapshot
 from .types import Confidence, JobType
+
+logger = logger(name="report", stream_level="DEBUG")
 
 def label(x):
     # "2017-01-01" -> "Jan 2017"
     year, month, _ = x.split("-")
-    return calendar.month_name[int(month)][:3] + " " + year
+    return calendar.month_name[int(float(month))][:3] + " " + year
+
+def fix_day(date, day="01"):
+    if date is not None:
+        yyyy, mm, _ = str(date).split("-")
+        return "-".join([yyyy, mm, day])
+    else:
+        return None
 
 class Report:
     """Report generator
@@ -30,14 +40,22 @@ class Report:
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
         self.featureset = self.prediction_snapshot.metadata['training']['featureset']
         self.data = self.prediction_snapshot.data
+
+        logger.info("              Total number of jobs: %d", len(self.data))
         # Drop jobs without salary information
         self.data = self.data[~pd.isna(self.data.salary_median)]
+        logger.info("After dropping jobs without salary: %d", len(self.data))
+
+        # Drop jobs without posted date
+        self.data = self.data[~pd.isna(self.data.posted)]
+        logger.info("After dropping jobs without posted: %d", len(self.data))
+        self.data['year_month'] = self.data.posted.apply(fix_day)
+
         # Convert to datetime format to allow pandas operations
         self.data['posted'] = pd.DatetimeIndex(self.data.posted)
-        self.data['year_month'] = self.data.posted.dt.year.astype(str) + "-" + \
-            self.data.posted.dt.month.astype(str) + "-01"
         # Drop PhD jobs, this should ideally be done earlier
         self.data = self.data[~self.data.job_title.str.contains("PhD")]
+        logger.info("  After dropping jobs at PhD level: %d", len(self.data))
         # job_title_match contains True or False depending on whether the
         # job_title contained the target job type
         # (such as "Research Software Engineer")
