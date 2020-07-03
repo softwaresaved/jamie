@@ -183,7 +183,7 @@ class Predict:
                 fp.write(dumps(r, sort_keys=True) + "\n")
         with (snapshot_root / 'metadata.json').open('w') as fp:
             metadata = self.model_snapshot.metadata
-            metadata['best_model_average_score'] = self.model_snapshot.data.scores.mean(axis=1).max()
+            metadata['best_model_average_score'] = self.model_snapshot.data.scores.mean_precision.max()
             json.dump(self.model_snapshot.metadata, fp, indent=True, sort_keys=True)
 
     @property
