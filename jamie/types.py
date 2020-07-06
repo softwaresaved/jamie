@@ -32,6 +32,40 @@ class Alert(Enum):
             return Alert.Low
 
 
+class PrecisionRecall(Enum):
+
+    High = """Both precision and recall are high. The model captures most
+of the target job type as well as being precise and avoiding false
+negatives. The reported estimates can be considered a good estimate for the
+target job type."""
+
+    Low = """Both precision and recall are low or average. The model can neither
+correctly classify most of the positives, nor is it precise. The reported estimates
+are unreliable for the target job type."""
+
+    HighLow = """Precision is high while recall is low or average. The model is
+conservative; the target job type is precisely identified with few
+false positives, but in doing so, the model fails to identify many
+jobs. The reported estimates should be considered an underestimate for
+the target job type."""
+
+    LowHigh = """"Precision is low or average while recall is high. The model is
+overpredicting, that is predicting more jobs in the target job type than
+actual, thus leading to low precision; while recall is high because of
+the overprediction. The reported estimates should be considered an overestimate
+for the target job type."""
+
+    @staticmethod
+    def get(precision, recall):
+        return_map = {
+            (True, True): PrecisionRecall.High,
+            (False, False): PrecisionRecall.Low,
+            (True, False): PrecisionRecall.HighLow,
+            (False, True): PrecisionRecall.LowHigh
+        }
+        return return_map[precision == Alert.High, recall == Alert.High]
+
+
 class Contract(Enum):
     "Contract type: Fixed Term or Permanent"
     FixedTerm = auto()

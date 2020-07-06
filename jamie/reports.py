@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from shutil import copyfile
 from .logger import logger
 from .snapshots import ReportSnapshot, ModelSnapshot
-from .types import Alert, JobType
+from .types import Alert, JobType, PrecisionRecall
 
 logger = logger(name="report", stream_level="DEBUG")
 
@@ -162,6 +162,7 @@ class Report:
             "score_name": self.scoring.replace("-", " ").capitalize(),
             "score_level": alert.name,
             "score": "{:.4f}".format(score),
+            "score_explanation": PrecisionRecall.get(alert, recall_alert).value,
             "recall_alert_level": recall_alert.value.alert_level,
             "recall_level": recall_alert.name,
             "recall": "{:.4f}".format(recall),
