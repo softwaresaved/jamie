@@ -24,12 +24,23 @@
 
       <h1>Jobs Analysis</h1>
       <p class="lead">How have <strong>{{ job_type }}</strong> jobs changed with time?</p>
-      <div class="alert {{ alert_level }}" role="alert">
-          <strong>Confidence</strong>:
-              <strong>{{ confidence }}</strong>
-              [{{ score_value }}, {{ score_type }}]
-              <em>{{ confidence_text }}</em>
-    </div>
+      <div class="row">
+          <div class="col-md-6">
+            <div class="alert {{ alert_level }}" role="alert">
+                <strong>{{ score_name }}</strong>:
+                <strong>{{ score_level }}</strong>
+                [{{ score }}]
+            </div>
+          </div>
+          <div class="col-md-6">
+          <div class="alert {{ recall_alert_level }}" role="alert">
+              <strong>Recall</strong>:
+                  <strong>{{ recall_level }}</strong>
+                  [{{ recall }}]
+          </div>
+          </div>
+      </div>
+
       <div class="row">
         <div class="col-md-6" id="njobsyear"></div>
         <div class="col-md-6" id="propjobsyear"></div>

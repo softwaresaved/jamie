@@ -7,8 +7,8 @@ from box import Box
 from typing import Optional, List
 from dataclasses import dataclass
 
-class Confidence(Enum):
-    "Confidence levels for reporting"
+class Alert(Enum):
+    "Alert levels for reporting"
     High = Box({
         "alert_level": "alert-success",
         "text": "High confidence is defined to be above a score of 0.80"
@@ -25,11 +25,11 @@ class Confidence(Enum):
     @staticmethod
     def level(n):
         if n > 0.80:
-            return Confidence.High
+            return Alert.High
         elif n > 0.60:
-            return Confidence.Medium
+            return Alert.Medium
         else:
-            return Confidence.Low
+            return Alert.Low
 
 
 class Contract(Enum):

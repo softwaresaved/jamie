@@ -7,8 +7,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
 from .logger import logger
-from .snapshots import ReportSnapshot
-from .types import Confidence, JobType
+from .snapshots import ReportSnapshot, ModelSnapshot
+from .types import Alert, JobType
 
 logger = logger(name="report", stream_level="DEBUG")
 
@@ -38,6 +38,11 @@ class Report:
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
+        self.scores = ModelSnapshot(self.prediction_snapshot.metadata['snapshot']).data.scores
+        self.scoring = self.prediction_snapshot.metadata['training']['scoring']
+        # Keep only the best score classifier as a dictionaly
+        self.scores = self.scores.sort_values(
+            'mean_' + self.scoring, ascending=False).head(1).to_dict('records')[0]
         self.featureset = self.prediction_snapshot.metadata['training']['featureset']
         self.data = self.prediction_snapshot.data
 
@@ -142,7 +147,9 @@ class Report:
         "Create a report and store in a report snapshot"
         self.make_graphs()
         score = self.prediction_snapshot.metadata['best_model_average_score']
-        confidence = Confidence.level(score)
+        alert = Alert.level(score)
+        recall = self.scores['mean_recall']
+        recall_alert = Alert.level(recall)
         templates = Path(__file__).parent / 'templates'
         with (self.snapshot.path / "by_year.json").open("w") as fp:
             json.dump(self.by_year(as_dataframe=False), fp, indent=2, sort_keys=True)
@@ -151,11 +158,13 @@ class Report:
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
             "job_type": JobType[self.featureset].value,
-            "alert_level": confidence.value.alert_level,
-            "confidence": confidence.name,
-            "confidence_text": confidence.value.text,
-            "score_value": "{:.2f}".format(score),
-            "score_type": self.prediction_snapshot.metadata['training']['scoring'],
+            "alert_level": alert.value.alert_level,
+            "score_name": self.scoring.replace("-", " ").capitalize(),
+            "score_level": alert.name,
+            "score": "{:.4f}".format(score),
+            "recall_alert_level": recall_alert.value.alert_level,
+            "recall_level": recall_alert.name,
+            "recall": "{:.4f}".format(recall),
             "date": self.snapshot.name,
             "njobs_year_fig": "njobs_yearly.png",
             "propjobs_year_fig": "propjobs_yearly.png",
