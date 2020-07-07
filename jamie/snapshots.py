@@ -2,6 +2,7 @@
 import json
 import pickle
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from dataclasses import asdict
 from box import Box
@@ -217,6 +218,29 @@ class PredictionSnapshot(Snapshot):
                     self._predictions.append(JobPrediction(json.loads(pred)))
             self._data = pd.DataFrame([asdict(x) for x in self._predictions])
         return self._data
+
+    def partition_jobs(self, n_each_class=None, random_state=100):
+        "Partition jobs into positive and negative class based on probability"
+        positives, negatives = [], []
+        if self._data is None:
+            self._predictions = []
+            fn = self.instance_location / 'predictions.jsonl'
+            with fn.open() as fp:
+                for pred in fp.readlines():
+                    prediction = JobPrediction(json.loads(pred))
+                    if prediction.probability_lower > 0.5:
+                        positives.append(prediction.jobid)
+                    else:
+                        negatives.append(prediction.jobid)
+        positives, negatives = np.array(positives), np.array(negatives)
+        if n_each_class is None:
+            return positives, negatives
+        else:
+            np.random.seed(random_state)
+            sample_positives = np.random.choice(positives, size=n_each_class, replace=False)
+            sample_negatives = np.random.choice(negatives, size=n_each_class, replace=False)
+            return sample_positives, sample_negatives
+
 
 class PredictionSnapshotCollection(SnapshotCollection):
     "Prediction :class:`SnapshotCollection`, with subpath=predictions"
