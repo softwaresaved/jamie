@@ -73,6 +73,12 @@ class Jamie:
             snapshot = model_snapshots.most_recent()
         print(jamie.predict.Predict(snapshot).predict().dataframe)
 
+    def random_sample_prediction(self, snapshot=None,
+                                 n_each_class=100, random_state=100):
+        "Generates a random sample of positive and negative classes"
+        fn = "random-sample_n{}_rnd{}.csv".format(n_each_class, random_state)
+        pass
+
     def report(self, snapshot=None):
         "Generate report using specified snapshot"
         if snapshot is None:

@@ -5,7 +5,7 @@ import datetime
 from enum import Enum, auto
 from box import Box
 from typing import Optional, List
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 class Alert(Enum):
     "Alert levels for reporting"
@@ -161,3 +161,6 @@ class JobPrediction:
             self.posted = loads(json.dumps(prediction['placed_on'])).date()
         else:
             self.posted = None
+
+    def to_dict(self):
+        return asdict(self)

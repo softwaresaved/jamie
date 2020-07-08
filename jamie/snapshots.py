@@ -229,9 +229,9 @@ class PredictionSnapshot(Snapshot):
                 for pred in fp.readlines():
                     prediction = JobPrediction(json.loads(pred))
                     if prediction.probability_lower > 0.5:
-                        positives.append(prediction.jobid)
+                        positives.append(prediction.to_dict())
                     else:
-                        negatives.append(prediction.jobid)
+                        negatives.append(prediction.to_dict())
         positives, negatives = np.array(positives), np.array(negatives)
         if n_each_class is None:
             return positives, negatives
