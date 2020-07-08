@@ -1,5 +1,6 @@
 __version__ = '0.1'
 
+import pandas as pd
 import jamie.config
 import jamie.scrape
 import jamie.snapshots
@@ -10,6 +11,7 @@ import jamie.data.importer
 import jamie.predict
 import jamie.reports
 from jamie.common.information_gain import _information_gain
+from jamie.common.getConnection import connectMongo
 
 class Jamie:
     """Job Analysis by Machine Information Extraction"""
@@ -77,7 +79,36 @@ class Jamie:
                                  n_each_class=100, random_state=100):
         "Generates a random sample of positive and negative classes"
         fn = "random-sample_n{}_rnd{}.csv".format(n_each_class, random_state)
-        pass
+        db = connectMongo(self.cf)
+        if snapshot is None:
+            prediction_snapshots = jamie.snapshots.PredictionSnapshotCollection(
+                self.cf['common.snapshots'])
+            snapshot = jamie.snapshots.PredictionSnapshot(prediction_snapshots.most_recent())
+        else:
+            snapshot = jamie.snapshots.PredictionSnapshot(snapshot)
+        positives, negatives = snapshot.partition_jobs(n_each_class, random_state)
+        data = []
+
+        def find_description(jobid):
+            found = db.jobs.find_one({"jobid": jobid})
+            return found.get('description', None) if found else None
+
+        print("Fetching descriptions for positives...")
+        for i in positives:
+            print(i['jobid'])
+            i['is_target_job_type'] = True
+            i['description'] = find_description(i['jobid'])
+            data.append(i)
+        print("Fetching descriptions for negatives...")
+        for i in negatives:
+            print(i['jobid'])
+            i['is_target_job_type'] = True
+            i['is_target_job_type'] = False
+            i['description'] = find_description(i['jobid'])
+            data.append(i)
+
+        pd.DataFrame(data).to_csv(snapshot.path / fn, index=False)
+        return snapshot.path / fn
 
     def report(self, snapshot=None):
         "Generate report using specified snapshot"
