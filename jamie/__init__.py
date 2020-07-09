@@ -95,13 +95,11 @@ class Jamie:
 
         print("Fetching descriptions for positives...")
         for i in positives:
-            print(i['jobid'])
             i['is_target_job_type'] = True
             i['description'] = find_description(i['jobid'])
             data.append(i)
         print("Fetching descriptions for negatives...")
         for i in negatives:
-            print(i['jobid'])
             i['is_target_job_type'] = True
             i['is_target_job_type'] = False
             i['description'] = find_description(i['jobid'])
