@@ -8,7 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
 from .logger import logger
-from .snapshots import ReportSnapshot, ModelSnapshot
+from .snapshots import ReportSnapshot, ModelSnapshot, TrainingSnapshot
 from .types import Alert, JobType, PrecisionRecall
 
 logger = logger(name="report", stream_level="DEBUG")
@@ -38,6 +38,8 @@ class Report:
 
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
+        self.training_data = TrainingSnapshot(
+            self.prediction_snapshot.metadata['training']['training_snapshot']).data
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
         self.scores = ModelSnapshot(self.prediction_snapshot.metadata['snapshot']).data.scores
         self.scoring = self.prediction_snapshot.metadata['training']['scoring']
@@ -82,6 +84,17 @@ class Report:
             'npos_upper': len(df[df.probability_lower > 0.5]),
             'salary_mean': df.salary_median.mean(skipna=True),
             'salary_mean_pos': None if salary.empty else salary.salary_median.mean()
+        }
+
+    def training_metrics(df, label="aggregate_tags", positive_label=1, negative_label=0):
+        "Return summary metrics for training snapshot"
+        return {
+            'total': len(df),
+            'npos': (df[label] == positive_label).sum(),
+            'nneg': (df[label] == negative_label).sum(),
+            'nphd': (df.job_title.str.contains("PhD")).sum(),
+            'nnotphd': (~df.job_title.str.contains("PhD")).sum(),
+            'proportion_pos': (df[label] == positive_label).sum() / len(df)
         }
 
     def by_month(self, as_dataframe=True):
