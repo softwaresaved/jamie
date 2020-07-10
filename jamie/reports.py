@@ -35,11 +35,13 @@ class Report:
     """
     _monthly = None
     _yearly = None
+    _training_monthly = None
 
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
         self.training_data = TrainingSnapshot(
             self.prediction_snapshot.metadata['training']['training_snapshot']).data
+        self.training_data['year_month'] = self.training_data.placed_on.apply(fix_day)
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
         self.scores = ModelSnapshot(self.prediction_snapshot.metadata['snapshot']).data.scores
         self.scoring = self.prediction_snapshot.metadata['training']['scoring']
@@ -86,16 +88,24 @@ class Report:
             'salary_mean_pos': None if salary.empty else salary.salary_median.mean()
         }
 
+    @staticmethod
     def training_metrics(df, label="aggregate_tags", positive_label=1, negative_label=0):
         "Return summary metrics for training snapshot"
         return {
             'total': len(df),
-            'npos': (df[label] == positive_label).sum(),
-            'nneg': (df[label] == negative_label).sum(),
-            'nphd': (df.job_title.str.contains("PhD")).sum(),
-            'nnotphd': (~df.job_title.str.contains("PhD")).sum(),
+            'npos': int((df[label] == positive_label).sum()),
+            'nneg': int((df[label] == negative_label).sum()),
+            'nphd': int((df.job_title.str.contains("PhD")).sum()),
+            'nnotphd': int((~df.job_title.str.contains("PhD")).sum()),
             'proportion_pos': (df[label] == positive_label).sum() / len(df)
         }
+
+    def training_by_month(self, as_dataframe=False):
+        "Returns list of dicts or dataframe having training data grouped by month"
+        if self._training_monthly is None:
+            self._training_monthly = [{'group': i, **self.training_metrics(data)} for i, data
+                                      in self.training_data.groupby(self.training_data.year_month)]
+        return pd.DataFrame(self._training_monthly) if as_dataframe else self._training_monthly
 
     def by_month(self, as_dataframe=False):
         "Returns list of dicts or dataframe having data grouped by month"
@@ -170,6 +180,8 @@ class Report:
             json.dump(self.by_year(), fp, indent=2, sort_keys=True)
         with (self.snapshot.path / "by_month.json").open("w") as fp:
             json.dump(self.by_month(), fp, indent=2, sort_keys=True)
+        with (self.snapshot.path / "training_by_month.json").open("w") as fp:
+            json.dump(self.training_by_month(), fp, indent=2, sort_keys=True)
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
             "job_type": JobType[self.featureset].title,
