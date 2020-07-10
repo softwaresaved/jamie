@@ -41,7 +41,7 @@ class Report:
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
         self.scores = ModelSnapshot(self.prediction_snapshot.metadata['snapshot']).data.scores
         self.scoring = self.prediction_snapshot.metadata['training']['scoring']
-        # Keep only the best score classifier as a dictionaly
+        # Keep only the best score classifier as a dictionary
         self.scores = self.scores.sort_values(
             'mean_' + self.scoring, ascending=False).head(1).to_dict('records')[0]
         self.featureset = self.prediction_snapshot.metadata['training']['featureset']
