@@ -9,6 +9,7 @@ d3.json('by_year.json', function(data) {
         target: '#njobsyear',
         x_accessor: 'group',
         y_accessor: 'npos',
+        show_confidence_band: ['npos_lower', 'npos_upper'],
         brush: 'x'
     })
 })
@@ -38,6 +39,7 @@ d3.json('by_month.json', function(data) {
         target: '#njobsmonth',
         x_accessor: 'group',
         y_accessor: 'npos',
+        show_confidence_band: ['npos_lower', 'npos_upper'],
         brush: 'x'
     })
 })
