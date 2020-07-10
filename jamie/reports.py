@@ -97,14 +97,14 @@ class Report:
             'proportion_pos': (df[label] == positive_label).sum() / len(df)
         }
 
-    def by_month(self, as_dataframe=True):
+    def by_month(self, as_dataframe=False):
         "Returns list of dicts or dataframe having data grouped by month"
         if self._monthly is None:
             self._monthly = [{'group': i, **self.metrics(data)} for i, data
                              in self.data.groupby(self.data.year_month)]
         return pd.DataFrame(self._monthly) if as_dataframe else self._monthly
 
-    def by_year(self, as_dataframe=True):
+    def by_year(self, as_dataframe=False):
         "Returns list of dicts or dataframe having data grouped by year"
         if self._yearly is None:
             self._yearly = [{'group': str(i), **self.metrics(data)} for i, data
@@ -134,22 +134,22 @@ class Report:
 
     def _graph_salary_mean(self):
         plt.clf()
-        df = self.by_year()
+        df = self.by_year(as_dataframe=True)
         print(df)
         plt.plot(df.group, df.salary_mean_pos)
         plt.savefig(self.snapshot.path / "mean_salary.png")
 
     def _graph_njobs_yearly(self):
-        self._graph_njobs(self.by_year(), "njobs_yearly.png", monthly=False)
+        self._graph_njobs(self.by_year(as_dataframe=True), "njobs_yearly.png", monthly=False)
 
     def _graph_njobs_monthly(self):
-        self._graph_njobs(self.by_month(), "njobs_monthly.png", monthly=True)
+        self._graph_njobs(self.by_month(as_dataframe=True), "njobs_monthly.png", monthly=True)
 
     def _graph_propjobs_yearly(self):
-        self._graph_propjobs(self.by_year(), "propjobs_yearly.png", monthly=False)
+        self._graph_propjobs(self.by_year(as_dataframe=True), "propjobs_yearly.png", monthly=False)
 
     def _graph_propjobs_monthly(self):
-        self._graph_propjobs(self.by_month(), "propjobs_monthly.png", monthly=True)
+        self._graph_propjobs(self.by_month(as_dataframe=True), "propjobs_monthly.png", monthly=True)
 
     def make_graphs(self):
         self._graph_njobs_yearly()
@@ -167,9 +167,9 @@ class Report:
         recall_alert = Alert.level(recall)
         templates = Path(__file__).parent / 'templates'
         with (self.snapshot.path / "by_year.json").open("w") as fp:
-            json.dump(self.by_year(as_dataframe=False), fp, indent=2, sort_keys=True)
+            json.dump(self.by_year(), fp, indent=2, sort_keys=True)
         with (self.snapshot.path / "by_month.json").open("w") as fp:
-            json.dump(self.by_month(as_dataframe=False), fp, indent=2, sort_keys=True)
+            json.dump(self.by_month(), fp, indent=2, sort_keys=True)
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
             "job_type": JobType[self.featureset].title,
