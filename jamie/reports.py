@@ -3,6 +3,7 @@ import json
 import chevron
 import calendar
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
@@ -62,10 +63,11 @@ class Report:
         self.data = self.data[~self.data.job_title.str.contains("PhD")]
         logger.info("  After dropping jobs at PhD level: %d", len(self.data))
         # job_title_match contains True or False depending on whether the
-        # job_title contained the target job type
-        # (such as "Research Software Engineer")
-        self.data['job_title_match'] = self.data.job_title.str.contains(
-            JobType[self.featureset].value, case=False)
+        # job_title contained the target job type keywords
+        # (such as containing both 'research' and 'software')
+        self.data['job_title_match'] = np.logical_and.reduce([
+            self.data.job_title.str.contains(keyword, case=False) for keyword in
+            JobType[self.featureset].search_keywords])
 
     @staticmethod
     def metrics(df):
@@ -157,7 +159,7 @@ class Report:
             json.dump(self.by_month(as_dataframe=False), fp, indent=2, sort_keys=True)
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
-            "job_type": JobType[self.featureset].value,
+            "job_type": JobType[self.featureset].title,
             "alert_level": alert.value.alert_level,
             "score_name": self.scoring.replace("-", " ").capitalize(),
             "score_level": alert.name,

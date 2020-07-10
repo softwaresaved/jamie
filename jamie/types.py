@@ -72,7 +72,18 @@ class Contract(Enum):
     Permanent = auto()
 
 class JobType(Enum):
-    rse = "Research Software Engineer"
+    rse = {
+        "title": "Research Software Engineer",
+        "search_keywords": ["research", "software"]
+    }
+
+    @property
+    def title(self):
+        return self.value["title"]
+
+    @property
+    def search_keywords(self):
+        return self.value["search_keywords"]
 
 @dataclass
 class JobPrediction:
