@@ -82,6 +82,8 @@ class JobPrediction:
     ----------
     jobid : str
         JobID from jobs.ac.uk
+    job_title : str
+        Job title
     snapshot : str
         Model snapshot used for prediction
     closes : datetime.date

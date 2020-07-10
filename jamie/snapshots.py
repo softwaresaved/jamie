@@ -228,6 +228,8 @@ class PredictionSnapshot(Snapshot):
             with fn.open() as fp:
                 for pred in fp.readlines():
                     prediction = JobPrediction(json.loads(pred))
+                    if 'PhD' in prediction.job_title:
+                        continue
                     if prediction.probability_lower > 0.5:
                         positives.append(prediction.to_dict())
                     else:
