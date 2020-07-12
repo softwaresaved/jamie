@@ -88,7 +88,7 @@ d3.json('by_year.json', function(data) {
 })
 d3.json('by_year.json', function(data) {
     MG.data_graphic({
-        title: "Number of contract jobs by year",
+        title: "Number of jobs per year by contract type",
         data: data,
         width: 450,
         height: 250,
@@ -103,7 +103,7 @@ d3.json('by_year.json', function(data) {
 })
 d3.json('by_year.json', function(data) {
     MG.data_graphic({
-        title: "Proportion of contract jobs by year",
+        title: "Proportion of jobs per year by contract type",
         data: data,
         width: 450,
         height: 250,
