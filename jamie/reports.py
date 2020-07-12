@@ -79,11 +79,11 @@ class Report:
         salary = df[(~pd.isna(df.salary_median)) & (df.probability > 0.5)]
         return {
             'total': len(df),
-            'npos': len(df[df.probability > 0.5]),
-            'proportion_pos': len(df[df.probability > 0.5]) / len(df),
+            'npos': int((df.probability > 0.5).sum()),
+            'proportion_pos': int((df.probability > 0.5).sum()) / len(df),
             'njob_match': int(df.job_title_match.sum()),
-            'npos_lower': len(df[df.probability_upper > 0.5]),
-            'npos_upper': len(df[df.probability_lower > 0.5]),
+            'npos_lower': int((df.probability_upper > 0.5).sum()),
+            'npos_upper': int((df.probability_lower > 0.5).sum()),
             'salary_mean': df.salary_median.mean(skipna=True),
             'salary_mean_pos': None if salary.empty else salary.salary_median.mean()
         }
