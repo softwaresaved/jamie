@@ -86,6 +86,37 @@ d3.json('by_year.json', function(data) {
         brush: 'x'
     })
 })
+d3.json('by_year.json', function(data) {
+    MG.data_graphic({
+        title: "Number of contract jobs by year",
+        data: data,
+        width: 450,
+        height: 250,
+        area: false,
+        color: "#2155a8",
+        target: '#ncontract',
+        x_accessor: 'group',
+        y_accessor: ['ncontract_permanent', 'ncontract_fixed_term'],
+        legend: ['Permanent', 'Fixed Term'],
+        brush: 'x'
+    })
+})
+d3.json('by_year.json', function(data) {
+    MG.data_graphic({
+        title: "Proportion of contract jobs by year",
+        data: data,
+        width: 450,
+        height: 250,
+        area: false,
+        color: "#2155a8",
+        target: '#propcontract',
+        x_accessor: 'group',
+        y_accessor: ['propcontract_permanent', 'propcontract_fixed_term'],
+        legend: ['Permanent', 'Fixed Term'],
+        brush: 'x'
+    })
+})
+
 d3.json('training_by_month.json', function(data) {
     data = MG.convert.date(data, 'group');
     MG.data_graphic({

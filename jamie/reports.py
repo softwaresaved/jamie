@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from shutil import copyfile
 from .logger import logger
 from .snapshots import ReportSnapshot, ModelSnapshot, TrainingSnapshot
-from .types import Alert, JobType, PrecisionRecall
+from .types import Alert, JobType, PrecisionRecall, Contract
 
 logger = logger(name="report", stream_level="DEBUG")
 
@@ -77,13 +77,20 @@ class Report:
     def metrics(df):
         "Return summary metrics for prediction snapshot data"
         salary = df[(~pd.isna(df.salary_median)) & (df.probability > 0.5)]
+        npos = int((df.probability > 0.5).sum())
+        ncontract_permanent = int(((df.contract == Contract.Permanent) & (df.probability > 0.5)).sum())
+        ncontract_fixed_term = int(((df.contract == Contract.FixedTerm) & (df.probability > 0.5)).sum())
         return {
             'total': len(df),
-            'npos': int((df.probability > 0.5).sum()),
-            'proportion_pos': int((df.probability > 0.5).sum()) / len(df),
+            'npos': npos,
+            'proportion_pos': npos / len(df),
             'njob_match': int(df.job_title_match.sum()),
             'npos_lower': int((df.probability_upper > 0.5).sum()),
             'npos_upper': int((df.probability_lower > 0.5).sum()),
+            'ncontract_permanent': ncontract_permanent,
+            'ncontract_fixed_term': ncontract_fixed_term,
+            'propcontract_permanent': ncontract_permanent / npos if npos > 0 else 0,
+            'propcontract_fixed_term': ncontract_fixed_term / npos if npos > 0 else 0,
             'salary_mean': df.salary_median.mean(skipna=True),
             'salary_mean_pos': None if salary.empty else salary.salary_median.mean()
         }
