@@ -33,12 +33,10 @@ Jamie is available on GNU/Linux, MacOS and Windows. To install using **pip**:
    source venv/bin/activate
    pip install .
 
-See the workflow for more information about how to use Jamie, or look at the API documentation if you want to use Jamie from a Python environment (such as a Jupyter notebook):
-
-.. toctree::
-   :maxdepth: 2
-
-   workflow
+See the :doc:`workflow` for more information about how to use Jamie, or look at
+the API documentation if you want to use Jamie from a Python environment (such
+as a Jupyter notebook), or dive into the detailed methodology in
+:doc:`methods`.
 
 API documentation
 =================
