@@ -24,11 +24,13 @@ dataset:
 * **Description**: This key contains the description of the job. We use text
   features from the description as one of our features.
 
-* **Date of publishing**: The date of publishing, stored using the key `placed_on`, is essential to do an analysis over time.
+* **Date of publishing**: The date of publishing, stored using the key
+  `placed_on`, is essential to do an analysis over time.
 
-* **Salary**: This information is essential for our analysis. it is a text
-  field that we convert into two piece of information. One is the lower salary
-  and the second is the higher salary based on skills or negotiation.
+* **Salary**: This information is essential for our analysis. Originally, is
+  a text field that we convert into two piece of information. One is the lower
+  salary and the second is the higher salary based on skills or negotiation. If
+  only one salary is present, both are the same.
 
 * **Employer**: This is the employer posted the job ads. We are only interested
   in Universities in United-Kingdom. Therefore we use a list of all
@@ -37,8 +39,9 @@ dataset:
 
 * **Type of role**: This field is an array of the type of job is given. It can
   be one or more of these values: [Academic or Research, Professional or
-  Managerial, Technical, Clerical, Craft or Manual, PhD, Masters].
-  We use this to ignore PhD or Master positions for job predictions as we are not interested in them.
+  Managerial, Technical, Clerical, Craft or Manual, PhD, Masters]. We use this
+  to ignore PhD or Master positions for job predictions as we are not
+  interested in them.
 
 The cleaned data is stored in a database.
 
@@ -55,14 +58,17 @@ in which category that jobs fallen into. They had the choice between 4 options:
 * This jobs does not requires software development.
 * There is not enough information to decide.
 
-Each job was shown several times (up to three times) to different experts
-until a consensus emerged. The aggregation procedure is shown in detail here
-TODO.
+Each job was shown several times (up to three times) to different experts until
+a consensus emerged. The aggregation procedure is shown in detail here TODO.
 
 Features
 --------
 
-We use text features from the description and job title to train our model. The other job attributes are not expected to have any relationship with whether it is a software job or not (such as employer or salary). This is particularly true for academic software jobs as many of them have a salary in the UK on the same scale as postdoctoral research associates.
+We use text features from the description and job title to train our model. The
+other job attributes are not expected to have any relationship with whether it
+is a software job or not (such as employer or salary). This is particularly
+true for academic software jobs as many of them have a salary in the UK on the
+same scale as postdoctoral research associates.
 
 For text features, the standard is to use TF-IDF with some mixture of n-grams.
 We chose to use unigrams and bigrams as they provide sufficient information
@@ -70,9 +76,10 @@ without being noisy. We perform standard text cleaning operations such as
 removing stopwords, punctuation, currency symbols.
 
 We use information gain to get an understanding of which features are relevant.
-Most of the features are not very predictive, so we keep the first NNN n-grams
-for description, out of a total of NNN n-grams.  Job title has relatively fewer
-text, so we keep all of the n-grams from job title. Altogether, we then have NNN features.
+Most of the features are not very predictive, so we keep the first 24,000 n-grams
+for description, out of a total of 133,300 n-grams.  Job title has relatively fewer
+text, so we keep all of the 4,308 n-grams from job title. Altogether, we then have
+28,308 features.
 
 Model
 -----
@@ -113,9 +120,10 @@ recall. However, the F1 gives equal weight to both precision and recall. While
 we could have experimented with variations of weighted F1 score, we opted for
 the following model selection criterion: select the model with a precision
 above 0.90 and with the highest recall. Following this selection criterion, we
-obtained the chosen model as the logistic regression model with C = NNN. It has the following metrics:
+obtained the chosen model as the logistic regression model with C = NNN. It has
+the following metrics:
 
-TODO
+TODO: metrics
 
 **Model ensemble**. To obtain confidence intervals for the probability
 estimates obtained from logistic regression, we create a model ensemble by
@@ -125,6 +133,16 @@ best model while keeping the hyperparameters fixed.
 Prediction
 ----------
 
-The model ensemble is used to generate 100 different predictions for each job from which we obtain bootstrap confidence intervals and estimates for the probability for each job. The probability bound is used to generate upper and lower bounds of the total number of jobs.
+We predict using the model ensemble for a dataset collected from 2014--2019,
+containing 344,012 jobs. Of these, only 335,437 had both the description and job title correctly parsed from the jobs.ac.uk data. We further drop based on the following criteria:
 
-TODO: Descriptives.
+* After dropping jobs without salary: 274,913
+* After dropping jobs without posted: 274,912
+* After dropping jobs at PhD level: 260,821
+
+Using the ensemble we generate 100 different predictions for each job from
+which we obtain bootstrap confidence intervals and estimates for the
+probability for each job. The probability bound is used to generate upper and
+lower bounds of the total number of jobs.
+
+TODO: descriptives of predictions
