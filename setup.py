@@ -34,5 +34,6 @@ setup(name='jamie',
           'tqdm',  # progress bars
           'pytest',
           'requests==2.22.0',
+          'python-slugify',
           'beautifulsoup4==4.9.0'],
       zip_safe=False)

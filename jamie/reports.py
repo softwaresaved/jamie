@@ -5,6 +5,7 @@ import calendar
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from slugify import slugify
 import matplotlib.pyplot as plt
 from shutil import copyfile
 from .logger import logger
@@ -80,6 +81,23 @@ class Report:
         npos = int((df.probability > 0.5).sum())
         ncontract_permanent = int(((df.contract == Contract.Permanent) & (df.probability > 0.5)).sum())
         ncontract_fixed_term = int(((df.contract == Contract.FixedTerm) & (df.probability > 0.5)).sum())
+        locations = {'nloc_' + slugify(loc).replace('-', '_'):
+                     int(((df.probability > 0.5) & (df.extra_location == loc)).sum())
+                     for loc in [
+                         "Africa",
+                         "All Locations",
+                         "Asia & Middle East",
+                         "Europe",
+                         "London",
+                         "Midlands of England",
+                         "North, South & Central America",
+                         "Northern England",
+                         "Northern Ireland",
+                         "Republic of Ireland",
+                         "Scotland",
+                         "South East England",
+                         "South West England",
+                         "Wales"]}
         return {
             'total': len(df),
             'npos': npos,
@@ -92,7 +110,8 @@ class Report:
             'propcontract_permanent': ncontract_permanent / npos if npos > 0 else 0,
             'propcontract_fixed_term': ncontract_fixed_term / npos if npos > 0 else 0,
             'salary_mean': df.salary_median.mean(skipna=True),
-            'salary_mean_pos': None if salary.empty else salary.salary_median.mean()
+            'salary_mean_pos': None if salary.empty else salary.salary_median.mean(),
+            **locations
         }
 
     @staticmethod

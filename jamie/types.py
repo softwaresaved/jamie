@@ -108,6 +108,8 @@ class JobPrediction:
         Job employer
     posted : datetime.date
         Date job was posted
+    extra_location : str
+        Broad geographical location of job position
     salary_min : Optional[int]
         Minimum salary associated with the job. Sometimes
         jobs have a range of salaries depending on the experience
@@ -138,6 +140,7 @@ class JobPrediction:
     hours: List[str]
     job_title: str
     posted: datetime.date
+    extra_location: str
     probability: float
     probability_lower: float
     probability_upper: float
@@ -160,6 +163,7 @@ class JobPrediction:
         self.job_title = prediction['job_title']
         self.department = prediction.get('department', None)
         self.location = prediction.get('location', None)
+        self.extra_location = prediction.get('extra_location', None)
         self.salary_max = prediction.get('salary_max', None)
         self.salary_min = prediction.get('salary_min', None)
         self.salary_median = prediction.get('salary_median', None)

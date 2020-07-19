@@ -116,6 +116,52 @@ d3.json('by_year.json', function(data) {
         brush: 'x'
     })
 })
+d3.json('by_year.json', function(data) {
+    MG.data_graphic({
+        title: "Job locations",
+        data: data,
+        width: 950,
+        height: 300,
+        area: false,
+        color: "#2155a8",
+        target: '#location',
+        x_accessor: 'group',
+        legend_target: '.legend',
+        y_accessor: [
+            "nloc_africa",
+            "nloc_all_locations",
+            "nloc_asia_middle_east",
+            "nloc_north_south_central_america",
+            "nloc_europe",
+            "nloc_republic_of_ireland",
+            "nloc_london",
+            "nloc_northern_england",
+            "nloc_midlands_of_england",
+            "nloc_south_east_england",
+            "nloc_south_west_england",
+            "nloc_northern_ireland",
+            "nloc_scotland",
+            "nloc_wales",
+        ],
+        legend: [
+            "Africa",
+            "All Locations",
+            "Asia & Middle East",
+            "Americas",
+            "Europe",
+            "Republic of Ireland",
+            "London",
+            "Northern England",
+            "Midlands England",
+            "South East England",
+            "South West England",
+            "Northern Ireland",
+            "Scotland",
+            "Wales"
+        ],
+        brush: 'x'
+    })
+})
 
 d3.json('training_by_month.json', function(data) {
     data = MG.convert.date(data, 'group');
