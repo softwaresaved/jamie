@@ -46,6 +46,31 @@
           </div>
       </div>
       <div class="row">
+              <ul class="nav" style="margin-top:-30px">
+  <li class="nav-item">
+    <a class="nav-link disabled" href="#">Jump to:</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#hjobs">Number of jobs</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#htarget">Matching job title</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#hcontract">Contract type</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#hlocation">Location</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#htraining">Training data</a>
+  </li>
+</ul>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+            <h3 id="hjobs">How many jobs are there?</h2>
+        </div>
         <div class="col-md-6" id="njobsyear"></div>
         <div class="col-md-6" id="propjobsyear"></div>
       </div>
@@ -54,19 +79,45 @@
         <div class="col-md-6" id="propjobsmonth"></div>
       </div>
       <div class="row">
+        <div class="col-md-12">
+        <h3 id="hmeansalary">Mean salary</h2>
+        </div>
+        <div class="col-md-6"><p class="lead">
+                The mean salary of a {{job_type}} was
+                <strong>£{{mean_salary_target}}</strong>, compared to
+            £{{mean_salary_non_target}} for other jobs.</p>
+        </div>
         <div class="col-md-6" id="meansalary"></div>
-        <div class="col-md-6" id="njobsmatch"></div>
       </div>
       <div class="row">
+        <div class="col-md-12">
+          <h3 id="htarget">How many had the target job keywords in job title?</h2>
+        </div>
+        <div class="col-md-6"><p class="lead">
+            To track adoption of the job, this graph shows the number of
+            {{job_type}} jobs which have any of the words
+    <em>{{job_target_keywords}}</em> in their job title; making up a
+    <strong>{{per_job_target}}%</strong> of all such jobs.</p>
+        </div>
+
+        <div class="col-md-6" id="njobsmatch"></div>
+
+        <div class="row">
+        <div class="col-md-12">
+            <h3 id="hcontract">Jobs by contract type</h2>
+        </div>
         <div class="col-md-6" id="ncontract"></div>
         <div class="col-md-6" id="propcontract"></div>
       </div>
       <div class="row">
+        <div class="col-md-12">
+          <h3 id="hlocation">Jobs by location</h2>
+        </div>
           <div class="col-md-12" id="location"></div>
           <div class="col-md-12 legend"></div>
       </div>
       <div class="row">
-        <h3>Training data</h3>
+        <h3 id="htraining">Training data</h3>
         <div class="col-md-12">
         <div class="alert alert-secondary" role="alert">
         Data statistics for training snapshot used to train the model. PhD jobs are included in counts.

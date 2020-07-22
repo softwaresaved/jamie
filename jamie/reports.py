@@ -202,6 +202,7 @@ class Report:
         recall = self.scores['mean_recall']
         recall_alert = Alert.level(recall)
         templates = Path(__file__).parent / 'templates'
+        per_job_target = 100 * int(self.data.job_title_match.sum()) / int((self.data.probability > 0.5).sum())
         with (self.snapshot.path / "by_year.json").open("w") as fp:
             json.dump(self.by_year(), fp, indent=2, sort_keys=True)
         with (self.snapshot.path / "by_month.json").open("w") as fp:
@@ -210,6 +211,10 @@ class Report:
             json.dump(self.training_by_month(), fp, indent=2, sort_keys=True)
         copyfile(templates / 'script.js', self.snapshot.path / 'script.js')
         data = {
+            "mean_salary_target": "{:,.0f}".format(self.data[self.data.probability > 0.5].salary_median.mean()),
+            "mean_salary_non_target": "{:,.0f}".format(self.data[self.data.probability <= 0.5].salary_median.mean()),
+            "job_target_keywords": ", ".join(JobType[self.featureset].search_keywords),
+            "per_job_target": "{:.1f}".format(per_job_target),
             "job_type": JobType[self.featureset].title,
             "alert_level": alert.value.alert_level,
             "score_name": self.scoring.replace("-", " ").capitalize(),

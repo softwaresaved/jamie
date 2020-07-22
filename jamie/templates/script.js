@@ -60,7 +60,6 @@ d3.json('by_month.json', function(data) {
 })
 d3.json('by_year.json', function(data) {
     MG.data_graphic({
-        title: "Mean salary",
         data: data,
         width: 450,
         height: 250,
@@ -74,7 +73,6 @@ d3.json('by_year.json', function(data) {
 })
 d3.json('by_year.json', function(data) {
     MG.data_graphic({
-        title: "Number of jobs matching target job title",
         data: data,
         width: 450,
         height: 250,
@@ -118,7 +116,6 @@ d3.json('by_year.json', function(data) {
 })
 d3.json('by_year.json', function(data) {
     MG.data_graphic({
-        title: "Job locations",
         data: data,
         width: 950,
         height: 300,
