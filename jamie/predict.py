@@ -169,6 +169,8 @@ class Predict:
                     for m, f in zip(models, features)
                 ]
                 self._record_prediction(_id, self.bootstrap.sample(probabilities), store_database=True)
+            else:
+                logger.warning("Skipping job because of empty description or job title: %s", _id)
         if save:
             self.save()
         return self
