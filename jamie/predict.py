@@ -104,23 +104,25 @@ class Predict:
                 doc = None
             yield _id, doc
 
-    def _record_prediction(self, _id, record):
-        """Record the prediction in the original document in Mongodb.
+    def _record_prediction(self, _id, record, store_database=False):
+        """Record the prediction in the original document, optionally in MongoDB
 
         Parameters
         ----------
         _id : str
             Job ID to record
         record : dict
-            Dictionary containing prediction information to save
-            in database
+            Dictionary containing prediction information
+        store_database : bool, optional
+            Whether to store in database, default = False
         """
-        record.update({
-            'snapshot': self.model_snapshot.name,
-            'jobid': _id,
-            '_id': _id + '_' + self.model_snapshot.name
-        })
-        self.db.predictions.update_one({'_id': record['_id']}, {'$set': record}, upsert=True)
+        if store_database:
+            record.update({
+                'snapshot': self.model_snapshot.name,
+                'jobid': _id,
+                '_id': _id + '_' + self.model_snapshot.name
+            })
+            self.db.predictions.update_one({'_id': record['_id']}, {'$set': record}, upsert=True)
         job = self.db.jobs.find_one({'jobid': _id})
         if job:
             record.update(job)
@@ -130,7 +132,7 @@ class Predict:
             del record['description']  # remove verbose attributes
             self._predictions.append(record)
         else:
-            logger.info("Job not found in database, but prediction exists: {}".format(_id))
+            logger.warning("Job not found in database, but prediction exists: {}".format(_id))
 
     def predict(self, save=True, skip_existing=True):
         """Record predictions in MongoDB
@@ -150,16 +152,15 @@ class Predict:
         self : :class:`Predict`
             Returns copy of itself
         """
-        ids_list = []
         models = [self.model_snapshot.model(i) for i in self.model_snapshot.data.indices]
         features = [self.model_snapshot.features(i) for i in self.model_snapshot.data.indices]
         for _id, doc in tqdm(self._get_documents(), desc="Predicting"):
             if doc is not None:
                 # Check if it has already been predicted
-                if skip_existing and self.db.predictions.find_one(
-                        {'_id': _id + '_' + self.model_snapshot.name}):
+                existing_prediction = self.db.predictions.find_one({'_id': _id + '_' + self.model_snapshot.name})
+                if skip_existing and existing_prediction:
+                    self._record_prediction(_id, existing_prediction)
                     continue
-                ids_list.append(_id)
                 probabilities = [
                     # predict_proba() returns a tuple for class (0, 1)
                     # we need the probability that class is 1, so we select
@@ -167,7 +168,7 @@ class Predict:
                     m.predict_proba(f.transform(doc))[0][1]
                     for m, f in zip(models, features)
                 ]
-                self._record_prediction(_id, self.bootstrap.sample(probabilities))
+                self._record_prediction(_id, self.bootstrap.sample(probabilities), store_database=True)
         if save:
             self.save()
         return self
