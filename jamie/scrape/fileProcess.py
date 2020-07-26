@@ -61,10 +61,10 @@ class JobFile:
         self.data["enhanced"] = self.enhanced
 
     @staticmethod
-    def transform_key(self, key_string):
+    def transform_key(key_string):
         key_string = key_string.lower()
-        key_string = str.encode(key_string, 'utf-8').translate(self.table_punc)
-        key_string = key_string.translate(self.table_space)
+        key_string = str.encode(key_string, 'utf-8').translate(_table_punc)
+        key_string = key_string.translate(_table_space)
         key_string = key_string.decode('utf-8')
         key_string = key_string.replace('_', ' ')
         key_string = key_string.rstrip()
@@ -166,7 +166,7 @@ class JobFile:
                 key = section.find('p')
                 if key:
                     original_content = key.findNext('p')
-                    key = self.transform_key(key.text)
+                    key = JobFile.transform_key(key.text)
                     result = list()
                     for element in original_content.findAll('a'):
                         result.append(element.text)
@@ -186,7 +186,7 @@ class JobFile:
         else:
             for element in self._soup.findAll('td', {'class': 'detail-heading'}):
                 key = element.text
-                key = self.transform_key(key)
+                key = JobFile.transform_key(key)
                 content = element.findNext('td')
                 content = content.text
                 yield {key: content}
@@ -294,10 +294,8 @@ class JobFile:
         raw_json = self._extract_json_ads()
         if raw_json:
             self.data['json'] = raw_json
-            print("Parsing JSON")
             return self.parse_json()
         else:
-            print("Parsing HTML")
             return self.parse_html()
 
 def main(filename):
