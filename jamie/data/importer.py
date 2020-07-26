@@ -14,7 +14,7 @@ import pymongo
 from ..logger import logger
 from ..config import Config
 from ..common.getConnection import connectMongo
-from ..scrape.fileProcess import fileProcess
+from ..scrape.fileProcess import JobFile
 from ..scrape.cleaningInformation import OutputRow
 from . import valid_employer
 from .summary_day_operation import generateReport
@@ -35,11 +35,10 @@ def data_from_file(input_folder, infiles):
     Function to get data from the different files within a folder
     and yield a dictionary containing the parsed information
     """
-    fileProc = fileProcess(input_folder)
     for filename in infiles:
-        data = fileProc.run(filename)
-        if data:
-            yield data
+        job = JobFile(input_folder / filename).parse()
+        if job:
+            yield job
 
 def create_index(coll, key, unique=False):
     """
@@ -129,6 +128,8 @@ def main(employer='uk_uni'):
         clean_data = OutputRow(data, employer=employer)
         clean_data.clean_row()
         data_to_record = clean_data.to_dictionary()
+        if 'description' in data_to_record['invalid_code'] or data_to_record['description'] is None:
+            logger.error('No description found in %s', data_to_record['filename'])
         try:
             if len(data_to_record['invalid_code']) >= 3:
                 m += 1
