@@ -1,18 +1,25 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import os
+import sys
 import json
-import itertools
 import bs4
+import copy
 import string
 from pathlib import Path
 from typing import Union
 
-
-_table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * \  # NOQA
-                              len(string.punctuation))
+_table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * len(string.punctuation))
 _table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
+
+def get_nested_key(d, key):
+    keys = key.split(".")
+    o = copy.deepcopy(d)
+    try:
+        for k in keys:
+            o = o[k]
+    except KeyError:
+        return None
 
 class JobFile:
     """
@@ -47,10 +54,11 @@ class JobFile:
         self._soup = bs4.BeautifulSoup(self._content, 'html.parser')
 
         # Enhanced content alters behaviour of some parsing
-        if soup.find('div', {'id': 'enhanced-content'}):
+        if self._soup.find('div', {'id': 'enhanced-content'}):
             self.enhanced = True
         else:
             self.enhanced = False
+        self.data["enhanced"] = self.enhanced
 
     @staticmethod
     def transform_key(self, key_string):
@@ -103,7 +111,7 @@ class JobFile:
             yield {key: content}
 
     @property
-    def description(self, soup, enhanced):
+    def description(self):
         # To add space when encounter <p> and <br> tags otherwise words are
         # attached
         # Some ads have the first div as <div id='enhanced-content'> which
@@ -123,9 +131,8 @@ class JobFile:
                 section = self._soup.findAll('div', {'id': 'enhanced-content'})[0]
                 return section.get_text(separator=u' ')
             except IndexError:
-                print(soup)
+                print(self._soup)
                 raise
-
         else:
             try:
                 section = self._soup.findAll('div', {'class': 'section', 'id': None})[1]
@@ -133,11 +140,10 @@ class JobFile:
             except IndexError:
                 pass
             try:
-                section = self._soup.findAll('div', {'id': 'job-description'})[1]
+                section = self._soup.findAll('div', {'id': 'job-description'})[0]
                 return section.get_text(separator=u' ')
             except IndexError:
                 pass
- 
             try:
                 description_text = []
                 section = self._soup.find('div', {'class': 'col-lg-12'})
@@ -154,9 +160,7 @@ class JobFile:
                 pass
 
     def extra_details(self):
-        """
-        Get the extra details at the end of description
-        """
+        "Get the extra details at the end of description"
         if not self.enhanced:
             for section in self._soup.findAll('div', {'class': 'inlineBox'}):
                 key = section.find('p')
@@ -187,13 +191,13 @@ class JobFile:
                 content = content.text
                 yield {key: content}
 
-    def parse(self):
-        self.data = {
+    def parse_html(self):
+        self.data.update({
             'description': self.description,
             'employer': self.employer,
             'name': self.job_title,
             'location': self.place,
-        }
+        })
         for d in self.details():
             self.data.update(d)
 
@@ -201,11 +205,9 @@ class JobFile:
             self.data.update(extra_details)
         return self.data
 
-    def _extract_json_ads(self, data):
-        """
-        Get the json content from the page and return a dictionary from it
-        """
-        content_json = data.find('script', attrs={'type': 'application/ld+json'})
+    def _extract_json_ads(self):
+        "Get the json content from the page and return a dictionary from it"
+        content_json = self._soup.find('script', attrs={'type': 'application/ld+json'})
         try:
             content_json = content_json.contents[0]
             d = json.loads(content_json)
@@ -213,11 +215,11 @@ class JobFile:
         except AttributeError:
             return None
 
-    def get_new_subject_area(self, soup):
-
-        subject = soup.find(lambda tag:tag.name=="b" and "Subject Area(s):" in tag.text)
+    @property
+    def new_subject_area(self):
+        subject = self._soup.find(lambda tag: tag.name == "b" and "Subject Area(s):" in tag.text)
         if subject is not None:
-            list_subject = list()
+            list_subject = []
             while True:
                 # find the next subject which not contain the value but it is just before
                 # the input that does have the value
@@ -228,14 +230,15 @@ class JobFile:
                     break
             return list_subject
 
-    def get_new_extra_location(self, soup):
-
-        for tag in soup.find_all('input', attrs={'class': 'j-form-input__location'}):
+    @property
+    def new_extra_location(self):
+        for tag in self._soup.find_all('input', attrs={'class': 'j-form-input__location'}):
             return tag['value']
 
-    def get_new_type_role(self, soup):
+    @property
+    def new_type_role(self):
 
-        type_role = soup.find(lambda tag:tag.name=="b" and "Type / Role:" in tag.text)
+        type_role = self._soup.find(lambda tag: tag.name == "b" and "Type / Role:" in tag.text)
         if type_role is not None:
             list_type_role = list()
             while True:
@@ -248,122 +251,62 @@ class JobFile:
                     break
             return list_type_role
 
-    def parse_json(self, dict_output, soup):
-        """
-        """
-        try:
-            dict_output['name'] = dict_output['json']['title']
-        except KeyError:
-            pass
-        try:
-            dict_output['employer'] = dict_output['json']['hiringOrganization']['name']
-        except KeyError:
-            pass
-        try:
-            dict_output['department'] = dict_output['json']['hiringOrganization']['department']['name']
-        except KeyError:
-            pass
-        try:
-            dict_output['location'] = dict_output['json']['jobLocation']['address']['addressLocality']
-        except TypeError:  # The job location seems to appears sometimes in a list. However that list contains the same dictionary
-            try:
-                dict_location = dict_output['json']['jobLocation'][0]
-                dict_output['location'] = dict_location['address']['addressLocality']
-            except IndexError:
-                pass
-        except KeyError:
-            pass
+    def _get_nested_data(self, keys):
+        return get_nested_key(self.data, keys)
 
-        try:
-            dict_output['salary'] = dict_output['json']['baseSalary']['value']
-        except KeyError:
-            pass
-        try:
-            hours_contract = dict_output['json']['employmentType']
+    def parse_json(self):
+        """
+        """
+        for k, v in {
+                'name': 'json.title',
+                'employer': 'json.hiringOrganization.name',
+                'department': 'json.hiringOrganization.department.name',
+                'salary': 'json.baseSalary.value',
+                'placed_on': 'json.datePosted',
+                'closes': 'json.validThrough',
+                'description': 'json.description',
+                'region': 'json.jobLocation.address.addressRegion'
+        }.items():
+            self.data[k] = self._get_nested_data(v)
+        joblocation = self._get_nested_data('json.jobLocation')
+        if isinstance(joblocation, list):
+            joblocation = joblocation[0]
+        self.data['location'] = get_nested_key(joblocation, 'address.addressLocality')
+        self.data['region'] = get_nested_key(joblocation, 'address.addressRegion')
+        hours_contract = get_nested_key(self.data, 'json.employmentType')
+        if hours_contract:
             splitted = hours_contract.split(',')
             # The hours and the contract are stored in the same k:v
             # Sometime when part time and full time are both available, the first
             # two elements are them. The last one is always the contract
-            dict_output['hours'] = splitted[:-1]
-            dict_output['contract'] =  splitted[-1]
-        except KeyError:
-            pass
-        try:
-            dict_output['placed_on'] = dict_output['json']['datePosted']
-        except KeyError:
-            pass
-        try:
-            dict_output['closes'] = dict_output['json']['validThrough']
-        except KeyError:
-            pass
-        try:
-            dict_output['description'] = dict_output['json']['description']
-        except KeyError:
-            pass
-        try:
-            dict_output['region'] = dict_output['json']['jobLocation']['address']['addressRegion']
+            self.data['hours'] = splitted[:-1]
+            self.data['contract'] = splitted[-1]
+        self.data.update({
+            'enhanced': 'json',
+            'subject_area': self.new_subject_area,
+            'extra_location': self.new_extra_location,
+            'type_role': self.type_role
+        })
+        return self.data
 
-        except TypeError:  # The job location seems to appears sometimes in a list. However that list contains the same dictionary
-            try:
-                dict_region = dict_output['json']['jobLocation'][0]
-                dict_output['location'] = dict_location['address']['addressRegion']
-            except IndexError:
-                pass
-        except KeyError:
-            pass
-
-        dict_output['subject_area'] = self.get_new_subject_area(soup)
-        dict_output['extra_location'] = self.get_new_extra_location(soup)
-        dict_output['type_role'] = self.get_new_type_role(soup)
-        return dict_output
-
-
-    def run(self, jobid, document=None):
-        """
-        """
-        dict_output = dict()
-        if document is None:
-            dict_output['jobid'] = jobid
-            raw_content = self.get_raw_content(jobid)
+    def parse(self):
+        "Parses job HTML or JSON and returns as a dictionary"
+        raw_json = self._extract_json_ads()
+        if raw_json:
+            self.data['json'] = raw_json
+            print("Parsing JSON")
+            return self.parse_json()
         else:
-            dict_output['jobid'] = jobid
-            raw_content = document
+            print("Parsing HTML")
+            return self.parse_html()
 
-        if raw_content:
-            soup = bs4.BeautifulSoup(raw_content, 'html.parser')
-            # Check if there is a presence of a json dictionary which means
-            # the new type of jobs
-            raw_json = self._extract_json_ads(soup)
-            if raw_json:
-                dict_output['enhanced'] = 'json'
-                dict_output['json'] = raw_json
-                dict_output = self.parse_json(dict_output, soup)
-            # Keep that version for old type of content and compatibility for
-            # Previous version
-            else:
-                dict_output = self.parse_html(dict_output, soup)
-        return dict_output
+def main(filename):
+    job = JobFile(filename).parse()
+    print("Enhanced:", job["enhanced"])
+    print(job["name"])
+    print()
+    print(job["description"])
 
 
-def main():
-    """
-    """
-    def get_filename(root_folder, *args):
-        """ Return the name of the file to be open in the csv reader """
-        for dirname, subdir, files in os.walk(root_folder):
-            for file_ in files:
-                if file_ not in itertools.chain(*args):
-                    yield file_
-
-    INPUT_FOLDER = '/home/olivier/data/job_analysis/dev-bob/jobs'
-    fileProc = fileProcess(INPUT_FOLDER)
-    for filename in get_filename(INPUT_FOLDER):
-        result = fileProc.run(filename)
-        try:
-            result['description']
-        except KeyError:
-            pass
-
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    main(Path(sys.argv[1]))
