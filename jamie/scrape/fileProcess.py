@@ -11,6 +11,7 @@ from typing import Union
 
 _table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * len(string.punctuation))
 _table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
+MINIMUM_DESCRIPTION_LENGTH = 560  # characters
 
 def get_nested_key(d, key):
     keys = key.split(".")
@@ -47,6 +48,7 @@ class JobFile:
         if isinstance(content, Path):
             self.filename = content
             self._content = self.filename.read_text()
+            self.data['filename'] = str(self.filename)
         elif isinstance(content, str):
             self._content = content
         else:
@@ -135,12 +137,20 @@ class JobFile:
                 raise
         else:
             try:
-                section = self._soup.findAll('div', {'class': 'section', 'id': None})[1]
-                return section.get_text(separator=u' ')
+                sections = [s.get_text(separator=u' ')
+                            for s in self._soup.findAll('div', {'class': 'section', 'id': None})]
+                sections.sort(key=len)
+                if len(sections[-1]) > MINIMUM_DESCRIPTION_LENGTH:
+                    return sections[-1]
             except IndexError:
                 pass
             try:
                 section = self._soup.findAll('div', {'id': 'job-description'})[0]
+                return section.get_text(separator=u' ')
+            except IndexError:
+                pass
+            try:
+                section = self._soup.findAll('div', {'id': 'rightcol'})[0]
                 return section.get_text(separator=u' ')
             except IndexError:
                 pass
