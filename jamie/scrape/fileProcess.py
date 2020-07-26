@@ -11,7 +11,7 @@ from typing import Union
 
 _table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * len(string.punctuation))
 _table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
-MINIMUM_DESCRIPTION_LENGTH = 560  # characters
+MINIMUM_DESCRIPTION_LENGTH = 500  # characters
 
 def get_nested_key(d, key):
     keys = key.split(".")
