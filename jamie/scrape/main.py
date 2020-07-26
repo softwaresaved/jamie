@@ -5,20 +5,16 @@
 Script to scrap the different jobs on https://www.jobs.ac.uk
 """
 import os
-import errno
-
 import requests
 from bs4 import BeautifulSoup
-
 from ..common.lib import make_sure_path_exists
 from ..config import Config
 from ..logger import logger
-from .fileProcess import fileProcess
 
 logger = logger(name="scrape", stream_level="DEBUG")
 
 content_attrs = [{'attrs_id': 'class', 'attrs_content': 'content'},
-                 {'attrs_id': 'id', 'attrs_content' :'enhanced-content'}]
+                 {'attrs_id': 'id', 'attrs_content': 'enhanced-content'}]
 
 
 def get_page(url):
