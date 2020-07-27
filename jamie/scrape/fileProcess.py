@@ -11,7 +11,7 @@ from typing import Union
 
 _table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * len(string.punctuation))
 _table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
-MINIMUM_DESCRIPTION_LENGTH = 500  # characters
+MINIMUM_DESCRIPTION_LENGTH = 150  # characters
 
 def get_nested_key(d, key):
     keys = key.split(".")
@@ -166,6 +166,23 @@ class JobFile:
                     if text_desc is True:
                         description_text.append(description.text)
                 return ' '.join(description_text)
+            except AttributeError:
+                pass
+            try:
+                jobPost = self._soup.find('div', {'class': 'jobPost'})
+                if jobPost:
+                    paras = [p.get_text(separator=u' ') for p in jobPost.findAll('p')]
+                    if len(paras) > 3:
+                        paras = paras[2:-1]  # first para is location and salary, second is usually about working hours
+                        paras = [p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH]
+                        return '\n'.join(paras)
+            except AttributeError:
+                pass
+            try:
+                paras = [p.get_text(separator=u' ') for p in self._soup.findAll('p')]
+                # Only keep long paragraphs and ones without emails
+                # (usually contact information)
+                return '\n'.join([p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH and '@' not in p])
             except AttributeError:
                 pass
 
