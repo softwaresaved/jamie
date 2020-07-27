@@ -1,5 +1,6 @@
 __version__ = '0.1'
 
+import collections
 import pandas as pd
 import jamie.config
 import jamie.scrape
@@ -123,3 +124,18 @@ class Jamie:
         if training_snapshot == "last":
             training_snapshot = ts.most_recent()
         return _information_gain(training_snapshot, text_column, output_column)
+
+    def list_jobids(self):
+        "List job ids from jobs database"
+        db = connectMongo(self.cf)
+        for i in db[self.cf['db.jobs']].find():
+            print(i['jobid'])
+
+    def yearly_distribution(self):
+        "Yearly distribution of jobs in database"
+        dist = collections.defaultdict(int)
+        db = connectMongo(self.cf)
+        for i in db[self.cf['db.jobs']].find():
+            dist[i['posted'][:4]] += 1
+        return pd.DataFrame(data=[(y, dist[y]) for y in sorted(dist)],
+                            columns=['year', 'frequency'])
