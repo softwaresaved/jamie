@@ -44,12 +44,16 @@ class JobFile:
                      'extra_subject_area', 'extra_location']
     data = dict()
 
-    def __init__(self, content: Union[Path, str]):
+    def __init__(self, content: Union[Path, str], jobid=None):
         if isinstance(content, Path):
             self.filename = content
             self._content = self.filename.read_text()
             self.data['filename'] = str(self.filename)
+            # Assign jobid if specified, otherwise take it from filename
+            self.data['jobid'] = jobid or self.filename.stem
         elif isinstance(content, str):
+            if jobid is None:
+                raise ValueError("jobid can't be None if content is string")
             self._content = content
         else:
             raise ValueError("content must be one of Path or str")

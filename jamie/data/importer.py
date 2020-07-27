@@ -128,7 +128,7 @@ def main(employer='uk_uni'):
         clean_data = OutputRow(data, employer=employer)
         clean_data.clean_row()
         data_to_record = clean_data.to_dictionary()
-        if 'description' in data_to_record['invalid_code'] or data_to_record['description'] is None:
+        if 'description' in data_to_record.get('invalid_code', []) or data_to_record['description'] is None:
             logger.error('No description found in %s', data_to_record['filename'])
         try:
             if len(data_to_record['invalid_code']) >= 3:
