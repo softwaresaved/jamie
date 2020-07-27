@@ -31,6 +31,10 @@ class JobFile:
     content : Path or str
         If type Path, filename of jobs.ac.uk scraped document, or if str,
         the content itself
+    jobid : Optional[str]
+        If specified, used as jobid. When reading from a Path, the filename
+        is used instead to create the jobid. When reading from a string,
+        jobid is not optional.
 
     Attributes
     ----------
@@ -44,7 +48,7 @@ class JobFile:
                      'extra_subject_area', 'extra_location']
     data = dict()
 
-    def __init__(self, content: Union[Path, str], jobid=None):
+    def __init__(self, content: Union[Path, str], jobid: str = None):
         if isinstance(content, Path):
             self.filename = content
             self._content = self.filename.read_text()
