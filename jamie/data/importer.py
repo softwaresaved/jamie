@@ -107,6 +107,9 @@ def main(employer='uk_uni'):
     right_enhanced = []
     right_json = []
     for data in data_from_file(INPUT_FOLDER, new_jobs_list):
+        if db_jobs.find_one({"jobid": data['jobid']}):
+            logger.info("Found existing jobid, skipping %s", data['jobid'])
+            continue
         report.nb_processed_job += 1
         if report.nb_processed_job % 500 == 0:
             logger.debug(
