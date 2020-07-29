@@ -142,4 +142,6 @@ class Jamie:
                 dist["{:d}-{:02d}".format(i['placed_on'].year, i['placed_on'].month)] += 1
             else:
                 dist[i['placed_on'].year] += 1
-        print(pd.DataFrame(data=[(y, dist[y]) for y in sorted(dist)], columns=[kind[:-2], 'frequency']))
+        data = pd.DataFrame(data=[(y, dist[y]) for y in sorted(dist)], columns=[kind[:-2], 'frequency'])
+        print(data)
+        print("Total:", data.frequency.sum())
