@@ -8,6 +8,7 @@ import copy
 import string
 from pathlib import Path
 from typing import Union
+from .cleaningInformation import OutputRow
 
 _table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * len(string.punctuation))
 _table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
@@ -324,19 +325,24 @@ class JobFile:
         })
         return self.data
 
-    def parse(self):
+    def parse(self, clean=True):
         "Parses job HTML or JSON and returns as a dictionary"
         raw_json = self._extract_json_ads()
         if raw_json:
             self.data['json'] = raw_json
-            return self.parse_json()
+            data = self.parse_json()
         else:
-            return self.parse_html()
+            data = self.parse_html()
+        if clean:
+            return OutputRow(data).clean_row().to_dictionary()
+        else:
+            return data
 
 def main(filename):
     job = JobFile(filename).parse()
     print("Enhanced:", job["enhanced"])
-    print(job["name"])
+    print(job["jobid"], "-", job["job_title"])
+    print("Placed on", job.get("placed_on", None))
     print()
     print(job["description"])
 

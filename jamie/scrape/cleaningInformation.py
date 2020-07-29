@@ -495,6 +495,7 @@ class OutputRow:
         self.clean_subject_area()
         self.add_median_salary()
         # self.add_not_student()
+        return self
 
     def to_dictionary(self):
         """
