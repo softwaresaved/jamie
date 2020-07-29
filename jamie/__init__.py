@@ -131,11 +131,15 @@ class Jamie:
         for i in db[self.cf['db.jobs']].find():
             print(i['jobid'])
 
-    def yearly_distribution(self):
-        "Yearly distribution of jobs in database"
+    def distribution(self, kind):
+        "Distribution of jobs in database: monthly or yearly"
         dist = collections.defaultdict(int)
         db = connectMongo(self.cf)
         for i in db[self.cf['db.jobs']].find():
-            dist[i['posted'][:4]] += 1
-        return pd.DataFrame(data=[(y, dist[y]) for y in sorted(dist)],
-                            columns=['year', 'frequency'])
+            if 'placed_on' not in i:
+                continue
+            if kind == "monthly":
+                dist["{:d}-{:02d}".format(i['placed_on'].year, i['placed_on'].month)] += 1
+            else:
+                dist[i['placed_on'].year] += 1
+        print(pd.DataFrame(data=[(y, dist[y]) for y in sorted(dist)], columns=[kind[:-2], 'frequency']))
