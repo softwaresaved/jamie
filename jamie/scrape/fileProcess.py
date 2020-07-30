@@ -8,6 +8,7 @@ import copy
 import string
 from pathlib import Path
 from pprint import pprint
+from contextlib import suppress  # alternative to try: (...) except Exception: pass
 from typing import Union
 from .cleaningInformation import OutputRow
 
@@ -44,10 +45,6 @@ class JobFile:
         Parsed data from HTML content
     """
 
-    _matching_key = ['jobid', 'name', 'employer', 'location', 'salary',
-                     'hours', 'contract', 'placed_on', 'closes',
-                     'description', 'extra_type_role',
-                     'extra_subject_area', 'extra_location']
     data = dict()
 
     def __init__(self, content: Union[Path, str], jobid: str = None):
@@ -71,6 +68,9 @@ class JobFile:
         else:
             self.enhanced = False
         self.data["enhanced"] = self.enhanced
+
+    def _first_section(self, elem, attrs):
+        return self._soup.findAll(elem, attrs)[0].get_text(separator=u' ')
 
     @staticmethod
     def transform_key(key_string):
@@ -99,17 +99,13 @@ class JobFile:
 
     @property
     def job_title(self):
-        try:
+        with suppress(AttributeError):
             return self._soup.find('h1').text
-        except AttributeError:
-            return None
 
     @property
     def place(self):
-        try:
+        with suppress(AttributeError):
             return self._soup.find('h3').text
-        except AttributeError:
-            return None
 
     def details(self):
         table_to_match = 'td'
@@ -118,8 +114,7 @@ class JobFile:
         for element in self._soup.findAll(table_to_match, {'class': class_to_match}):
             key = element.text
             key = self.transform_key(key)
-            content = element.findNext('td')
-            content = content.text
+            content = element.findNext('td').text
             yield {key: content}
 
     @property
@@ -129,42 +124,27 @@ class JobFile:
         # Some ads have the first div as <div id='enhanced-content'> which
         # change the structure of the html
         if self.enhanced:
+            with suppress(IndexError):
+                return self._first_section('div', {'class': 'section', 'id': None})
+            with suppress(IndexError):
+                return self._first_section('div', {'id': 'enhanced-right'})
             try:
-                section = self._soup.findAll('div', {'class': 'section', 'id': None})[0]
-                return section.get_text(separator=u' ')
-            except IndexError:
-                pass
-            try:
-                section = self._soup.findAll('div', {'id': 'enhanced-right'})[0]
-                return section.get_text(separator=u' ')
-            except IndexError:
-                pass
-            try:
-                section = self._soup.findAll('div', {'id': 'enhanced-content'})[0]
-                return section.get_text(separator=u' ')
+                return self._first_section('div', {'id': 'enhanced-content'})
             except IndexError:
                 print(self._soup)
                 raise
         else:
-            try:
+            with suppress(IndexError):
                 sections = [s.get_text(separator=u' ')
                             for s in self._soup.findAll('div', {'class': 'section', 'id': None})]
                 sections.sort(key=len)
                 if len(sections[-1]) > MINIMUM_DESCRIPTION_LENGTH:
                     return sections[-1]
-            except IndexError:
-                pass
-            try:
-                section = self._soup.findAll('div', {'id': 'job-description'})[0]
-                return section.get_text(separator=u' ')
-            except IndexError:
-                pass
-            try:
-                section = self._soup.findAll('div', {'id': 'rightcol'})[0]
-                return section.get_text(separator=u' ')
-            except IndexError:
-                pass
-            try:
+            with suppress(IndexError):
+                return self._first_section('div', {'id': 'job-description'})
+            with suppress(IndexError):
+                return self._first_section('div', {'id': 'rightcol'})
+            with suppress(AttributeError):
                 description_text = []
                 section = self._soup.find('div', {'class': 'col-lg-12'})
                 # Need to find the first <p>. The description is under that one
@@ -176,9 +156,7 @@ class JobFile:
                     if text_desc is True:
                         description_text.append(description.text)
                 return ' '.join(description_text)
-            except AttributeError:
-                pass
-            try:
+            with suppress(AttributeError):
                 jobPost = self._soup.find('div', {'class': 'jobPost'})
                 if jobPost:
                     paras = [p.get_text(separator=u' ') for p in jobPost.findAll('p')]
@@ -186,15 +164,11 @@ class JobFile:
                         paras = paras[2:-1]  # first para is location and salary, second is usually about working hours
                         paras = [p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH]
                         return '\n'.join(paras)
-            except AttributeError:
-                pass
-            try:
+            with suppress(AttributeError):
                 paras = [p.get_text(separator=u' ') for p in self._soup.findAll('p')]
                 # Only keep long paragraphs and ones without emails
                 # (usually contact information)
                 return '\n'.join([p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH and '@' not in p])
-            except AttributeError:
-                pass
 
     def extra_details(self):
         "Get the extra details at the end of description"
@@ -247,8 +221,7 @@ class JobFile:
         content_json = self._soup.find('script', attrs={'type': 'application/ld+json'})
         try:
             content_json = content_json.contents[0]
-            d = json.loads(content_json)
-            return d
+            return json.loads(content_json)
         except AttributeError:
             return None
 
@@ -340,8 +313,8 @@ class JobFile:
             return data
 
 def main(filename):
-    job = JobFile(filename).parse()
-    pprint(job)
+    pprint(JobFile(filename).parse())
+
 
 if __name__ == "__main__":
     main(Path(sys.argv[1]))
