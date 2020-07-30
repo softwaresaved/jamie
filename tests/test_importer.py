@@ -26,6 +26,7 @@ d = {
         ("json.hiringOrganization.department.name", "computer_science"),
         ("json.jobLocation.address.addressRegion", "England"),
         ("json.description", "Another job description here"),
+        ("base", True),
     ])
 def test_get_nested_key(key, value):
     assert get_nested_key(d, key) == value
