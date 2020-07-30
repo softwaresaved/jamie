@@ -19,11 +19,10 @@ MINIMUM_DESCRIPTION_LENGTH = 150  # characters
 def get_nested_key(d, key):
     keys = key.split(".")
     o = copy.deepcopy(d)
-    try:
+    with suppress(KeyError):
         for k in keys:
             o = o[k]
-    except KeyError:
-        return None
+        return o
 
 class JobFile:
     """
