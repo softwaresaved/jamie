@@ -59,41 +59,34 @@ def get_db_ids(db):
     return db.distinct("jobid")
 
 
-def main(employer='uk_uni'):
-    """
-    Wrapper around for the data parser from html to mongodb
+def main(config, employer='uk_uni'):
+    """Import data from HTML to MongoDB
+
+    Parameters
+    ----------
+    config : jamie.config.Config
+        Configuration
+    employer : str, optional
+        Employer set to use, by default uk_uni
     """
 
     if not valid_employer(employer):
         print("importer: not a valid employer set\n"
               "          use 'jamie list-employers' to see them")
         sys.exit(1)
-    c = Config()
-    db_conn = connectMongo(c)
-    # Get the folder or the file where the input data are stored
-    INPUT_FOLDER = c['scrape.folder']
-    # ### Init the processes #####
 
-    # Connect to the database
-    logger.info("Connection to the database")
-    db_jobs = db_conn[c['db.jobs']]
-    # Ensure the indexes are created
-    create_index(db_jobs, "jobid", unique=True)
-    # create_index(db_jobs, 'IncludeInStudy', unique=False)
-    create_index(db_jobs, "predicted")
+    db_conn = connectMongo(config)
+    db_jobs = db_conn[config['db.jobs']]
+    create_index(db_jobs, "jobid", unique=True)  # faster searches for "jobid"
 
-    logger.info("Collecting the already recorded jobsIds")
+    logger.info("Collecting the already recorded jobs")
     recorded_jobs_list = get_db_ids(db_jobs)
-    logger.info("Nb of already recorded jobs: {}".format(len(recorded_jobs_list)))
+    logger.info("Already recorded jobs: {}".format(len(recorded_jobs_list)))
 
-    # Get the list of all files in the folders and only get the ones
-    # that are not in the two lists passed in argument
-    # That list is the list of jobs that are going to be proceeded
-    logger.info("Getting the list of jobsIds to process")
-    new_jobs_list = get_filename(INPUT_FOLDER, recorded_jobs_list)
-
+    # new_jobs_list has only the jobs not in recorded_jobs_list
+    new_jobs_list = get_filename(config['scrape.folder'], recorded_jobs_list)
     njobs = defaultdict(int)
-    for data in data_from_file(INPUT_FOLDER, new_jobs_list):
+    for data in data_from_file(config['scrape.folder'], new_jobs_list):
         if njobs['inserted'] % REPORT_INTERVAL == 0:
             logger.debug("Progress %s", njobs)
         try:
@@ -103,3 +96,4 @@ def main(employer='uk_uni'):
             njobs['duplicate'] += 1
         except pymongo.errors:
             njobs['mongo_error'] += 1
+    logger.info("Final import state %s", njobs)

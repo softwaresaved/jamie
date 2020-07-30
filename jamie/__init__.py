@@ -34,9 +34,9 @@ class Jamie:
     def load(self, employer=None):  # NOQA
         "Read scraped jobs into MongoDB"
         if employer:
-            jamie.data.importer.main(employer=employer)
+            jamie.data.importer.main(self.cf, employer=employer)
         else:
-            jamie.data.importer.main()
+            jamie.data.importer.main(self.cf)
 
     def config(self, field=None, value=None):
         "Reads and sets jamie configuration"
