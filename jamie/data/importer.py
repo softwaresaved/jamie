@@ -7,17 +7,15 @@ downloaded from www.jobs.ac.uk to mongodb, after cleaning.
 """
 
 import os
-import csv
 import sys
 import itertools
 import pymongo
+from collections import defaultdict
 from ..logger import logger
 from ..config import Config
 from ..common.getConnection import connectMongo
 from ..scrape.fileProcess import JobFile
-from ..scrape.cleaningInformation import OutputRow
 from . import valid_employer
-from .summary_day_operation import generateReport
 
 logger = logger(name="importer", stream_level="DEBUG")
 
@@ -87,108 +85,20 @@ def main(employer='uk_uni'):
     recorded_jobs_list = get_db_ids(db_jobs)
     logger.info("Nb of already recorded jobs: {}".format(len(recorded_jobs_list)))
 
-    # Init the report generator
-    report = generateReport(db_jobs)
-
     # Get the list of all files in the folders and only get the ones
     # that are not in the two lists passed in argument
     # That list is the list of jobs that are going to be proceeded
     logger.info("Getting the list of jobsIds to process")
     new_jobs_list = get_filename(INPUT_FOLDER, recorded_jobs_list)
 
-    m = 0
-    wrong_enhanced = []
-    wrong_normal = []
-    wrong_json = []
-    empty_file = []
-    # ### Start the record ####
-    n = 0
-    right_normal = []
-    right_enhanced = []
-    right_json = []
+    njobs = defaultdict(int)
     for data in data_from_file(INPUT_FOLDER, new_jobs_list):
-        if db_jobs.find_one({"jobid": data['jobid']}):
-            logger.info("Found existing jobid, skipping %s", data['jobid'])
+        if data["jobid"] in recorded_jobs_list:
             continue
-        report.nb_processed_job += 1
-        if report.nb_processed_job % 500 == 0:
-            logger.debug(
-                """Nb of job processed: {} - recorded: {} - duplicate: {}""".format(
-                    report.nb_processed_job,
-                    report.nb_inserted_job,
-                    report.nb_duplicated_job
-                )
-            )
-            logger.debug('Total jobs: {}'.format(report.nb_processed_job))
-            logger.debug('\tTotal right jobs: {}'.format(report.nb_processed_job - m))
-            logger.debug('\t\tRight normal: {}'.format(len(right_normal)))
-            logger.debug('\t\tRight enhanced: {}'.format(len(right_enhanced)))
-            logger.debug('\t\tRight json: {}'.format(len(right_json)))
-            logger.debug('\tWrong jobs: {}'.format(m))
-            logger.debug('\t\tWrong normal: {}'.format(len(wrong_normal)))
-            logger.debug('\t\tWrong enhanced: {}'.format(len(wrong_enhanced)))
-            logger.debug('\t\tWrong json: {}'.format(len(wrong_json)))
-        if 'description' in data.get('invalid_code', []) or data['description'] is None:
-            logger.error('No description found in %s', data['filename'])
-        try:
-            if len(data['invalid_code']) >= 3:
-                m += 1
-                if data['enhanced'] == 'normal':
-                    wrong_normal.append(data['jobid'])
-                elif data['enhanced'] == 'enhanced':
-                    wrong_enhanced.append(data['jobid'])
-                elif data['enhanced'] == 'json':
-                    wrong_json.append(data['jobid'])
-
-            else:
-                n += 1
-                if data['enhanced'] == 'normal':
-                    right_normal.append(data['jobid'])
-                elif data['enhanced'] == 'enhanced':
-                    right_enhanced.append(data['jobid'])
-                elif data['enhanced'] == 'json':
-                    right_json.append(data['jobid'])
-        except KeyError:
-            n += 1
-            try:
-                if data['enhanced'] == 'normal':
-                    right_normal.append(data['jobid'])
-                elif data['enhanced'] == 'enhanced':
-                    right_enhanced.append(data['jobid'])
-                elif data['enhanced'] == 'json':
-                    right_json.append(data['jobid'])
-            except KeyError:
-                empty_file.append(data['jobid'])
         try:
             db_jobs.insert(data)
-            report.nb_inserted_job += 1
+            njobs['inserted'] += 1
         except pymongo.errors.DuplicateKeyError:
-            report.nb_duplicated_job += 1
+            njobs['duplicate'] += 1
         except pymongo.errors:
-            report.nb_mongo_error_job += 1
-    # #### Writing report for the cronjob to send by email ####
-    logger.info(report.get_summary())
-    logger.info(report.get_current())
-    logger.info(report.get_total())
-    logger.debug('Total jobs: {}'.format(report.nb_processed_job))
-    logger.debug('\tTotal right jobs: {}'.format(report.nb_processed_job - m))
-    logger.debug('\t\tRight normal: {}'.format(len(right_normal)))
-    logger.debug('\t\tRight enhanced: {}'.format(len(right_enhanced)))
-    logger.debug('\t\tRight json: {}'.format(len(right_json)))
-    logger.debug('\tWrong jobs: {}'.format(m))
-    logger.debug('\t\tWrong normal: {}'.format(len(wrong_normal)))
-    logger.debug('\t\tWrong enhanced: {}'.format(len(wrong_enhanced)))
-    logger.debug('\t\tWrong json: {}'.format(len(wrong_json)))
-    logger.debug('\t\tEmpty file: {}'.format(len(empty_file)))
-
-    for type_wrong, inlist in [('wrong_normal.csv', wrong_normal), ('wrong_enhanced', wrong_enhanced),
-                               ('wrong_json', wrong_json), ('empty_file', empty_file)]:
-
-        with open(type_wrong, 'w') as f:
-            csvwriter = csv.writer(f)
-            for i in inlist:
-                csvwriter.writerow([i])
-
-
-if __name__ == "__main__":
-    main()
+            njobs['mongo_error'] += 1

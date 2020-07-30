@@ -7,6 +7,7 @@ import bs4
 import copy
 import string
 from pathlib import Path
+from pprint import pprint
 from typing import Union
 from .cleaningInformation import OutputRow
 
@@ -340,12 +341,7 @@ class JobFile:
 
 def main(filename):
     job = JobFile(filename).parse()
-    print("Enhanced:", job["enhanced"])
-    print(job["jobid"], "-", job["job_title"])
-    print("Placed on", job.get("placed_on", None))
-    print()
-    print(job["description"])
-
+    pprint(job)
 
 if __name__ == "__main__":
     main(Path(sys.argv[1]))
