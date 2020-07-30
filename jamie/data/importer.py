@@ -18,6 +18,7 @@ from ..scrape.fileProcess import JobFile
 from . import valid_employer
 
 logger = logger(name="importer", stream_level="DEBUG")
+REPORT_INTERVAL = 1000  # report progress of database import every N jobs
 
 def get_filename(root_folder, *args):
     """
@@ -93,8 +94,8 @@ def main(employer='uk_uni'):
 
     njobs = defaultdict(int)
     for data in data_from_file(INPUT_FOLDER, new_jobs_list):
-        if data["jobid"] in recorded_jobs_list:
-            continue
+        if njobs['inserted'] % REPORT_INTERVAL == 0:
+            logger.debug("Progress %s", njobs)
         try:
             db_jobs.insert(data)
             njobs['inserted'] += 1
