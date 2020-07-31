@@ -54,10 +54,13 @@ class Jamie:
 
     def readjob(self, fn, save=False):
         "Reads a job HTML and prints in JSON format, with option to save"
+        fn = Path(fn)
+        if not fn.exists():
+            return "[jamie readjob] File does not exist: " + str(fn)
         data = json.dumps(
-            jamie.scrape.JobFile(Path(fn)).parse().json, indent=2, sort_keys=True)
+            jamie.scrape.JobFile(fn).parse().json, indent=2, sort_keys=True)
         if save:
-            (Path(fn).parent / (Path(fn).stem + '.json')).write_text(data)
+            (fn.parent / (fn.stem + '.json')).write_text(data)
         else:
             return data
 
