@@ -1,7 +1,9 @@
 __version__ = '0.1'
 
+import json
 import collections
 import pandas as pd
+from pathlib import Path
 import jamie.config
 import jamie.scrape
 import jamie.snapshots
@@ -49,6 +51,15 @@ class Jamie:
     def snapshots(self, kind, instance=None):
         "Show saved snapshots (models/training)"
         return jamie.snapshots.main(kind, instance)
+
+    def readjob(self, fn, save=False):
+        "Reads a job HTML and prints in JSON format, with option to save"
+        data = json.dumps(
+            jamie.scrape.JobFile(Path(fn)).parse().json, indent=2, sort_keys=True)
+        if save:
+            (Path(fn).parent / (Path(fn).stem + '.json')).write_text(data)
+        else:
+            return data
 
     def features(self):
         "List possible features (job types)"
