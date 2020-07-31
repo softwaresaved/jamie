@@ -44,7 +44,7 @@ class Jamie:
 
     def scrape(self):
         "Scrapes jobs from jobs.ac.uk"
-        return jamie.scrape.main()
+        return jamie.scrape.main(self.cf)
 
     def snapshots(self, kind, instance=None):
         "Show saved snapshots (models/training)"

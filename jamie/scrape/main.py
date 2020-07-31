@@ -166,11 +166,10 @@ def record_data(input_folder, job_id, data):
         raise
 
 
-def main(_):
+def main(config):
     """
     """
     # Get the folder or the file where the input data are stored
-    config = Config()
     input_folder = config['scrape.folder']
 
     # Check if the folder exists
@@ -193,7 +192,6 @@ def main(_):
     n = 0
     # file_process = fileProcess()
     for job in jobs_list:
-
         job_rel_url = extract_job_url(job)
         jobid, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
         # Check if the jobid is not parsed yet
@@ -207,9 +205,5 @@ def main(_):
             if data_to_record is None:
                 raise
             record_data(input_folder, jobid, data_to_record)
-            n+=1
+            n += 1
             logger.info('Jobs downloaded: {}'.format(n))
-
-
-if __name__ == "__main__":
-    main()
