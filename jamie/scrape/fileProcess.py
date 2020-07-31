@@ -6,8 +6,8 @@ import json
 import bs4
 import copy
 import string
+import datetime
 from pathlib import Path
-from pprint import pprint
 from contextlib import suppress  # alternative to try: (...) except Exception: pass
 from typing import Union
 from .cleaningInformation import OutputRow
@@ -303,16 +303,24 @@ class JobFile:
         raw_json = self._extract_json_ads()
         if raw_json:
             self.data['json'] = raw_json
-            data = self.parse_json()
+            self.parse_json()
         else:
-            data = self.parse_html()
+            self.parse_html()
         if clean:
-            return OutputRow(data).clean_row().to_dictionary()
-        else:
-            return data
+            self.data = OutputRow(self.data).clean_row().to_dictionary()
+        return self
+
+    @property
+    def json(self):
+        _json = self.data.copy()
+        for date in ['placed_on', 'closes']:
+            if date in self.data and isinstance(self.data[date], datetime.datetime):
+                _json[date] = self.data[date].date().isoformat()
+        return _json
 
 def main(filename):
-    pprint(JobFile(filename).parse())
+    print(json.dumps(
+        JobFile(filename).parse().json, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
