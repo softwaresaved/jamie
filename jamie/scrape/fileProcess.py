@@ -37,16 +37,9 @@ class JobFile:
         If specified, used as jobid. When reading from a Path, the filename
         is used instead to create the jobid. When reading from a string,
         jobid is not optional.
-
-    Attributes
-    ----------
-    data : dict
-        Parsed data from HTML content
     """
-
-    data = dict()
-
     def __init__(self, content: Union[Path, str], jobid: str = None):
+        self.data = {}
         if isinstance(content, Path):
             self.filename = content
             self._content = self.filename.read_text()
