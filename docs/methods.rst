@@ -18,23 +18,21 @@ ensure that at least the following attributes are there for each job in our
 dataset:
 
 * **Job Title**: Title of the job, like Research Associate, Research Software
-  Engineer, Lecturer, etc. We use text features from the description as one of
+  Engineer, Lecturer, etc. We use text features from the job title as one of
   our features.
 
 * **Description**: This key contains the description of the job. We use text
   features from the description as one of our features.
 
-* **Date of publishing**: The date of publishing, stored using the key
-  `placed_on`, is essential to do an analysis over time.
+* **Date of publishing**: The date the job was published. This is essential to
+  do an analysis over time.
 
-* **Salary**: This information is essential for our analysis. Originally, is
-  a text field that we convert into two piece of information. One is the lower
-  salary and the second is the higher salary based on skills or negotiation. If
-  only one salary is present, both are the same.
+* **Salary**: This information is essential for our analysis. The salary can be
+  a single value or a range of values depending on experience.
 
-* **Employer**: This is the employer posted the job ads. We are only interested
-  in Universities in United-Kingdom. Therefore we use a list of all
-  universities in UK and only keep the ones that matches an element in that
+* **Employer**: This is the employer that posted the job. We are only
+  interested in universities in the United Kingdom. Therefore we use a list of
+  all universities in UK and only keep the ones that matches an element in that
   list.
 
 * **Type of role**: This field is an array of the type of job is given. It can
