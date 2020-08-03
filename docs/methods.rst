@@ -51,13 +51,17 @@ the jobs in two categories we needed to have a training dataset. We asked
 experts to read a subset of jobs as presented on a website (without pictures)
 in which category that jobs fallen into. They had the choice between 4 options:
 
-* This job ads is mostly for a software development position.
-* This jobs requires some software development.
-* This jobs does not requires software development.
-* There is not enough information to decide.
+* This job is **mostly** for a software development position (*most*).
+* This jobs requires **some** software development (*some*).
+* This jobs does **not** require software development (*none*).
+* There is not enough information to decide (*NA*).
 
 Each job was shown several times (up to three times) to different experts until
-a consensus emerged. The aggregation procedure is shown in detail here TODO.
+a consensus emerged. A job is classified as Software job if two participants
+assigned *most* or *some* to the question: how much of this person's time would
+be spent developing software? If no consensus emerged, a third rater was used
+to derive a majority rating. Only jobs with a clear classification were kept
+for building the model.
 
 Features
 --------
