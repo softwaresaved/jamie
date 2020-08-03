@@ -122,10 +122,18 @@ recall. However, the F1 gives equal weight to both precision and recall. While
 we could have experimented with variations of weighted F1 score, we opted for
 the following model selection criterion: select the model with a precision
 above 0.90 and with the highest recall. Following this selection criterion, we
-obtained the chosen model as the logistic regression model with C = NNN. It has
-the following metrics:
+obtained the chosen model as the logistic regression model with C = 10000,
+balanced class weights and the L-BFGS solver. It has the following metrics:
 
-TODO: metrics
+================== ======
+Metric             Value
+================== ======
+Precision          0.9007
+Recall             0.3549
+Balanced accuracy  0.6688
+F1                 0.4914
+ROC AUC            0.9093
+=================  ======
 
 **Model ensemble**. To obtain confidence intervals for the probability
 estimates obtained from logistic regression, we create a model ensemble by
@@ -147,4 +155,16 @@ which we obtain bootstrap confidence intervals and estimates for the
 probability for each job. The probability bound is used to generate upper and
 lower bounds of the total number of jobs.
 
-TODO: descriptives of predictions
+Out of the 260,821 jobs, there were 33,704 (32000--35,413, based on 95% CI of
+probability being greater than 0.5) jobs classified. This translates to
+a proportion of 12.9% (95% CI 12.3--13.6%) of all jobs being classified as
+requiring some software development. We note that the precision is high while
+recall is low. The model is conservative; the target job type is precisely
+identified with few false positives, but in doing so, the model fails to
+identify many jobs. The reported estimates should be considered an
+underestimate for the target job type. Out of the 33,704 jobs classified as
+software jobs, 513 (1.5% of all software jobs) had the words 'research' and
+'software' in their job title, explicitly indicating their nature. This metric
+can be used to track adoption of the nomenclature of research software
+engineering in the UK academic job market. Out of the 33,704 software jobs,
+25,634 (76.1%) were fixed term and 6,738 (20.0%) were permanent positions.
