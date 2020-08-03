@@ -57,11 +57,18 @@ in which category that jobs fallen into. They had the choice between 4 options:
 * There is not enough information to decide (*NA*).
 
 Each job was shown several times (up to three times) to different experts until
-a consensus emerged. A job is classified as Software job if two participants
+a consensus emerged. A job is classified as software job if two participants
 assigned *most* or *some* to the question: how much of this person's time would
 be spent developing software? If no consensus emerged, a third rater was used
 to derive a majority rating. Only jobs with a clear classification were kept
-for building the model.
+for building the model. We performed an inter-rater reliability calculation
+using Krippendorff's alpha, and obtained alpha = 0.6774 for the first two
+raters. We do not include the third rater as the third rater did not rate all
+the data, but if we do, we obtain an alpha of 0.6116. Thus the data just
+crosses the minimum acceptable threshold for data analysis, and it is generally
+recommended to have alpha above 0.800. Thus we should try to obtain better,
+more consistent ratings, either by using more expert raters with a clearly
+defined set of questions or many raters, such as in crowdsourcing.
 
 Features
 --------
