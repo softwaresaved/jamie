@@ -141,7 +141,7 @@ Recall             0.3549
 Balanced accuracy  0.6688
 F1                 0.4914
 ROC AUC            0.9093
-=================  ======
+================== ======
 
 **Model ensemble**. To obtain confidence intervals for the probability
 estimates obtained from logistic regression, we create a model ensemble by
