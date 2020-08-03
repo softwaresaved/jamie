@@ -66,9 +66,10 @@ using Krippendorff's alpha, and obtained alpha = 0.6774 for the first two
 raters. We do not include the third rater as the third rater did not rate all
 the data, but if we do, we obtain an alpha of 0.6116. Thus the data just
 crosses the minimum acceptable threshold for data analysis, and it is generally
-recommended to have alpha above 0.800. Thus we should try to obtain better,
-more consistent ratings, either by using more expert raters with a clearly
-defined set of questions or many raters, such as in crowdsourcing.
+recommended to have alpha above 0.800. We can only rely on this training data
+as a tentative signal for a software job. Ideally we should try to obtain
+better, more consistent ratings, either by using more expert raters with
+a clearly defined set of questions or many raters, such as in crowdsourcing.
 
 Features
 --------
