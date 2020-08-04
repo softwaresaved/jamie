@@ -35,44 +35,42 @@ model](http://data.trenozoic.net/jamie/docs/methods.html)**.
 
 ## Example
 
-In the following `$` denotes the terminal prompt, which should be ignored.
-
 1. Look at the configuration
 
-    $ jamie config
-    $ jamie config <configname> <value>   # to set config
+       jamie config
+       jamie config <configname> <value>   # to set config
 
 2. Download some jobs:
 
-    $ jamie scrape
+       jamie scrape
 
 3. Load them into local MongoDB:
 
-    $ jamie load
+       jamie load
 
 4. Create the training snapshots folder underneath the common snapshots folder
    (configuration ``common.snapshots``:
 
-    $ mkdir -p snapshots/training
-    $ cp /path/to/training_set.csv snapshots/training/<date>
+       mkdir -p snapshots/training
+       cp /path/to/training_set.csv snapshots/training/<date>
 
 5. Train the model:
 
-    $ jamie train  # Latest snapshot by default
+       jamie train  # Latest snapshot by default
 
-    # If you wanted to use a specific snapshot
-    $ jamie train <snapshot> 
+       # If you wanted to use a specific snapshot
+       jamie train <snapshot> 
 
 6. The previous command will create model snapshots in ``snapshots/models``. You
    can now use these snapshots to make predictions:
 
-    $ jamie predict
+       jamie predict
 
    This will save the prediction snapshot under ``snapshots/predictions``.
 
 7. Generate report corresponding to the prediction snapshot:
 
-    $ jamie report
+       jamie report
 
 8. The report snapshot will be created in ``snapshots/reports``. The snapshot
    contains an ``index.html`` file which can be opened in a browser. The entire
