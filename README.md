@@ -1,4 +1,4 @@
-![jamie](docs/jamie.png)
+![jamie](docs/jamie-small.png)
 
 **Jobs Analysis using Machine Information Extraction** (JAMIE) is a tool that
 aims to monitor and analyse the number of academic jobs, mainly in the UK, that
