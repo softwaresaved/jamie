@@ -1,5 +1,7 @@
 ![jamie](docs/jamie-small.png)
 
+![Python 3.8](https://github.com/softwaresaved/jobs-analysis/workflows/Python%203.8/badge.svg?branch=jamie)
+
 **Jobs Analysis using Machine Information Extraction** (JAMIE) is a tool that
 aims to monitor and analyse the number of academic jobs, mainly in the UK, that
 require software skills.
