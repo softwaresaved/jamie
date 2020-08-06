@@ -29,7 +29,7 @@ The final step is the creation of the report.
 ![workflow](docs/workflow.svg)
 
 You can take a look at the **[detailed
-workflow](http://data.trenozoic.net/jamie/reports/latest/)** along with the
+workflow](http://data.trenozoic.net/jamie/docs/workflow.html)** along with the
 help for the command line interface, or look at how we **[built the
 model](http://data.trenozoic.net/jamie/docs/methods.html)**.
 
