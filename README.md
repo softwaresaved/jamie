@@ -13,10 +13,10 @@ require software skills.
 
 To install using pip:
 
-    git clone -b jamie git@github.com:softwaresaved/jobs-analysis.git
-    cd jobs-analysis
-    python3 -m venv venv
-    source venv/bin/activate
+    git clone git@github.com:softwaresaved/jamie.git
+    cd jamie
+    python3 -m venv .venv
+    source .venv/bin/activate
     pip install .
 
 ## How it works
