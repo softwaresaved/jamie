@@ -1,0 +1,23 @@
+docs/_build
+docs/logs
+
+logs
+
+*.egg-info
+tags
+tags.lock
+tags.temp
+snapshots
+input
+test-input
+
+.Rproj.user
+.Rhistory
+.RData
+.DS_Store
+*.pyc
+*~
+*.swp
+
+# Ignore the virtual environment
+.venv/
