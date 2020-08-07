@@ -7,8 +7,7 @@ Script to scrap the different jobs on https://www.jobs.ac.uk
 import os
 import requests
 from bs4 import BeautifulSoup
-from ..common.lib import make_sure_path_exists
-from ..config import Config
+from ..lib import make_sure_path_exists
 from ..logger import logger
 
 logger = logger(name="scrape", stream_level="DEBUG")

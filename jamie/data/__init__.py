@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 from box import Box
-from ..common.lib import table
+from ..lib import table
 
 
 def read_list(fn):

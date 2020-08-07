@@ -9,7 +9,7 @@ from tqdm import tqdm
 from bson.json_util import dumps
 from .common.getConnection import connectMongo
 from .logger import logger
-from .common.lib import isotime_snapshot
+from .lib import isotime_snapshot
 from .snapshots import ModelSnapshot
 
 Date = datetime.date

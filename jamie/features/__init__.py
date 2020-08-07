@@ -1,7 +1,7 @@
 # Features
 
 from .default import RSEFeatures
-from ..common.lib import arrow_table
+from ..lib import arrow_table
 from .base import FeatureBase  # NOQA
 
 allowed_features = {

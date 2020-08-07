@@ -24,7 +24,7 @@ from sklearn.model_selection import (
 )
 from .snapshots import TrainingSnapshotCollection
 from .features import select_features
-from .common.lib import isotime_snapshot, gitversion
+from .lib import isotime_snapshot, gitversion
 from .logger import logger
 
 logger = logger(name="models", stream_level="INFO")
@@ -154,10 +154,10 @@ model_description = {
         "matrix": "sparse",
     },
     "RandomForest": {
-        "params": {"clf__n_estimators": "=10:101:10", "clf__max_features": "=6:32:5",},
+        "params": {"clf__n_estimators": "=10:101:10", "clf__max_features": "=6:32:5"},
         "matrix": "sparse",
     },
-    "CART": {"params": [{"clf__max_depth": "=3:20"}], "matrix": "sparse",},
+    "CART": {"params": [{"clf__max_depth": "=3:20"}], "matrix": "sparse"},
     "GradientBoosting": {
         "params": {
             "clf__learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],

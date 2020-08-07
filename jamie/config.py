@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytoml as toml
-from .common.lib import arrow_table
+from .lib import arrow_table
 
 DEFAULTS = {
     "common.snapshots": Path("snapshots"),
@@ -65,7 +65,7 @@ class Config:
                 raise ValueError("%s accepts Path keys")
         try:
             root, child = s.split(".")
-        except:
+        except ValueError:
             raise ValueError("Indentation level not two levels (abc.xyz)")
         cf = {}
         for k in self.cf:
