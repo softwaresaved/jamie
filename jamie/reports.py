@@ -5,7 +5,6 @@ import calendar
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from slugify import slugify
 import matplotlib.pyplot as plt
 from shutil import copyfile
 from .logger import logger
@@ -27,6 +26,10 @@ def fix_day(date, day="01"):
         return "-".join([yyyy, mm, day])
     else:
         return None
+
+
+def slugify_location(x):
+    return "nloc_" + x.replace("&", "").replace(",", "").lower().replace(" ", "_")
 
 
 class Report:
@@ -99,8 +102,7 @@ class Report:
             ((df.contract == Contract.FixedTerm) & (df.probability > 0.5)).sum()
         )
         locations = {
-            "nloc_"
-            + slugify(loc).replace("-", "_"): int(
+            slugify_location(loc): int(
                 ((df.probability > 0.5) & (df.extra_location == loc)).sum()
             )
             for loc in [

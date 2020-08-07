@@ -23,11 +23,9 @@ setup(
         "tabulate",  # pretty printing tabular data
         "python-box==4.2.3",  # access dict using dot notation
         "numpy>=1.12.0",
-        "python-slugify",
         "tqdm",  # progress bars
         "pytest",
         "requests==2.22.0",
-        "python-slugify",
         "beautifulsoup4==4.9.0",
     ],
     extras_require={
