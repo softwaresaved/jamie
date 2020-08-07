@@ -76,8 +76,8 @@ class OutputRow:
         and create a set of strings
         """
         return set(
-            " ".join(set([x for x in self.text_cleaner.clean_text(l)]))
-            for l in employers[self._employer].list
+            " ".join(set([x for x in self.text_cleaner.clean_text(empl)]))
+            for empl in employers[self._employer].list
         )
 
     def read_postcode(self):
@@ -108,12 +108,12 @@ class OutputRow:
             clean_key = "job_title"
         elif key == "type___role" or key == "extra_type___role":
             clean_key = "type_role"
-        elif (
-            key == "subject_area_s"
-            or key == "subject_area"
-            or key == "extra_subject_area"
-            or key == "extra_subject_area_s"
-        ):
+        elif key in [
+            "subject_area_s",
+            "subject_area",
+            "extra_subject_area",
+            "extra_subject_area_s",
+        ]:
             clean_key = "subject_area"
         elif key == "location_s" or key == "location":
             clean_key = "location"
@@ -187,46 +187,24 @@ class OutputRow:
                     return s
 
     def clean_description(self):
-        """
-        """
-        # clean Description
         self.check_validity(self.description, "description")
 
     def clean_jobid(self):
-        """
-        """
-        # clean JobId
         self.check_validity(self.jobid, "jobid")
 
     def clean_job_title(self):
-        """
-        """
-        # clean JobTitle
         self.check_validity(self.job_title, "job_title")
 
-    def clean_type_role(self):
-        """
-        """
-        self.check_validity(self.type_role, "type_role")
-
     def clean_subject_area(self):
-        """
-        """
         self.check_validity(self.subject_area, "subject_area")
 
     def clean_location(self):
-        """
-        """
         self.check_validity(self.location, "location")
 
     def clean_hours(self):
-        """
-        """
         self.check_validity(self.hours, "hours")
 
     def clean_place_on(self):
-        """
-        """
         self.check_validity(self.placed_on, "placed_on")
         self.placed_on = self.transform_valid_date(
             self.remove_suffix_date(self.placed_on)
@@ -235,8 +213,6 @@ class OutputRow:
             self.add_invalid_code("placed_on")
 
     def clean_closes(self):
-        """
-        """
         self.check_validity(self.closes, "closes")
         self.closes = self.transform_valid_date(self.remove_suffix_date(self.closes))
         if isinstance(self.closes, str):
@@ -254,24 +230,15 @@ class OutputRow:
                 pass
 
     def clean_employRef(self):
-        """
-        """
         self.check_validity(self.employRef, "EmployRef")
 
     def clean_employer(self):
-        """
-        """
         self.check_validity(self.employer, "employer")
 
     def clean_type_role(self):
-        """
-        """
         self.check_validity(self.employer, "type_role")
 
     def clean_contract(self):
-        """
-        """
-        # clean Contract
         self.check_validity(self.contract, "contract")
         try:
             if self.Contract == "Contract / Temporary":

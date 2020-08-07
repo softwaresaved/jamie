@@ -16,7 +16,6 @@ import re
 import unicodedata
 import sys
 
-from nltk import data
 from nltk import sent_tokenize
 from nltk import word_tokenize
 from nltk.corpus import stopwords
@@ -49,18 +48,22 @@ class textClean:
         # Use to remove the trailing punctuation in words that remain after tokenization
         self.REGEX_EMAIL = re.compile(
             (
-                "([a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`"
-                "{|}~-]+)*(@|\sat\s)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(\.|"
-                "\sdot\s))+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)"
+                r"([a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`"
+                r"{|}~-]+)*(@|\sat\s)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(\.|"
+                r"\sdot\s))+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)"
             )
         )
-        self.REGEX_SPLIT = re.compile(",|/|-|\s|'")
+        self.REGEX_SPLIT = re.compile(r",|/|-|\s|'")
         # To remove trailing space with translate in python 3, need to apply
         # the following workaround in order to build the self.TABLE to use in the translate func()
         # Workaround can be found on the following
-        # # http://stackoverflow.com/questions/11066400/remove-punctuation-from-unicode-formatted-strings/21635971#21635971
+        # http://stackoverflow.com
+        #   /questions/11066400
+        #   /remove-punctuation-from-unicode-formatted-strings/21635971#21635971
         # Discussion about removing punctuation
-        # # http://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-string-in-python
+        # http://stackoverflow.com/
+        #   /questions/265960
+        #   /best-way-to-strip-punctuation-from-a-string-in-python
         self.TABLE = dict.fromkeys(
             i
             for i in range(sys.maxunicode)
@@ -315,11 +318,14 @@ class textClean:
 
 
 def main():
-    # sentence = "A small test1  I you  will For the second's don't   take the asp.net because I need to program in c++ and in c# in R Each £ sentence £34234234, ala.group@somewhere.co.uk 321321312  http://www.group.com?yes , -12313 won't program in c# wouldn't I'll not pass the she doesn't his passes he's mentions' are perfect. exams's certificate, it's not my problem, as exam, test1. Second test"
     sentence = (
         "Petit test/pour voir-si/ca/fonction bien sans pour autant. Tout casserrrrr/."
     )
-    breaking_url = " http://www.ndm.ox.ac.uk/current-job-vacancies/vacancy/125232-Laboratory-Technician---Chemical-Biology-(-Protein-Purification-&-Cell-Culture-)"
+    breaking_url = (
+        " http://www.ndm.ox.ac.uk/current-job-vacancies/vacancy"
+        "/125232-Laboratory-Technician---Chemical-Biology-(-"
+        "Protein-Purification-&-Cell-Culture-)"
+    )
     print(sentence)
     process = textClean()
     cleaned = process.run(breaking_url)
