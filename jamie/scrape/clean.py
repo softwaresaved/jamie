@@ -9,8 +9,8 @@ import re
 import difflib
 from operator import itemgetter
 from datetime import datetime
-from ..common.textClean import textClean
 from ..data import employers
+from ..text_clean import TextClean
 
 
 class OutputRow:
@@ -66,7 +66,7 @@ class OutputRow:
         self.invalid_code = list()
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
-        self.text_cleaner = textClean()
+        self.text_cleaner = TextClean()
         self.uk_uni_list = self.read_uni_list_file()
         self.uk_postcode_dict = self.read_postcode()
 

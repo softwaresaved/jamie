@@ -23,7 +23,7 @@ from nltk.corpus import stopwords
 # from include.update_nltk import init_nltk
 
 
-class textClean:
+class TextClean:
     """
     Get a string as input of several sentence (or One), clean the text and return a list of words
     Break the text into several sentences
@@ -315,23 +315,3 @@ class textClean:
             txt_cleaned.append(sent_cleaned)
 
         return txt_cleaned
-
-
-def main():
-    sentence = (
-        "Petit test/pour voir-si/ca/fonction bien sans pour autant. Tout casserrrrr/."
-    )
-    breaking_url = (
-        " http://www.ndm.ox.ac.uk/current-job-vacancies/vacancy"
-        "/125232-Laboratory-Technician---Chemical-Biology-(-"
-        "Protein-Purification-&-Cell-Culture-)"
-    )
-    print(sentence)
-    process = textClean()
-    cleaned = process.run(breaking_url)
-
-    print(cleaned)
-
-
-if __name__ == "__main__":
-    main()

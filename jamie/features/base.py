@@ -1,11 +1,10 @@
 # Base file for features
 import numpy as np
-from slugify import slugify
 import sklearn.model_selection as model_selection
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import LabelBinarizer
-from ..common.textClean import textClean
+from ..text_clean import TextClean
 
 
 class TextSelector(BaseEstimator, TransformerMixin):
@@ -101,7 +100,7 @@ class FeatureBase:
         if any(f not in self.data for f in require_columns):
             raise ValueError("Missing one of required columns %r" % require_columns)
         if clean_columns:
-            cleaner = textClean()
+            cleaner = TextClean()
             for tc in clean_columns:
                 self.data[tc] = self.data[tc].apply(
                     lambda x: " ".join(cleaner.clean_text(x))
