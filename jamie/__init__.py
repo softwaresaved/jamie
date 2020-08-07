@@ -13,8 +13,8 @@ import jamie.data
 import jamie.data.importer
 import jamie.predict
 import jamie.reports
-from jamie.common.information_gain import _information_gain
-from jamie.common.getConnection import connectMongo
+from jamie.information_gain import _information_gain
+from jamie.lib import connect_mongo, arrow_table
 
 
 class Jamie:
@@ -111,7 +111,7 @@ class Jamie:
     ):
         "Generates a random sample of positive and negative classes"
         fn = "random-sample_n{}_rnd{}.csv".format(n_each_class, random_state)
-        db = connectMongo(self.cf)
+        db = connect_mongo(self.cf)
         if snapshot is None:
             prediction_snapshots = jamie.snapshots.PredictionSnapshotCollection(
                 self.cf["common.snapshots"]
@@ -166,14 +166,14 @@ class Jamie:
 
     def list_jobids(self):
         "List job ids from jobs database"
-        db = connectMongo(self.cf)
+        db = connect_mongo(self.cf)
         for i in db[self.cf["db.jobs"]].find():
             print(i["jobid"])
 
     def distribution(self, kind):
         "Distribution of jobs in database: monthly or yearly"
         dist = collections.defaultdict(int)
-        db = connectMongo(self.cf)
+        db = connect_mongo(self.cf)
         for i in db[self.cf["db.jobs"]].find():
             if "placed_on" not in i:
                 continue

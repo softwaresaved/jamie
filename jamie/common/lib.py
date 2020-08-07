@@ -3,6 +3,55 @@ import os
 import git
 import errno
 import datetime
+import pymongo
+import pytoml as toml
+from .logger import logger
+
+
+def read_toml(fn):
+    with open(fn) as fp:
+        return toml.load(fp)
+
+
+def connect_mongo(cfg):
+    """
+    """
+
+    _logger = logger(name="database", stream_level="DEBUG")
+
+    def connect_db(*args):
+        """
+        Parse the argument to Pymongo Client
+        and return a db object
+        """
+        db = args[0]
+        c = pymongo.MongoClient()
+        try:
+            user, passwd, db_auth, db_mech = args
+            confirmation = c[db].authenticate(
+                user, passwd, source=db_auth, mechanism=db_mech
+            )
+            _logger.info("Authenticated: {}".format(confirmation))
+        except (IndexError, ValueError, TypeError):
+            _logger.info(
+                "Connection to the database without password and authentication"
+            )
+        return c[db]
+
+    args_to_connect = [cfg["db.name"]]
+    # # MongoDB ACCESS #
+    if "db.access" in cfg:
+        access_value = read_toml(cfg["db.access"])
+        args_to_connect += [
+            access_value["MongoDB"].get("db_username", None),
+            access_value["MongoDB"].get("DB_PASSWORD", None),
+            access_value["MongoDB"].get("DB_AUTH_DB", None),
+            access_value["MongoDB"].get("DB_AUTH_METHOD", None),
+        ]
+
+    # Get the information about the db and the collections
+    # Create the instance that connect to the db storing the training set
+    return connect_db(*args_to_connect)
 
 
 def gitversion():
