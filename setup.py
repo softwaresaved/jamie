@@ -36,5 +36,9 @@ setup(name='jamie',
           'requests==2.22.0',
           'python-slugify',
           'beautifulsoup4==4.9.0'],
+      extras_require={
+          'docs': ['sphinx'],
+          'dev': ['pre-commit', 'black', 'flake8', 'pytest']
+      },
       package_data={'jamie': ['data/uk_uni*']},
       zip_safe=False)
