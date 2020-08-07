@@ -13,8 +13,10 @@ from ..logger import logger
 
 logger = logger(name="scrape", stream_level="DEBUG")
 
-content_attrs = [{'attrs_id': 'class', 'attrs_content': 'content'},
-                 {'attrs_id': 'id', 'attrs_content': 'enhanced-content'}]
+content_attrs = [
+    {"attrs_id": "class", "attrs_content": "content"},
+    {"attrs_id": "id", "attrs_content": "enhanced-content"},
+]
 
 
 def get_page(url):
@@ -64,7 +66,7 @@ def extract_job_url(job):
     returns:
         url str: relative URL path of the job ad
     """
-    return job.a['href']
+    return job.a["href"]
 
 
 def split_info_from_job_url(BASE_URL, job_rel_url):
@@ -104,10 +106,10 @@ def to_download(input_folder, job_id):
     if not os.path.isfile(filename):
         return True
     else:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             check_content = f.read()
             if check_content is None:
-                logger.info('{}: No data recorded'.format(filename))
+                logger.info("{}: No data recorded".format(filename))
                 return True
 
 
@@ -129,7 +131,7 @@ def _extract_ads(data, attrs_id, attrs_content):
 
 def extract_ads_info(data):
     for attrs in content_attrs:
-        content = _extract_ads(data, attrs['attrs_id'], attrs['attrs_content'])
+        content = _extract_ads(data, attrs["attrs_id"], attrs["attrs_content"])
         if len(content) > 0:
             return content
 
@@ -138,9 +140,9 @@ def new_extract_ads_info(data):
     """
     Return the body of the html page
     """
-    data_to_return = data.find_all('body')
+    data_to_return = data.find_all("body")
     if len(data_to_return) == 0:
-        data_to_return = data.find_all('html')
+        data_to_return = data.find_all("html")
     return data_to_return
 
 
@@ -170,25 +172,27 @@ def main(config):
     """
     """
     # Get the folder or the file where the input data are stored
-    input_folder = config['scrape.folder']
+    input_folder = config["scrape.folder"]
 
     # Check if the folder exists
-    logger.info('Check if the input folder exists: {}'.format(input_folder))
+    logger.info("Check if the input folder exists: {}".format(input_folder))
     make_sure_path_exists(input_folder)
 
     # Setting the URL.
     # Number of jobs fetch for one query
-    NUM_JOBS = config['scrape.njobs']
+    NUM_JOBS = config["scrape.njobs"]
     BASE_URL = "http://www.jobs.ac.uk"
-    FULL_URL = "{}/search/?keywords=*&sort=re&s=1&pageSize={}".format(BASE_URL, NUM_JOBS)
+    FULL_URL = "{}/search/?keywords=*&sort=re&s=1&pageSize={}".format(
+        BASE_URL, NUM_JOBS
+    )
 
     # Start the job collection
-    logger.info('Getting the search page')
+    logger.info("Getting the search page")
     page = get_page(FULL_URL)
     data = transform_txt_in_bs4(page)
 
     jobs_list = split_by_results(data)
-    logger.info('Start to download new jobs')
+    logger.info("Start to download new jobs")
     n = 0
     # file_process = fileProcess()
     for job in jobs_list:
@@ -196,7 +200,7 @@ def main(config):
         jobid, job_name, job_full_url = split_info_from_job_url(BASE_URL, job_rel_url)
         # Check if the jobid is not parsed yet
         if to_download(input_folder, jobid) is True:
-            logger.info('Job id: {}'.format(jobid))
+            logger.info("Job id: {}".format(jobid))
             job_page = get_page(job_full_url)
             job_data = transform_txt_in_bs4(job_page)
             data_to_record = new_extract_ads_info(job_data)
@@ -206,4 +210,4 @@ def main(config):
                 raise
             record_data(input_folder, jobid, data_to_record)
             n += 1
-            logger.info('Jobs downloaded: {}'.format(n))
+            logger.info("Jobs downloaded: {}".format(n))

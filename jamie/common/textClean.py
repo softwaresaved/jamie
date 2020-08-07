@@ -24,7 +24,6 @@ from nltk.corpus import stopwords
 # from include.update_nltk import init_nltk
 
 
-
 class textClean:
     """
     Get a string as input of several sentence (or One), clean the text and return a list of words
@@ -45,24 +44,33 @@ class textClean:
         # Allow to install the nltk files directly in the current folder
         # self.nltk_path = init_nltk(**kwargs)
         # if self.nltk_path:
-            # data.path.append(self.nltk_path)
-        self.stop_words = stopwords.words('english')
+        # data.path.append(self.nltk_path)
+        self.stop_words = stopwords.words("english")
         # Use to remove the trailing punctuation in words that remain after tokenization
-        self.REGEX_EMAIL = re.compile(("([a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`" "{|}~-]+)*(@|\sat\s)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(\.|" "\sdot\s))+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)"))
-        self.REGEX_SPLIT = re.compile(',|/|-|\s|\'')
+        self.REGEX_EMAIL = re.compile(
+            (
+                "([a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`"
+                "{|}~-]+)*(@|\sat\s)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(\.|"
+                "\sdot\s))+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)"
+            )
+        )
+        self.REGEX_SPLIT = re.compile(",|/|-|\s|'")
         # To remove trailing space with translate in python 3, need to apply
         # the following workaround in order to build the self.TABLE to use in the translate func()
         # Workaround can be found on the following
         # # http://stackoverflow.com/questions/11066400/remove-punctuation-from-unicode-formatted-strings/21635971#21635971
         # Discussion about removing punctuation
         # # http://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-string-in-python
-        self.TABLE = dict.fromkeys(i for i in range(sys.maxunicode)
-                                   if unicodedata.category(chr(i)).startswith('P'))
+        self.TABLE = dict.fromkeys(
+            i
+            for i in range(sys.maxunicode)
+            if unicodedata.category(chr(i)).startswith("P")
+        )
         # Remove the `#` form the dic to keep in in case of c#
         # FIXME Not having any impact yet because the word_tokenise is splitting c# in 'c', '#'
         del self.TABLE[35]
         # exceptions that have been encountered and are not dealt with all the automated options
-        self.exceptions = set('``')
+        self.exceptions = set("``")
 
     @staticmethod
     def break_sentence(text):
@@ -75,7 +83,7 @@ class textClean:
         """
         Remove email address with the REGEX_EMAIL
         """
-        return re.sub(self.REGEX_EMAIL, '', sentence)
+        return re.sub(self.REGEX_EMAIL, "", sentence)
 
     def break_word(self, sent):
         """
@@ -84,7 +92,7 @@ class textClean:
         simple splitting -- Also split words into several words when
         symbol in self.REGEX_SPLIT are encountered
         """
-        return word_tokenize(re.sub(self.REGEX_SPLIT, ' ', sent))
+        return word_tokenize(re.sub(self.REGEX_SPLIT, " ", sent))
         # return re.split(self.REGEX_SPLIT, sent)
 
     @staticmethod
@@ -116,6 +124,7 @@ class textClean:
         """
         Remove all the numbers
         """
+
         def check_numeric(s):
             """
             Check if a string is a numeric, Return True if yes
@@ -125,6 +134,7 @@ class textClean:
                 return True
             except (ValueError, TypeError):
                 return False
+
         if check_numeric(word) is False:
             return word
 
@@ -143,12 +153,12 @@ class textClean:
             if word == "'s":
                 pass
             elif word == "'ll":
-                return 'will'
+                return "will"
             else:
                 return word
         else:
             if word == "n't":
-                return 'not'
+                return "not"
             else:
                 return word
 
@@ -157,7 +167,7 @@ class textClean:
         """
         Remove the I that is not removed from the stop words list
         """
-        if word != 'i':
+        if word != "i":
             return word
 
     @staticmethod
@@ -168,7 +178,7 @@ class textClean:
         # http://stackoverflow.com/questions/25978771/what-is-regex-for-currency-symbol
         try:
             for ch in [word[0], word[-1]]:
-                if unicodedata.category(ch) == 'Sc':
+                if unicodedata.category(ch) == "Sc":
                     # return an empty word instead of None
                     # and get removed in the remove_empty_words()
                     return None
@@ -186,7 +196,7 @@ class textClean:
         :params: :word: str()
         :return: word: str()
         """
-        if word != '':
+        if word != "":
             return word
 
     def remove_exceptions(self, word):
@@ -234,7 +244,7 @@ class textClean:
         condition
         """
         try:
-            if not word.startswith(('www', 'http')):
+            if not word.startswith(("www", "http")):
                 return word
         except AttributeError:
             return None
@@ -306,7 +316,9 @@ class textClean:
 
 def main():
     # sentence = "A small test1  I you  will For the second's don't   take the asp.net because I need to program in c++ and in c# in R Each £ sentence £34234234, ala.group@somewhere.co.uk 321321312  http://www.group.com?yes , -12313 won't program in c# wouldn't I'll not pass the she doesn't his passes he's mentions' are perfect. exams's certificate, it's not my problem, as exam, test1. Second test"
-    sentence = 'Petit test/pour voir-si/ca/fonction bien sans pour autant. Tout casserrrrr/.'
+    sentence = (
+        "Petit test/pour voir-si/ca/fonction bien sans pour autant. Tout casserrrrr/."
+    )
     breaking_url = " http://www.ndm.ox.ac.uk/current-job-vacancies/vacancy/125232-Laboratory-Technician---Chemical-Biology-(-Protein-Purification-&-Cell-Culture-)"
     print(sentence)
     process = textClean()
@@ -315,5 +327,5 @@ def main():
     print(cleaned)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -3,26 +3,29 @@ import pytoml as toml
 from .common.lib import arrow_table
 
 DEFAULTS = {
-    'common.snapshots': Path('snapshots'),
-    'scrape.folder': Path('input'),
-    'common.nltk-files': Path('nltk-files'),
-    'scrape.njobs': 10000,
-    'db.name': 'jobsDB',
-    'db.tags': 'tags',
-    'db.jobs': 'jobs',
-    'db.prediction': 'prediction',
-    'db.mysql-host': '127.0.0.1',
-    'db.mysql-port': None,
-    'db.mysql-name': 'classify',
-    'model.k-fold': 5
+    "common.snapshots": Path("snapshots"),
+    "scrape.folder": Path("input"),
+    "common.nltk-files": Path("nltk-files"),
+    "scrape.njobs": 10000,
+    "db.name": "jobsDB",
+    "db.tags": "tags",
+    "db.jobs": "jobs",
+    "db.prediction": "prediction",
+    "db.mysql-host": "127.0.0.1",
+    "db.mysql-port": None,
+    "db.mysql-name": "classify",
+    "model.k-fold": 5,
 }
+
 
 class Config:
     cf = DEFAULTS
     cache = Path("~/.cache/jamie").expanduser()
     paths = ["common.snapshots", "scrape.folder", "common.nltk-files"]
 
-    def __init__(self, filename=Path("~/.config/jamie/config.toml").expanduser(), who="jamie"):
+    def __init__(
+        self, filename=Path("~/.config/jamie/config.toml").expanduser(), who="jamie"
+    ):
         self.who = who
         self.filename = filename
         self.exists = Path(filename).exists()
@@ -31,7 +34,9 @@ class Config:
                 _cf = toml.load(fp)
             for k in _cf:
                 if not isinstance(_cf[k], dict):
-                    raise ValueError("Incorrect configuration file format in %s" % self.filename)
+                    raise ValueError(
+                        "Incorrect configuration file format in %s" % self.filename
+                    )
                 else:
                     for y in _cf[k]:
                         key = "%s.%s" % (k, y)
@@ -59,12 +64,12 @@ class Config:
             if not isinstance(val, Path):
                 raise ValueError("%s accepts Path keys")
         try:
-            root, child = s.split('.')
+            root, child = s.split(".")
         except:
             raise ValueError("Indentation level not two levels (abc.xyz)")
         cf = {}
         for k in self.cf:
-            r, c = k.split('.')
+            r, c = k.split(".")
             if r not in cf:
                 cf[r] = {}
             if k in self.paths:
@@ -77,13 +82,13 @@ class Config:
             cf[root][child] = str(val)
         else:
             cf[root][child] = val
-        with self.filename.open('w') as fp:
+        with self.filename.open("w") as fp:
             toml.dump(cf, fp)
 
     def save(self, folder, name="config.toml"):
         cf = {}
         for k in self.cf:
-            r, c = k.split('.')
+            r, c = k.split(".")
             if r not in cf:
                 cf[r] = {}
             if k in self.paths:
@@ -91,7 +96,7 @@ class Config:
             else:
                 cf[r][c] = self.cf[k]
 
-        with (folder / name).open('w') as fp:
+        with (folder / name).open("w") as fp:
             toml.dump(cf, fp)
 
     def as_dict(self):
@@ -104,17 +109,19 @@ class Config:
     def __getitem__(self, key):
         return self.cf[key]
 
+
 def configurator(field=None, new_value=None):
     c = Config()
 
     if field is None:
-        print("jamie: configuration file %s -- %s\n"
-              "  config               List current configuration\n"
-              "  config <name>        Read value of configuration <name>\n"
-              "  config <name> <val>  Set configuration <name> to <val>\n\n"
-              "Current configuration:" %
-              ("(not present, using defaults)" if not c.exists else "",
-                  c.filename))
+        print(
+            "jamie: configuration file %s -- %s\n"
+            "  config               List current configuration\n"
+            "  config <name>        Read value of configuration <name>\n"
+            "  config <name> <val>  Set configuration <name> to <val>\n\n"
+            "Current configuration:"
+            % ("(not present, using defaults)" if not c.exists else "", c.filename)
+        )
         print(c)
     elif field is not None and new_value is None:
         return str(c.get(field))

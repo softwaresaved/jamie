@@ -21,7 +21,7 @@ class OutputRow:
     Return the cleaned dictionary and the key with the invalid code with it
     """
 
-    def __init__(self, input_row, employer='uk_uni'):
+    def __init__(self, input_row, employer="uk_uni"):
         """
         *Create attributes from the dict() input_row
         *Import the transformKey __init__() to have access to the key list
@@ -32,29 +32,33 @@ class OutputRow:
         self.input_row = input_row
         self._employer = employer
 
-        self.needed_keys = ['jobid',
-                            'description',
-                            'job_title',
-                            'employer',
-                            'location',
-                            'salary',
-                            'funding_amount',
-                            'hours',
-                            'contract',
-                            'placed_on',
-                            'closes',
-                            'subject_area']
+        self.needed_keys = [
+            "jobid",
+            "description",
+            "job_title",
+            "employer",
+            "location",
+            "salary",
+            "funding_amount",
+            "hours",
+            "contract",
+            "placed_on",
+            "closes",
+            "subject_area",
+        ]
 
         # Create a list of keys that are added during the cleaning process
-        self.new_keys = ['invalid_code',
-                         'salary_min',
-                         'salary_max',
-                         'duration_ad_days',
-                         'uk_university',
-                         'uk_postcode',
-                         'salary_median',
-                         'not_student',
-                         'in_uk']
+        self.new_keys = [
+            "invalid_code",
+            "salary_min",
+            "salary_max",
+            "duration_ad_days",
+            "uk_university",
+            "uk_postcode",
+            "salary_median",
+            "not_student",
+            "in_uk",
+        ]
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
@@ -71,15 +75,19 @@ class OutputRow:
         Read the txt file containing all universities from a text file
         and create a set of strings
         """
-        return set(' '.join(set([x for x in self.text_cleaner.clean_text(l)]))
-                   for l in employers[self._employer].list)
+        return set(
+            " ".join(set([x for x in self.text_cleaner.clean_text(l)]))
+            for l in employers[self._employer].list
+        )
 
     def read_postcode(self):
         """
         Read the csv file containing university and postcode for UK only
         """
-        return {row.PROVIDER_NAME: row.POSTCODE
-                for row in employers[self._employer].postcodes.itertuples()}
+        return {
+            row.PROVIDER_NAME: row.POSTCODE
+            for row in employers[self._employer].postcodes.itertuples()
+        }
 
     def matching_key(self, key):
         """
@@ -87,25 +95,30 @@ class OutputRow:
         """
         key = key.rstrip().lower()
 
-        if key == 'contract_type' or key == 'contract' or key == 'contract type':
-            clean_key = 'contract'
+        if key == "contract_type" or key == "contract" or key == "contract type":
+            clean_key = "contract"
 
-        elif key == 'expires' or key == 'closes':
-            clean_key = 'closes'
+        elif key == "expires" or key == "closes":
+            clean_key = "closes"
 
-        elif key == 'placed on':
-            clean_key = 'placed_on'
+        elif key == "placed on":
+            clean_key = "placed_on"
 
-        elif key == 'name':
-            clean_key = 'job_title'
-        elif key == 'type___role' or key == 'extra_type___role':
-            clean_key = 'type_role'
-        elif key == 'subject_area_s' or key == 'subject_area' or key == 'extra_subject_area' or key == 'extra_subject_area_s':
-            clean_key = 'subject_area'
-        elif key == 'location_s' or key == 'location':
-            clean_key = 'location'
-        elif key == 'extra_location_s':
-            clean_key = 'extra_location'
+        elif key == "name":
+            clean_key = "job_title"
+        elif key == "type___role" or key == "extra_type___role":
+            clean_key = "type_role"
+        elif (
+            key == "subject_area_s"
+            or key == "subject_area"
+            or key == "extra_subject_area"
+            or key == "extra_subject_area_s"
+        ):
+            clean_key = "subject_area"
+        elif key == "location_s" or key == "location":
+            clean_key = "location"
+        elif key == "extra_location_s":
+            clean_key = "extra_location"
         else:
             clean_key = key
         return clean_key
@@ -130,7 +143,7 @@ class OutputRow:
             try:
                 getattr(self, key)
             except AttributeError:
-                setattr(self, key, '')
+                setattr(self, key, "")
 
     @staticmethod
     def remove_suffix_date(s):
@@ -143,7 +156,7 @@ class OutputRow:
         :return:
             str() without the st, th
         """
-        return re.sub(r'(\d)(st|nd|rd|th)', r'\1', str(s))
+        return re.sub(r"(\d)(st|nd|rd|th)", r"\1", str(s))
 
     @staticmethod
     def transform_valid_date(s):
@@ -163,13 +176,13 @@ class OutputRow:
             failed
         """
         try:
-            return datetime.strptime(s, '%d %B %Y')
+            return datetime.strptime(s, "%d %B %Y")
         except ValueError:
             try:
-                return datetime.strptime(s.replace(' ', '').strip(), "%Y-%m-%d")
+                return datetime.strptime(s.replace(" ", "").strip(), "%Y-%m-%d")
             except ValueError:
                 try:
-                    return datetime.strptime(s.split('+')[0], '%Y-%m-%dT%H:%M:%S')
+                    return datetime.strptime(s.split("+")[0], "%Y-%m-%dT%H:%M:%S")
                 except ValueError:
                     return s
 
@@ -177,61 +190,63 @@ class OutputRow:
         """
         """
         # clean Description
-        self.check_validity(self.description, 'description')
+        self.check_validity(self.description, "description")
 
     def clean_jobid(self):
         """
         """
         # clean JobId
-        self.check_validity(self.jobid, 'jobid')
+        self.check_validity(self.jobid, "jobid")
 
     def clean_job_title(self):
         """
         """
         # clean JobTitle
-        self.check_validity(self.job_title, 'job_title')
+        self.check_validity(self.job_title, "job_title")
 
     def clean_type_role(self):
         """
         """
-        self.check_validity(self.type_role, 'type_role')
+        self.check_validity(self.type_role, "type_role")
 
     def clean_subject_area(self):
         """
         """
-        self.check_validity(self.subject_area, 'subject_area')
+        self.check_validity(self.subject_area, "subject_area")
 
     def clean_location(self):
         """
         """
-        self.check_validity(self.location, 'location')
+        self.check_validity(self.location, "location")
 
     def clean_hours(self):
         """
         """
-        self.check_validity(self.hours, 'hours')
+        self.check_validity(self.hours, "hours")
 
     def clean_place_on(self):
         """
         """
-        self.check_validity(self.placed_on, 'placed_on')
-        self.placed_on = self.transform_valid_date(self.remove_suffix_date(self.placed_on))
+        self.check_validity(self.placed_on, "placed_on")
+        self.placed_on = self.transform_valid_date(
+            self.remove_suffix_date(self.placed_on)
+        )
         if isinstance(self.placed_on, str):
-            self.add_invalid_code('placed_on')
+            self.add_invalid_code("placed_on")
 
     def clean_closes(self):
         """
         """
-        self.check_validity(self.closes, 'closes')
+        self.check_validity(self.closes, "closes")
         self.closes = self.transform_valid_date(self.remove_suffix_date(self.closes))
         if isinstance(self.closes, str):
-            self.add_invalid_code('closes')
+            self.add_invalid_code("closes")
 
     def add_duration(self):
         """
         Add a duration of the job ads by substracting closes to placed_on
         """
-        if 'placed_on' not in self.invalid_code and 'closes' not in self.invalid_code:
+        if "placed_on" not in self.invalid_code and "closes" not in self.invalid_code:
             try:
                 duration_ad = self.closes - self.placed_on
                 self.duration_ad_days = duration_ad.days
@@ -241,30 +256,30 @@ class OutputRow:
     def clean_employRef(self):
         """
         """
-        self.check_validity(self.employRef, 'EmployRef')
+        self.check_validity(self.employRef, "EmployRef")
 
     def clean_employer(self):
         """
         """
-        self.check_validity(self.employer, 'employer')
+        self.check_validity(self.employer, "employer")
 
     def clean_type_role(self):
         """
         """
-        self.check_validity(self.employer, 'type_role')
+        self.check_validity(self.employer, "type_role")
 
     def clean_contract(self):
         """
         """
         # clean Contract
-        self.check_validity(self.contract, 'contract')
+        self.check_validity(self.contract, "contract")
         try:
-            if self.Contract == 'Contract / Temporary':
-                self.Contract = 'Temporary'
-            elif self.Contract == 'Permanent':
-                self.Contract = 'Permanent'
-            elif self.Contract == 'Fixed-Term/Contract':
-                self.Contract = 'Fixed-Term'
+            if self.Contract == "Contract / Temporary":
+                self.Contract = "Temporary"
+            elif self.Contract == "Permanent":
+                self.Contract = "Permanent"
+            elif self.Contract == "Fixed-Term/Contract":
+                self.Contract = "Fixed-Term"
             else:
                 self.add_invalid_code("contract")
         except AttributeError:
@@ -276,14 +291,15 @@ class OutputRow:
         self.check_validity(field, fieldname)
         try:
             # First remove all the white spaces and replace them with a single whitespace
-            field = ' '.join(field.split())
+            field = " ".join(field.split())
             # Are there numbers associated with a £ symbol in the format £nn,nnn or £nnn,nnn?
-            salary_fields = re.findall(r'£[0-9]?[0-9][0-9],[0-9][0-9][0-9]', field,
-                                       flags=re.MULTILINE)
+            salary_fields = re.findall(
+                r"£[0-9]?[0-9][0-9],[0-9][0-9][0-9]", field, flags=re.MULTILINE
+            )
             num_salary_fields = len(salary_fields)
             if num_salary_fields == 0:
                 # Does the salary field contain only text, i.e. no numbers
-                if re.search(r'[0-9]', field):
+                if re.search(r"[0-9]", field):
                     self.add_invalid_code(fieldname)
 
             elif num_salary_fields > 2:
@@ -293,7 +309,9 @@ class OutputRow:
                 salary_values = []
                 for salary_field in salary_fields:
                     # remove characters '£, ' from salary_field, e.g. '£37,394 '
-                    salary_value = int(salary_field.translate(str.maketrans('', '', '£, ')))
+                    salary_value = int(
+                        salary_field.translate(str.maketrans("", "", "£, "))
+                    )
                     salary_values.append(salary_value)
                 salary_values.sort()
                 # Is the smallest number < £11k?
@@ -329,7 +347,7 @@ class OutputRow:
         if args[0] is None:
             return self.set_up_invalidity(*args)  # return to stop the func() here
         if isinstance(args[0], str):
-            if args[0].strip().lower() in ['', 'not specified']:
+            if args[0].strip().lower() in ["", "not specified"]:
                 self.set_up_invalidity(*args)
 
     def set_up_invalidity(self, *args):
@@ -377,18 +395,18 @@ class OutputRow:
         Check the string from employer if it matches an UK university
         provided by the file self.uk_uni_list using difflib
         """
-        if hasattr(self, 'employer'):
+        if hasattr(self, "employer"):
 
             # clean the employer string to get only key word
-            employer = self.text_cleaner.clean_text(self.employer.split('-')[0])
+            employer = self.text_cleaner.clean_text(self.employer.split("-")[0])
             # List of keyword that are associated to university
-            list_uni = ['university', 'school', 'college']
+            list_uni = ["university", "school", "college"]
             if len(set(employer).intersection(set(list_uni))) > 0:
                 self.uk_university = self.employer
                 return
 
             # if did not match an university. Try to match with the list provided
-            employer = ' '.join(set([x for x in employer]))
+            employer = " ".join(set([x for x in employer]))
             best_match = self.check_match(employer, self.uk_uni_list)
             if best_match:
                 self.uk_university = best_match
@@ -397,14 +415,16 @@ class OutputRow:
         """
         Check the string from extra_location is from uk
         """
-        if hasattr(self, 'extra_location'):
-            if self.extra_location in ['Northern England',
-                                       'London Midlands of England Scotland',
-                                       'South West England',
-                                       'South East England',
-                                       'Wales',
-                                       'Republic of Ireland',
-                                       'Northern Ireland']:
+        if hasattr(self, "extra_location"):
+            if self.extra_location in [
+                "Northern England",
+                "London Midlands of England Scotland",
+                "South West England",
+                "South East England",
+                "Wales",
+                "Republic of Ireland",
+                "Northern Ireland",
+            ]:
                 self.in_uk = True
 
     def add_postcode(self):
@@ -412,8 +432,10 @@ class OutputRow:
         If there is a uk_university, try to match it with the code
         provided by self.dict_uk_uni_postcode
         """
-        if hasattr(self, 'uk_university'):
-            best_match = self.check_match(self.uk_university, self.uk_postcode_dict.keys())
+        if hasattr(self, "uk_university"):
+            best_match = self.check_match(
+                self.uk_university, self.uk_postcode_dict.keys()
+            )
             if best_match:
                 self.uk_postcode = self.uk_postcode_dict[best_match]
 
@@ -422,18 +444,20 @@ class OutputRow:
         If there is a salary_min and salary_max, create a SalaryMedian which is the middle
         between the two salary. to get an average
         """
-        if hasattr(self, 'salary_min') and hasattr(self, 'salary_max'):
-            self.salary_median = self.salary_min + ((self.salary_max - self.salary_min)/ 2)
+        if hasattr(self, "salary_min") and hasattr(self, "salary_max"):
+            self.salary_median = self.salary_min + (
+                (self.salary_max - self.salary_min) / 2
+            )
 
     def add_not_student(self):
         """
         Check if the jobs ads does not contain `PhD` or `Master` in the type role
         If it does, return false
         """
-        if hasattr(self, 'type_role'):
+        if hasattr(self, "type_role"):
             try:
                 for i in self.type_role:
-                    if i.lower().rstrip() in ['phd', 'masters']:
+                    if i.lower().rstrip() in ["phd", "masters"]:
                         return
                 self.not_student = True
                 return
@@ -460,19 +484,19 @@ class OutputRow:
         # self.add_uk_university()
         # self.add_in_uk()
         # self.add_postcode()
-        self.clean_salary(self.salary, 'salary')
-        self.clean_salary(self.funding_amount, 'funding_amount')
-        if hasattr(self, 'funding_amount') and 'contract' in self.invalid_code:
-            self.invalid_code.remove('contract')
-            self.contract = 'funding'
+        self.clean_salary(self.salary, "salary")
+        self.clean_salary(self.funding_amount, "funding_amount")
+        if hasattr(self, "funding_amount") and "contract" in self.invalid_code:
+            self.invalid_code.remove("contract")
+            self.contract = "funding"
 
-        if hasattr(self, 'salary_max') or hasattr(self, 'salary_min'):
+        if hasattr(self, "salary_max") or hasattr(self, "salary_min"):
             try:
-                self.invalid_code.remove('salary')
+                self.invalid_code.remove("salary")
             except ValueError:
                 pass
             try:
-                self.invalid_code.remove('funding_amount')
+                self.invalid_code.remove("funding_amount")
             except ValueError:
                 pass
 
@@ -480,12 +504,12 @@ class OutputRow:
         if self.invalid_code == []:
             del self.invalid_code
         try:
-            if 'funding_amount' in self.invalid_code:
-                self.invalid_code.remove('funding_amount')
-                if 'salary' in self.invalid_code:
+            if "funding_amount" in self.invalid_code:
+                self.invalid_code.remove("funding_amount")
+                if "salary" in self.invalid_code:
                     pass
                 else:
-                    self.invalid_code.append('salary')
+                    self.invalid_code.append("salary")
         except AttributeError:
             pass
         # New enhanced content (check in november 2017) doesnt have that key

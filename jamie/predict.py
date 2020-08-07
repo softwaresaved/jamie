@@ -14,7 +14,8 @@ from .snapshots import ModelSnapshot
 
 Date = datetime.date
 
-logger = logger(name='predict', stream_level='DEBUG')
+logger = logger(name="predict", stream_level="DEBUG")
+
 
 class Bootstrap:
     """Get bootstrap means and confidence intervals from a sample.
@@ -26,6 +27,7 @@ class Bootstrap:
     n : int, default=1000
         Number of bootstrap samples
     """
+
     def __init__(self, random_state, n=1000):
         self.random_state = random_state
         self.n = n
@@ -48,14 +50,13 @@ class Bootstrap:
             Dictionary containing probability, lower_ci, upper_ci
             (95% confidence intervals).
         """
-        bootstrap_means = np.array([
-            self._single_sample_mean(array, k)
-            for k in range(self.n)
-        ])
+        bootstrap_means = np.array(
+            [self._single_sample_mean(array, k) for k in range(self.n)]
+        )
         return {
-            'probability': bootstrap_means.mean(),
-            'lower_ci': np.percentile(bootstrap_means, 2.5),
-            'upper_ci': np.percentile(bootstrap_means, 97.5)
+            "probability": bootstrap_means.mean(),
+            "lower_ci": np.percentile(bootstrap_means, 2.5),
+            "upper_ci": np.percentile(bootstrap_means, 97.5),
         }
 
 
@@ -75,7 +76,7 @@ class Predict:
     def __init__(self, model_snapshot, random_state=0, bootstrap_size=1000):
         self.model_snapshot = ModelSnapshot(model_snapshot)
         self.bootstrap = Bootstrap(random_state, bootstrap_size)
-        self.config = self.model_snapshot.metadata['config']
+        self.config = self.model_snapshot.metadata["config"]
         self.db = self._connect_db()
         self._predictions = []
 
@@ -93,13 +94,19 @@ class Predict:
         doc : pd.Dataframe
             Dataframe containing the description and job_title field. None if KeyError
         """
-        for doc in self.db['jobs'].find(
-                {}, {'job_title': True, 'description': True,
-                     'jobid': True}).batch_size(5):
-            _id = doc['jobid']
+        for doc in (
+            self.db["jobs"]
+            .find({}, {"job_title": True, "description": True, "jobid": True})
+            .batch_size(5)
+        ):
+            _id = doc["jobid"]
             try:
-                doc = pd.DataFrame({'description': [doc['description']],
-                                   'job_title': [doc['job_title']]})
+                doc = pd.DataFrame(
+                    {
+                        "description": [doc["description"]],
+                        "job_title": [doc["job_title"]],
+                    }
+                )
             except KeyError:
                 doc = None
             yield _id, doc
@@ -117,22 +124,30 @@ class Predict:
             Whether to store in database, default = False
         """
         if store_database:
-            record.update({
-                'snapshot': self.model_snapshot.name,
-                'jobid': _id,
-                '_id': _id + '_' + self.model_snapshot.name
-            })
-            self.db.predictions.update_one({'_id': record['_id']}, {'$set': record}, upsert=True)
-        job = self.db.jobs.find_one({'jobid': _id})
+            record.update(
+                {
+                    "snapshot": self.model_snapshot.name,
+                    "jobid": _id,
+                    "_id": _id + "_" + self.model_snapshot.name,
+                }
+            )
+            self.db.predictions.update_one(
+                {"_id": record["_id"]}, {"$set": record}, upsert=True
+            )
+        job = self.db.jobs.find_one({"jobid": _id})
         if job:
             record.update(job)
-            record['_id'] = _id + '_' + self.model_snapshot.name  # fix _id as it's overwritten
-            if 'json' in record:
-                del record['json']['description']  # remove verbose attributes
-            del record['description']  # remove verbose attributes
+            record["_id"] = (
+                _id + "_" + self.model_snapshot.name
+            )  # fix _id as it's overwritten
+            if "json" in record:
+                del record["json"]["description"]  # remove verbose attributes
+            del record["description"]  # remove verbose attributes
             self._predictions.append(record)
         else:
-            logger.warning("Job not found in database, but prediction exists: {}".format(_id))
+            logger.warning(
+                "Job not found in database, but prediction exists: {}".format(_id)
+            )
 
     def predict(self, save=True, skip_existing=True):
         """Record predictions in MongoDB
@@ -152,12 +167,18 @@ class Predict:
         self : :class:`Predict`
             Returns copy of itself
         """
-        models = [self.model_snapshot.model(i) for i in self.model_snapshot.data.indices]
-        features = [self.model_snapshot.features(i) for i in self.model_snapshot.data.indices]
+        models = [
+            self.model_snapshot.model(i) for i in self.model_snapshot.data.indices
+        ]
+        features = [
+            self.model_snapshot.features(i) for i in self.model_snapshot.data.indices
+        ]
         for _id, doc in tqdm(self._get_documents(), desc="Predicting"):
             if doc is not None:
                 # Check if it has already been predicted
-                existing_prediction = self.db.predictions.find_one({'_id': _id + '_' + self.model_snapshot.name})
+                existing_prediction = self.db.predictions.find_one(
+                    {"_id": _id + "_" + self.model_snapshot.name}
+                )
                 if skip_existing and existing_prediction:
                     self._record_prediction(_id, existing_prediction)
                     continue
@@ -168,25 +189,32 @@ class Predict:
                     m.predict_proba(f.transform(doc))[0][1]
                     for m, f in zip(models, features)
                 ]
-                self._record_prediction(_id, self.bootstrap.sample(probabilities), store_database=True)
+                self._record_prediction(
+                    _id, self.bootstrap.sample(probabilities), store_database=True
+                )
             else:
-                logger.warning("Skipping job because of empty description or job title: %s", _id)
+                logger.warning(
+                    "Skipping job because of empty description or job title: %s", _id
+                )
         if save:
             self.save()
         return self
 
     def save(self, output=None):
         "Save predictions in prediction snapshot folder"
-        snapshot_root = self.model_snapshot.path.parent.parent \
-            / 'predictions' / isotime_snapshot()
+        snapshot_root = (
+            self.model_snapshot.path.parent.parent / "predictions" / isotime_snapshot()
+        )
         if not snapshot_root.exists():
             snapshot_root.mkdir(parents=True)
-        with (snapshot_root / 'predictions.jsonl').open('w') as fp:
+        with (snapshot_root / "predictions.jsonl").open("w") as fp:
             for r in self._predictions:
                 fp.write(dumps(r, sort_keys=True) + "\n")
-        with (snapshot_root / 'metadata.json').open('w') as fp:
+        with (snapshot_root / "metadata.json").open("w") as fp:
             metadata = self.model_snapshot.metadata
-            metadata['best_model_average_score'] = self.model_snapshot.data.scores.mean_precision.max()
+            metadata[
+                "best_model_average_score"
+            ] = self.model_snapshot.data.scores.mean_precision.max()
             json.dump(self.model_snapshot.metadata, fp, indent=True, sort_keys=True)
 
     @property

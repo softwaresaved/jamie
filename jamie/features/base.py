@@ -7,6 +7,7 @@ from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import LabelBinarizer
 from ..common.textClean import textClean
 
+
 class TextSelector(BaseEstimator, TransformerMixin):
     """Select a particular column from a pd.DataFrame.
     Like all transformers, you can use transform() to apply a transformation.
@@ -16,6 +17,7 @@ class TextSelector(BaseEstimator, TransformerMixin):
     key : str
         Column to select
     """
+
     def __init__(self, key):
         self.key = key
 
@@ -24,6 +26,7 @@ class TextSelector(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         return self
+
 
 class CountTerm(BaseEstimator, TransformerMixin):
     """Add count of terms from a search term list
@@ -38,15 +41,17 @@ class CountTerm(BaseEstimator, TransformerMixin):
         self.search_terms = search_terms
 
     def transform(self, X):
-        return np.array([
-            len(set(i for i in self.search_terms if i in text)) for text in X],
-            dtype=int, ndmin=2).T
+        return np.array(
+            [len(set(i for i in self.search_terms if i in text)) for text in X],
+            dtype=int,
+            ndmin=2,
+        ).T
 
     def fit(self, X, y=None):
         return self
 
-class IntSelector(TextSelector):
 
+class IntSelector(TextSelector):
     def transform(self, X):
         return X[[self.key]]
 
@@ -99,7 +104,8 @@ class FeatureBase:
             cleaner = textClean()
             for tc in clean_columns:
                 self.data[tc] = self.data[tc].apply(
-                    lambda x: ' '.join(cleaner.clean_text(x)))
+                    lambda x: " ".join(cleaner.clean_text(x))
+                )
 
     def set_features(self, features):
         "Set features using a FeatureUnion"
@@ -149,7 +155,7 @@ class FeatureBase:
 
     def _prepare_labels(self, column):
         "Assign labels from column"
-        y = self.data[(self.data[column] == '0') | (self.data[column] == '1')][column]
+        y = self.data[(self.data[column] == "0") | (self.data[column] == "1")][column]
         if len(y) == 0:
             y = self.data[(self.data[column] == 0) | (self.data[column] == 1)][column]
 
@@ -190,6 +196,9 @@ class FeatureBase:
         """
 
         return model_selection.train_test_split(
-            self.X, self.labels, test_size=test_size,
-            random_state=random_state, stratify=self.labels
+            self.X,
+            self.labels,
+            test_size=test_size,
+            random_state=random_state,
+            stratify=self.labels,
         )

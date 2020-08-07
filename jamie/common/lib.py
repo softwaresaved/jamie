@@ -13,8 +13,10 @@ def gitversion():
 def isodate():
     return datetime.datetime.now().date().isoformat()
 
+
 def isotime_snapshot():
     return datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+
 
 def make_sure_path_exists(path):
     try:
@@ -53,6 +55,7 @@ def table(tuples, align, sep=""):
             for i in tuples
         ]
     )
+
 
 def arrow_table(tuples):
     return table(tuples, align="rl", sep="⯈")

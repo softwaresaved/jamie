@@ -12,9 +12,12 @@ from contextlib import suppress  # alternative to try: (...) except Exception: p
 from typing import Union
 from .cleaningInformation import OutputRow
 
-_table_punc = bytes.maketrans(str.encode(string.punctuation), b' ' * len(string.punctuation))
-_table_space = bytes.maketrans(bytes(' ', 'utf-8'), bytes('_', 'utf-8'))
+_table_punc = bytes.maketrans(
+    str.encode(string.punctuation), b" " * len(string.punctuation)
+)
+_table_space = bytes.maketrans(bytes(" ", "utf-8"), bytes("_", "utf-8"))
 MINIMUM_DESCRIPTION_LENGTH = 150  # characters
+
 
 def get_nested_key(d, key):
     keys = key.split(".")
@@ -23,6 +26,7 @@ def get_nested_key(d, key):
         for k in keys:
             o = o[k]
         return o
+
 
 class JobFile:
     """
@@ -38,52 +42,53 @@ class JobFile:
         is used instead to create the jobid. When reading from a string,
         jobid is not optional.
     """
+
     def __init__(self, content: Union[Path, str], jobid: str = None):
         self.data = {}
         if isinstance(content, Path):
             self.filename = content
             self._content = self.filename.read_text()
-            self.data['filename'] = str(self.filename)
+            self.data["filename"] = str(self.filename)
             # Assign jobid if specified, otherwise take it from filename
-            self.data['jobid'] = jobid or self.filename.stem
+            self.data["jobid"] = jobid or self.filename.stem
         elif isinstance(content, str):
             if jobid is None:
                 raise ValueError("jobid can't be None if content is string")
             self._content = content
         else:
             raise ValueError("content must be one of Path or str")
-        self._soup = bs4.BeautifulSoup(self._content, 'html.parser')
+        self._soup = bs4.BeautifulSoup(self._content, "html.parser")
 
         # Enhanced content alters behaviour of some parsing
-        if self._soup.find('div', {'id': 'enhanced-content'}):
+        if self._soup.find("div", {"id": "enhanced-content"}):
             self.enhanced = True
         else:
             self.enhanced = False
         self.data["enhanced"] = self.enhanced
 
     def _first_section(self, elem, attrs):
-        return self._soup.findAll(elem, attrs)[0].get_text(separator=u' ')
+        return self._soup.findAll(elem, attrs)[0].get_text(separator=u" ")
 
     @staticmethod
     def transform_key(key_string):
         key_string = key_string.lower()
-        key_string = str.encode(key_string, 'utf-8').translate(_table_punc)
+        key_string = str.encode(key_string, "utf-8").translate(_table_punc)
         key_string = key_string.translate(_table_space)
-        key_string = key_string.decode('utf-8')
-        key_string = key_string.replace('_', ' ')
+        key_string = key_string.decode("utf-8")
+        key_string = key_string.replace("_", " ")
         key_string = key_string.rstrip()
-        key_string = key_string.replace(' ', '_')
+        key_string = key_string.replace(" ", "_")
         return key_string
 
     @property
     def employer(self):
         _employer = None
         try:
-            _employer = self._soup.find('h3').text
+            _employer = self._soup.find("h3").text
         except AttributeError:
             try:
-                for emp in self._soup.find('a').get('href'):
-                    if emp[:10] == '/employer/':
+                for emp in self._soup.find("a").get("href"):
+                    if emp[:10] == "/employer/":
                         _employer = emp[:10]
             except (AttributeError, TypeError):
                 pass
@@ -92,21 +97,21 @@ class JobFile:
     @property
     def job_title(self):
         with suppress(AttributeError):
-            return self._soup.find('h1').text
+            return self._soup.find("h1").text
 
     @property
     def place(self):
         with suppress(AttributeError):
-            return self._soup.find('h3').text
+            return self._soup.find("h3").text
 
     def details(self):
-        table_to_match = 'td'
-        class_to_match = 'detail-heading'
+        table_to_match = "td"
+        class_to_match = "detail-heading"
 
-        for element in self._soup.findAll(table_to_match, {'class': class_to_match}):
+        for element in self._soup.findAll(table_to_match, {"class": class_to_match}):
             key = element.text
             key = self.transform_key(key)
-            content = element.findNext('td').text
+            content = element.findNext("td").text
             yield {key: content}
 
     @property
@@ -117,61 +122,73 @@ class JobFile:
         # change the structure of the html
         if self.enhanced:
             with suppress(IndexError):
-                return self._first_section('div', {'class': 'section', 'id': None})
+                return self._first_section("div", {"class": "section", "id": None})
             with suppress(IndexError):
-                return self._first_section('div', {'id': 'enhanced-right'})
+                return self._first_section("div", {"id": "enhanced-right"})
             try:
-                return self._first_section('div', {'id': 'enhanced-content'})
+                return self._first_section("div", {"id": "enhanced-content"})
             except IndexError:
                 print(self._soup)
                 raise
         else:
             with suppress(IndexError):
-                sections = [s.get_text(separator=u' ')
-                            for s in self._soup.findAll('div', {'class': 'section', 'id': None})]
+                sections = [
+                    s.get_text(separator=u" ")
+                    for s in self._soup.findAll("div", {"class": "section", "id": None})
+                ]
                 sections.sort(key=len)
                 if len(sections[-1]) > MINIMUM_DESCRIPTION_LENGTH:
                     return sections[-1]
             with suppress(IndexError):
-                return self._first_section('div', {'id': 'job-description'})
+                return self._first_section("div", {"id": "job-description"})
             with suppress(IndexError):
-                return self._first_section('div', {'id': 'rightcol'})
+                return self._first_section("div", {"id": "rightcol"})
             with suppress(AttributeError):
                 description_text = []
-                section = self._soup.find('div', {'class': 'col-lg-12'})
+                section = self._soup.find("div", {"class": "col-lg-12"})
                 # Need to find the first <p>. The description is under that one
                 # but also contains differents tags
                 text_desc = False
                 for description in section.findAll():
-                    if description.name == 'p' and text_desc is False:
+                    if description.name == "p" and text_desc is False:
                         text_desc = True
                     if text_desc is True:
                         description_text.append(description.text)
-                return ' '.join(description_text)
+                return " ".join(description_text)
             with suppress(AttributeError):
-                jobPost = self._soup.find('div', {'class': 'jobPost'})
+                jobPost = self._soup.find("div", {"class": "jobPost"})
                 if jobPost:
-                    paras = [p.get_text(separator=u' ') for p in jobPost.findAll('p')]
+                    paras = [p.get_text(separator=u" ") for p in jobPost.findAll("p")]
                     if len(paras) > 3:
-                        paras = paras[2:-1]  # first para is location and salary, second is usually about working hours
-                        paras = [p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH]
-                        return '\n'.join(paras)
+                        paras = paras[
+                            2:-1
+                        ]  # first para is location and salary, second is usually about working hours
+                        paras = [
+                            p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH
+                        ]
+                        return "\n".join(paras)
             with suppress(AttributeError):
-                paras = [p.get_text(separator=u' ') for p in self._soup.findAll('p')]
+                paras = [p.get_text(separator=u" ") for p in self._soup.findAll("p")]
                 # Only keep long paragraphs and ones without emails
                 # (usually contact information)
-                return '\n'.join([p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH and '@' not in p])
+                return "\n".join(
+                    [
+                        p
+                        for p in paras
+                        if len(p) > MINIMUM_DESCRIPTION_LENGTH and "@" not in p
+                    ]
+                )
 
     def extra_details(self):
         "Get the extra details at the end of description"
         if not self.enhanced:
-            for section in self._soup.findAll('div', {'class': 'inlineBox'}):
-                key = section.find('p')
+            for section in self._soup.findAll("div", {"class": "inlineBox"}):
+                key = section.find("p")
                 if key:
-                    original_content = key.findNext('p')
+                    original_content = key.findNext("p")
                     key = JobFile.transform_key(key.text)
                     result = list()
-                    for element in original_content.findAll('a'):
+                    for element in original_content.findAll("a"):
                         result.append(element.text)
                     # Sometime the content is not within a tag <p> and
                     # within <a> tag but under a
@@ -180,27 +197,29 @@ class JobFile:
                     # try to parse the <div> tag
                     # Work for <p>Subject Area(s) don't know for the others
                     if len(result) == 0:
-                        second_content = section.findNext('div')
-                        for element in second_content.findAll('a'):
+                        second_content = section.findNext("div")
+                        for element in second_content.findAll("a"):
                             result.append(element.text)
                         if len(result) == 0:
                             result = original_content.text
-                    yield {'extra_{}'.format(key): result}
+                    yield {"extra_{}".format(key): result}
         else:
-            for element in self._soup.findAll('td', {'class': 'detail-heading'}):
+            for element in self._soup.findAll("td", {"class": "detail-heading"}):
                 key = element.text
                 key = JobFile.transform_key(key)
-                content = element.findNext('td')
+                content = element.findNext("td")
                 content = content.text
                 yield {key: content}
 
     def parse_html(self):
-        self.data.update({
-            'description': self.description,
-            'employer': self.employer,
-            'name': self.job_title,
-            'location': self.place,
-        })
+        self.data.update(
+            {
+                "description": self.description,
+                "employer": self.employer,
+                "name": self.job_title,
+                "location": self.place,
+            }
+        )
         for d in self.details():
             self.data.update(d)
 
@@ -210,7 +229,7 @@ class JobFile:
 
     def _extract_json_ads(self):
         "Get the json content from the page and return a dictionary from it"
-        content_json = self._soup.find('script', attrs={'type': 'application/ld+json'})
+        content_json = self._soup.find("script", attrs={"type": "application/ld+json"})
         try:
             content_json = content_json.contents[0]
             return json.loads(content_json)
@@ -219,36 +238,42 @@ class JobFile:
 
     @property
     def new_subject_area(self):
-        subject = self._soup.find(lambda tag: tag.name == "b" and "Subject Area(s):" in tag.text)
+        subject = self._soup.find(
+            lambda tag: tag.name == "b" and "Subject Area(s):" in tag.text
+        )
         if subject is not None:
             list_subject = []
             while True:
                 # find the next subject which not contain the value but it is just before
                 # the input that does have the value
-                subject = subject.findNext('input', attrs={'name': 'categoryId[]'})
+                subject = subject.findNext("input", attrs={"name": "categoryId[]"})
                 try:
-                    list_subject.append(subject.findNext('input')['value'])
+                    list_subject.append(subject.findNext("input")["value"])
                 except AttributeError:  # means it is the end of the list
                     break
             return list_subject
 
     @property
     def new_extra_location(self):
-        for tag in self._soup.find_all('input', attrs={'class': 'j-form-input__location'}):
-            return tag['value']
+        for tag in self._soup.find_all(
+            "input", attrs={"class": "j-form-input__location"}
+        ):
+            return tag["value"]
 
     @property
     def new_type_role(self):
 
-        type_role = self._soup.find(lambda tag: tag.name == "b" and "Type / Role:" in tag.text)
+        type_role = self._soup.find(
+            lambda tag: tag.name == "b" and "Type / Role:" in tag.text
+        )
         if type_role is not None:
             list_type_role = list()
             while True:
                 # find the next type_role which not contain the value but it is just before
                 # the input that does have the value
-                type_role = type_role.findNext('input', attrs={'name': 'jobTypeId[]'})
+                type_role = type_role.findNext("input", attrs={"name": "jobTypeId[]"})
                 try:
-                    list_type_role.append(type_role.findNext('input')['value'])
+                    list_type_role.append(type_role.findNext("input")["value"])
                 except AttributeError:  # means it is the end of the list
                     break
             return list_type_role
@@ -260,42 +285,44 @@ class JobFile:
         """
         """
         for k, v in {
-                'name': 'json.title',
-                'employer': 'json.hiringOrganization.name',
-                'department': 'json.hiringOrganization.department.name',
-                'salary': 'json.baseSalary.value',
-                'placed_on': 'json.datePosted',
-                'closes': 'json.validThrough',
-                'description': 'json.description',
-                'region': 'json.jobLocation.address.addressRegion'
+            "name": "json.title",
+            "employer": "json.hiringOrganization.name",
+            "department": "json.hiringOrganization.department.name",
+            "salary": "json.baseSalary.value",
+            "placed_on": "json.datePosted",
+            "closes": "json.validThrough",
+            "description": "json.description",
+            "region": "json.jobLocation.address.addressRegion",
         }.items():
             self.data[k] = self._get_nested_data(v)
-        joblocation = self._get_nested_data('json.jobLocation')
+        joblocation = self._get_nested_data("json.jobLocation")
         if isinstance(joblocation, list):
             joblocation = joblocation[0]
-        self.data['location'] = get_nested_key(joblocation, 'address.addressLocality')
-        self.data['region'] = get_nested_key(joblocation, 'address.addressRegion')
-        hours_contract = get_nested_key(self.data, 'json.employmentType')
+        self.data["location"] = get_nested_key(joblocation, "address.addressLocality")
+        self.data["region"] = get_nested_key(joblocation, "address.addressRegion")
+        hours_contract = get_nested_key(self.data, "json.employmentType")
         if hours_contract:
-            splitted = hours_contract.split(',')
+            splitted = hours_contract.split(",")
             # The hours and the contract are stored in the same k:v
             # Sometime when part time and full time are both available, the first
             # two elements are them. The last one is always the contract
-            self.data['hours'] = splitted[:-1]
-            self.data['contract'] = splitted[-1]
-        self.data.update({
-            'enhanced': 'json',
-            'subject_area': self.new_subject_area,
-            'extra_location': self.new_extra_location,
-            'type_role': self.type_role
-        })
+            self.data["hours"] = splitted[:-1]
+            self.data["contract"] = splitted[-1]
+        self.data.update(
+            {
+                "enhanced": "json",
+                "subject_area": self.new_subject_area,
+                "extra_location": self.new_extra_location,
+                "type_role": self.type_role,
+            }
+        )
         return self.data
 
     def parse(self, clean=True):
         "Parses job HTML or JSON and returns as a dictionary"
         raw_json = self._extract_json_ads()
         if raw_json:
-            self.data['json'] = raw_json
+            self.data["json"] = raw_json
             self.parse_json()
         else:
             self.parse_html()
@@ -306,14 +333,14 @@ class JobFile:
     @property
     def json(self):
         _json = self.data.copy()
-        for date in ['placed_on', 'closes']:
+        for date in ["placed_on", "closes"]:
             if date in self.data and isinstance(self.data[date], datetime.datetime):
                 _json[date] = self.data[date].date().isoformat()
         return _json
 
+
 def main(filename):
-    print(json.dumps(
-        JobFile(filename).parse().json, indent=2, sort_keys=True))
+    print(json.dumps(JobFile(filename).parse().json, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

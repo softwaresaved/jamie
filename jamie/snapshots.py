@@ -9,6 +9,7 @@ from box import Box
 from .config import Config
 from .types import JobPrediction
 
+
 class Snapshot:
     """Base class for a snapshot instance.
 
@@ -25,6 +26,7 @@ class Snapshot:
     root : str
         Root path of snapshots (default : None)
     """
+
     subpath = ""
     _data = None
     _metadata = None
@@ -33,7 +35,7 @@ class Snapshot:
         self.instance = instance
         if root is None:
             cf = Config()
-            self.root = Path(cf['common.snapshots'])
+            self.root = Path(cf["common.snapshots"])
         else:
             self.root = Path(root)
         self.instance_location = self.root / self.subpath / self.instance
@@ -65,17 +67,21 @@ class Snapshot:
 
     def __str__(self):
         "String representation of snapshot"
-        return json.dumps(self.metadata, indent=2, sort_keys=True) \
-            if self.metadata else self.instance
+        return (
+            json.dumps(self.metadata, indent=2, sort_keys=True)
+            if self.metadata
+            else self.instance
+        )
 
     @property
     def metadata(self):
         "Snapshot metadata"
         if self._metadata is None:
-            metadata_file = self.instance_location / 'metadata.json'
+            metadata_file = self.instance_location / "metadata.json"
             with metadata_file.open() as fp:
                 self._metadata = json.load(fp)
         return self._metadata
+
 
 class SnapshotCollection:
     """Base class for collection of snapshots. Instances of derived class
@@ -91,16 +97,18 @@ class SnapshotCollection:
         If specified, restricts collection to instances that end with this string
     """
 
-    subpath = ''
+    subpath = ""
 
     def __init__(self, root=None, startswith="", endswith=""):
         if root is None:
             cf = Config()
-            self.root = Path(cf['common.snapshots'])
+            self.root = Path(cf["common.snapshots"])
         else:
             self.root = Path(root)
         self.glob = startswith + "*" + endswith
-        self.instances = [x.name for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()]
+        self.instances = [
+            x.name for x in (self.root / self.subpath).glob(self.glob) if x.is_dir()
+        ]
 
     @property
     def list(self):
@@ -113,35 +121,39 @@ class SnapshotCollection:
 
     def __str__(self):
         "String representation of collection"
-        return '\n'.join(str(s) for s in self.list)
+        return "\n".join(str(s) for s in self.list)
 
     def most_recent(self):
         "Returns most recent instance in collection using lexicographical sorting"
         return sorted(self.instances)[-1]
 
+
 class ReportSnapshotCollection(SnapshotCollection):
     "Training :class:`SnapshotCollection`, with subpath=reports"
-    subpath = 'reports'
+    subpath = "reports"
 
     def __getitem__(self, key):
         if key in self.instances:
             return ReportSnapshot(key, self.root)
 
+
 class TrainingSnapshotCollection(SnapshotCollection):
     "Training :class:`SnapshotCollection`, with subpath=training"
-    subpath = 'training'
+    subpath = "training"
 
     def __getitem__(self, key):
         if key in self.instances:
             return TrainingSnapshot(key, self.root)
 
+
 class ModelSnapshotCollection(SnapshotCollection):
     "Model :class:`SnapshotCollection`, with subpath=models"
-    subpath = 'models'
+    subpath = "models"
 
     def __getitem__(self, key):
         if key in self.instances:
             return ModelSnapshot(key, self.root)
+
 
 class ReportSnapshot(Snapshot):
     "Represents a single report :class:`Snapshot`"
@@ -151,9 +163,10 @@ class ReportSnapshot(Snapshot):
     def data(self):
         "Returns index.html of the report"
         if self._data is None:
-            fn = self.instance_location / 'index.html'
+            fn = self.instance_location / "index.html"
             self._data = fn.read_text()
         return self._data
+
 
 class TrainingSnapshot(Snapshot):
     "Represents a single training :class:`Snapshot`"
@@ -163,9 +176,10 @@ class TrainingSnapshot(Snapshot):
     def data(self):
         "Returns DataFrame corresponding to training snapshot"
         if self._data is None:
-            fn = self.instance_location / 'training_set.csv'
+            fn = self.instance_location / "training_set.csv"
             self._data = pd.read_csv(fn)
         return self._data
+
 
 class ModelSnapshot(Snapshot):
     "Represents a single model :class:`Snapshot`"
@@ -180,31 +194,32 @@ class ModelSnapshot(Snapshot):
         """
         if self._data is None:
             out = {}
-            model_fn = self.instance_location / 'model.pkl'
-            scores_fn = self.instance_location / 'scores.csv'
+            model_fn = self.instance_location / "model.pkl"
+            scores_fn = self.instance_location / "scores.csv"
             if model_fn.exists():
-                with model_fn.open('rb') as fp:
-                    out['final_model'] = pickle.load(fp)
-            model_fns = sorted(self.instance_location.glob('model_*.pkl'))
-            out['indices'] = [fn.stem.replace("model_", "") for fn in model_fns]
+                with model_fn.open("rb") as fp:
+                    out["final_model"] = pickle.load(fp)
+            model_fns = sorted(self.instance_location.glob("model_*.pkl"))
+            out["indices"] = [fn.stem.replace("model_", "") for fn in model_fns]
             if scores_fn.exists():
-                out['scores'] = pd.read_csv(scores_fn)
+                out["scores"] = pd.read_csv(scores_fn)
             self._data = out
         return Box(self._data)
 
     def model(self, index: str):
         "Returns model at index"
-        with (self.instance_location / ("model_%s.pkl" % index)).open('rb') as fp:
+        with (self.instance_location / ("model_%s.pkl" % index)).open("rb") as fp:
             return pickle.load(fp)
 
     def features(self, index: str):
         "Returns features at index"
-        with (self.instance_location / ("features_%s.pkl" % index)).open('rb') as fp:
+        with (self.instance_location / ("features_%s.pkl" % index)).open("rb") as fp:
             return pickle.load(fp)
 
 
 class PredictionSnapshot(Snapshot):
     """Prediction Snapshot class"""
+
     subpath = "predictions"
 
     @property
@@ -212,7 +227,7 @@ class PredictionSnapshot(Snapshot):
         "Returns data as dataframe"
         if self._data is None:
             self._predictions = []
-            fn = self.instance_location / 'predictions.jsonl'
+            fn = self.instance_location / "predictions.jsonl"
             with fn.open() as fp:
                 for pred in fp.readlines():
                     self._predictions.append(JobPrediction(json.loads(pred)))
@@ -224,11 +239,11 @@ class PredictionSnapshot(Snapshot):
         positives, negatives = [], []
         if self._data is None:
             self._predictions = []
-            fn = self.instance_location / 'predictions.jsonl'
+            fn = self.instance_location / "predictions.jsonl"
             with fn.open() as fp:
                 for pred in fp.readlines():
                     prediction = JobPrediction(json.loads(pred))
-                    if 'PhD' in prediction.job_title:
+                    if "PhD" in prediction.job_title:
                         continue
                     if prediction.probability_lower > 0.5:
                         positives.append(prediction.to_dict())
@@ -239,8 +254,12 @@ class PredictionSnapshot(Snapshot):
             return positives, negatives
         else:
             np.random.seed(random_state)
-            sample_positives = np.random.choice(positives, size=n_each_class, replace=False)
-            sample_negatives = np.random.choice(negatives, size=n_each_class, replace=False)
+            sample_positives = np.random.choice(
+                positives, size=n_each_class, replace=False
+            )
+            sample_negatives = np.random.choice(
+                negatives, size=n_each_class, replace=False
+            )
             return sample_positives, sample_negatives
 
 
@@ -264,25 +283,25 @@ def main(kind, instance=None):
         If specified, show a particular instance
     """
     c = Config()
-    snapshot_path = Path(c['common.snapshots'])
+    snapshot_path = Path(c["common.snapshots"])
     if not snapshot_path.exists():
         snapshot_path.mkdir()
-    if kind == 'models':
+    if kind == "models":
         if instance is None:
             return ModelSnapshotCollection(snapshot_path)
         else:
             return ModelSnapshotCollection(snapshot_path)[instance]
-    elif kind == 'training':
+    elif kind == "training":
         if instance is None:
             return TrainingSnapshotCollection(snapshot_path)
         else:
             return TrainingSnapshotCollection(snapshot_path)[instance]
-    elif kind == 'predictions':
+    elif kind == "predictions":
         if instance is None:
             return PredictionSnapshotCollection(snapshot_path)
         else:
             return PredictionSnapshotCollection(snapshot_path)[instance]
-    elif kind == 'reports':
+    elif kind == "reports":
         if instance is None:
             return ReportSnapshotCollection(snapshot_path)
         else:

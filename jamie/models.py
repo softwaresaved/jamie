@@ -27,15 +27,10 @@ from .features import select_features
 from .common.lib import isotime_snapshot, gitversion
 from .logger import logger
 
-logger = logger(name='models', stream_level='INFO')
+logger = logger(name="models", stream_level="INFO")
 
-SCORES = [
-    "precision",
-    "balanced_accuracy",
-    "f1",
-    "recall",
-    "roc_auc"
-]
+SCORES = ["precision", "balanced_accuracy", "f1", "recall", "roc_auc"]
+
 
 def get_model(n):
     """Return model object corresponding to the named parameter.
@@ -50,22 +45,20 @@ def get_model(n):
     Model object
     """
     data = {
-        "SVC": {
-            "model": SVC,
-            "params": {"probability": True}
-        },
+        "SVC": {"model": SVC, "params": {"probability": True}},
         "LogReg": {"model": LogisticRegression},
         "RandomForest": {"model": RandomForestClassifier},
         "CART": {"model": DecisionTreeClassifier},
-        "GradientBoosting": {"model": GradientBoostingClassifier}
+        "GradientBoosting": {"model": GradientBoostingClassifier},
     }
     if n in data:
-        if 'params' in data[n]:
-            return data[n]['model'](**data[n]['params'])
+        if "params" in data[n]:
+            return data[n]["model"](**data[n]["params"])
         else:
-            return data[n]['model']()
+            return data[n]["model"]()
     else:
         return None
+
 
 def parse_parameter_description(d):
     if not isinstance(d, str):
@@ -85,6 +78,7 @@ def parse_parameter_description(d):
             return list(range(*d))  # start, stop, [num]
         else:
             raise ValueError("Parameter parsing error: " + d)
+
 
 def parse_model_description(model_description, models=None, random_state=100):
     """Parse models description. This function expands configuration values
@@ -120,13 +114,20 @@ def parse_model_description(model_description, models=None, random_state=100):
         if isinstance(model_description[n]["params"], list):
             k[n]["params"] = []
             for p in model_description[n]["params"]:
-                k[n]["params"].append({"clf__random_state": [random_state],
-                                       **{c: parse_parameter_description(v)
-                                          for c, v in p.items()}})
+                k[n]["params"].append(
+                    {
+                        "clf__random_state": [random_state],
+                        **{c: parse_parameter_description(v) for c, v in p.items()},
+                    }
+                )
         else:  # is a dict
-            k[n]["params"] = {"clf__random_state": [random_state],
-                              **{c: parse_parameter_description(v)
-                                 for c, v in model_description[n]["params"].items()}}
+            k[n]["params"] = {
+                "clf__random_state": [random_state],
+                **{
+                    c: parse_parameter_description(v)
+                    for c, v in model_description[n]["params"].items()
+                },
+            }
     return k
 
 
@@ -153,16 +154,10 @@ model_description = {
         "matrix": "sparse",
     },
     "RandomForest": {
-        "params": {
-            "clf__n_estimators": "=10:101:10",
-            "clf__max_features": "=6:32:5",
-        },
+        "params": {"clf__n_estimators": "=10:101:10", "clf__max_features": "=6:32:5",},
         "matrix": "sparse",
     },
-    "CART": {
-        "params": [{"clf__max_depth": "=3:20"}],
-        "matrix": "sparse",
-    },
+    "CART": {"params": [{"clf__max_depth": "=3:20"}], "matrix": "sparse",},
     "GradientBoosting": {
         "params": {
             "clf__learning_rate": [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
@@ -179,8 +174,14 @@ model_description = {
 
 
 def nested_cross_validation(
-    models, X, y, scoring_value, snapshot, oversampling=False,
-    nbr_folds=5, random_state=100,
+    models,
+    X,
+    y,
+    scoring_value,
+    snapshot,
+    oversampling=False,
+    nbr_folds=5,
+    random_state=100,
 ):
     """Perform nested cross validation and return best model. The set of
     models is defined in :mod:`jamie.models`. This function is generally
@@ -228,10 +229,10 @@ def nested_cross_validation(
     score_for_outer_cv["model"] = [name for name in models]
 
     # Add nbr_folds for each score type
-    columns_to_add = ["{}_{}".format(scoretype, int(i) + 1)
-                      for scoretype, i in itertools.product(
-                          SCORES, range(nbr_folds))] + \
-        ["mean_" + scoretype for scoretype in SCORES]
+    columns_to_add = [
+        "{}_{}".format(scoretype, int(i) + 1)
+        for scoretype, i in itertools.product(SCORES, range(nbr_folds))
+    ] + ["mean_" + scoretype for scoretype in SCORES]
     score_for_outer_cv = score_for_outer_cv.reindex(
         columns=score_for_outer_cv.columns.tolist() + columns_to_add
     )
@@ -241,8 +242,10 @@ def nested_cross_validation(
         if oversampling is True:
             logger.info("Oversampling: ON")
             estimator = Pipeline(
-                [("sampling", RandomOverSampler(random_state=random_state)),
-                 ("clf", models[name]["model"])]
+                [
+                    ("sampling", RandomOverSampler(random_state=random_state)),
+                    ("clf", models[name]["model"]),
+                ]
             )
         else:
             estimator = Pipeline([("clf", models[name]["model"])])
@@ -272,33 +275,49 @@ def nested_cross_validation(
         for scoretype in SCORES:
             score_list.extend(scores_across_outer_folds["test_" + scoretype])
         # Add mean scores
-        score_list.extend([scores_across_outer_folds["test_" + scoretype].mean()
-                           for scoretype in SCORES])
+        score_list.extend(
+            [
+                scores_across_outer_folds["test_" + scoretype].mean()
+                for scoretype in SCORES
+            ]
+        )
         score_for_outer_cv.iloc[i, 1:] = score_list
 
         # Get the mean MSE across each of outer_cv's K-folds
         # While we report various scores, we only compare models
         # on scoring_value
-        average_scores_across_outer_folds_for_each_model[name] = \
-            scores_across_outer_folds["test_" + scoring_value].mean()
-        logger.info("[{}]   Fit time %s".format(name), scores_across_outer_folds["fit_time"])
-        logger.info("[{}] Score time %s".format(name), scores_across_outer_folds["score_time"])
+        average_scores_across_outer_folds_for_each_model[
+            name
+        ] = scores_across_outer_folds["test_" + scoring_value].mean()
+        logger.info(
+            "[{}]   Fit time %s".format(name), scores_across_outer_folds["fit_time"]
+        )
+        logger.info(
+            "[{}] Score time %s".format(name), scores_across_outer_folds["score_time"]
+        )
         for scoretype in scores_across_outer_folds:
             if not scoretype.startswith("test_"):
                 continue
-            logger.info("[{}]  Fold {:18s} [{}]".format(
-                name, scoretype[5:],
-                ", ".join("{:.5f}".format(s) for s in scores_across_outer_folds[scoretype])
-            ))
+            logger.info(
+                "[{}]  Fold {:18s} [{}]".format(
+                    name,
+                    scoretype[5:],
+                    ", ".join(
+                        "{:.5f}".format(s) for s in scores_across_outer_folds[scoretype]
+                    ),
+                )
+            )
         for scoretype in scores_across_outer_folds:
             if not scoretype.startswith("test_"):
                 continue
-            logger.info("[{}]  Mean {:18s} {:.5f}".format(
-                name, scoretype[5:], scores_across_outer_folds[scoretype].mean()))
+            logger.info(
+                "[{}]  Mean {:18s} {:.5f}".format(
+                    name, scoretype[5:], scores_across_outer_folds[scoretype].mean()
+                )
+            )
 
     logger.info(
-        "Mean score %s",
-        average_scores_across_outer_folds_for_each_model,
+        "Mean score %s", average_scores_across_outer_folds_for_each_model,
     )
     logger.info("Fitting the model on the training set")
 
@@ -334,10 +353,14 @@ def nested_cross_validation(
 
 
 def train(
-    config, snapshot, featureset,
-    models, prediction_field,
-    oversampling, scoring,
-    random_state=100
+    config,
+    snapshot,
+    featureset,
+    models,
+    prediction_field,
+    oversampling,
+    scoring,
+    random_state=100,
 ):
     """Train models, called when using ``jamie train`` and save model snapshots.
 
@@ -360,40 +383,39 @@ def train(
     random_state : int
         Seed to initialise the random state (default: 100)
     """
-    filename = Box({
-        'models': 'model.pkl',
-        'scores': 'scores.csv',
-        'features_original': 'features.csv',
-        'features_transformed': 'features.npz'
-    })
+    filename = Box(
+        {
+            "models": "model.pkl",
+            "scores": "scores.csv",
+            "features_original": "features.csv",
+            "features_transformed": "features.npz",
+        }
+    )
     Features = select_features(featureset)
     timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
-    model_snapshot_folder = config['common.snapshots'] / 'models' / timestamp
+    model_snapshot_folder = config["common.snapshots"] / "models" / timestamp
     metadata = {
-        'snapshot': timestamp,
-        'training': {
-            'random_state': random_state,
-            'training_snapshot': snapshot,
-            'models': models,
-            'featureset': featureset,
-            'prediction_field': prediction_field,
-            'oversampling': oversampling,
-            'scoring': scoring
+        "snapshot": timestamp,
+        "training": {
+            "random_state": random_state,
+            "training_snapshot": snapshot,
+            "models": models,
+            "featureset": featureset,
+            "prediction_field": prediction_field,
+            "oversampling": oversampling,
+            "scoring": scoring,
         },
-        'pickle_protocol': pickle.DEFAULT_PROTOCOL,  # used for saving models
-        'versions': {
-            'pandas': pd.__version__,
-            'numpy': np.__version__,
-            'scikit-learn': sklearn.__version__  # different sklearn versions may not have compatible pickles
+        "pickle_protocol": pickle.DEFAULT_PROTOCOL,  # used for saving models
+        "versions": {
+            "pandas": pd.__version__,
+            "numpy": np.__version__,
+            "scikit-learn": sklearn.__version__,  # different sklearn versions may not have compatible pickles
         },
-        'config': config.as_dict(),
-        'data': {
-            'models': filename.models,
-            'scores': filename.scores
-        }
+        "config": config.as_dict(),
+        "data": {"models": filename.models, "scores": filename.scores},
     }
     logger.info("Snapshot %s", timestamp)
-    training_snapshots = TrainingSnapshotCollection(config['common.snapshots'])
+    training_snapshots = TrainingSnapshotCollection(config["common.snapshots"])
     features = Features(training_snapshots[snapshot].data).make_arrays(prediction_field)
     X_train = features.fit_transform(features.X)
     logger.info("Saving features")
@@ -401,23 +423,26 @@ def train(
         model_snapshot_folder.mkdir(parents=True)
     features.X.to_csv(model_snapshot_folder / filename.features_original)
     scipy.sparse.save_npz(
-        model_snapshot_folder / filename.features_transformed, X_train)
+        model_snapshot_folder / filename.features_transformed, X_train
+    )
     logger.info("Features: {} jobs, {} features".format(*X_train.shape))
     logger.info("Nested cross validation")
     best_model_params, final_model, average_scores = nested_cross_validation(
         models,
-        X_train, features.labels, scoring,
+        X_train,
+        features.labels,
+        scoring,
         snapshot=timestamp,
         oversampling=oversampling,
-        nbr_folds=config['model.k-fold'],
-        random_state=random_state
+        nbr_folds=config["model.k-fold"],
+        random_state=random_state,
     )
     logger.info("Saving scores and models")
-    metadata['best_parameters'] = best_model_params
-    metadata['models'] = model_description
-    with (model_snapshot_folder / 'metadata.json').open('w') as fp:
+    metadata["best_parameters"] = best_model_params
+    metadata["models"] = model_description
+    with (model_snapshot_folder / "metadata.json").open("w") as fp:
         json.dump(metadata, fp, indent=2, sort_keys=True)
-    with (model_snapshot_folder / filename.models).open('wb') as fp:
+    with (model_snapshot_folder / filename.models).open("wb") as fp:
         pickle.dump(final_model, fp)
     average_scores.to_csv(model_snapshot_folder / filename.scores, index=False)
 
@@ -429,11 +454,12 @@ def train(
         X_train, _, y_train, _ = features.train_test_split(ensemble_state)
         X_train = features.fit_transform(X_train)
         estimator.fit(X_train, y_train)
-        with (model_snapshot_folder /
-                ('model_%d.pkl' % ensemble_state)).open('wb') as fp:
+        with (model_snapshot_folder / ("model_%d.pkl" % ensemble_state)).open(
+            "wb"
+        ) as fp:
             pickle.dump(estimator, fp)
         # Save feature pipeline instead of the entire features object
-        with (model_snapshot_folder /
-                ('features_%d.pkl' % ensemble_state)).open('wb') as fp:
+        with (model_snapshot_folder / ("features_%d.pkl" % ensemble_state)).open(
+            "wb"
+        ) as fp:
             pickle.dump(features._features, fp)
-
