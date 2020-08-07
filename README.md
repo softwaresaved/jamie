@@ -1,6 +1,7 @@
 ![jamie](docs/jamie-small.png)
 
 ![Python 3.8](https://github.com/softwaresaved/jamie/workflows/Python%203.8/badge.svg?branch=master)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **Jobs Analysis using Machine Information Extraction** (JAMIE) is a tool that
 aims to monitor and analyse the number of academic jobs, mainly in the UK, that
@@ -59,7 +60,7 @@ model](http://data.trenozoic.net/jamie/docs/methods.html)**.
        jamie train  # Latest snapshot by default
 
        # If you wanted to use a specific snapshot
-       jamie train <snapshot> 
+       jamie train <snapshot>
 
 6. The previous command will create model snapshots in ``snapshots/models``. You
    can now use these snapshots to make predictions:
