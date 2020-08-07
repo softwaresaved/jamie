@@ -1,4 +1,5 @@
 # Jamie scrape module
+# flake8: noqa
 
 from .main import main
-from .fileProcess import JobFile
+from .process import JobFile

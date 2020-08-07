@@ -4,7 +4,7 @@ from scipy.stats import rankdata
 from sklearn.feature_extraction.text import CountVectorizer
 from collections import defaultdict
 import pandas as pd
-from ..snapshots import TrainingSnapshot
+from .snapshots import TrainingSnapshot
 from .text_clean import TextClean
 
 

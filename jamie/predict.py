@@ -7,9 +7,8 @@ import numpy as np
 import json
 from tqdm import tqdm
 from bson.json_util import dumps
-from .common.getConnection import connectMongo
 from .logger import logger
-from .lib import isotime_snapshot
+from .lib import isotime_snapshot, connect_mongo
 from .snapshots import ModelSnapshot
 
 Date = datetime.date
@@ -81,7 +80,7 @@ class Predict:
         self._predictions = []
 
     def _connect_db(self):
-        return connectMongo(self.config)
+        return connect_mongo(self.config)
 
     def _get_documents(self):
         """Query the collection and return the documents for prediction as

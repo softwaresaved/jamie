@@ -6,7 +6,7 @@ from ..lib import table
 
 def read_list(fn):
     lines = Path(fn).read_text().split("\n")
-    return [l.strip() for l in lines if l.strip()]
+    return [line.strip() for line in lines if line.strip()]
 
 
 # Employer data

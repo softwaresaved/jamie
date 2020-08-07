@@ -10,7 +10,7 @@ import datetime
 from pathlib import Path
 from contextlib import suppress  # alternative to try: (...) except Exception: pass
 from typing import Union
-from .cleaningInformation import OutputRow
+from .clean import OutputRow
 
 _table_punc = bytes.maketrans(
     str.encode(string.punctuation), b" " * len(string.punctuation)

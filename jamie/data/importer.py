@@ -10,8 +10,8 @@ import sys
 import pymongo
 from collections import defaultdict
 from ..logger import logger
-from ..common.getConnection import connectMongo
-from ..scrape.fileProcess import JobFile
+from ..lib import connect_mongo
+from ..scrape.process import JobFile
 from . import valid_employer
 
 logger = logger(name="importer", stream_level="DEBUG")
@@ -58,7 +58,7 @@ def main(config, employer="uk_uni"):
         )
         sys.exit(1)
 
-    db_conn = connectMongo(config)
+    db_conn = connect_mongo(config)
     db_jobs = db_conn[config["db.jobs"]]
     db_jobs.create_index("jobid", unique=True)  # faster searches for "jobid"
 

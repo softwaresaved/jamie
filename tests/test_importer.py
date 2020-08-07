@@ -1,5 +1,5 @@
 import pytest
-from jamie.scrape.fileProcess import get_nested_key
+from jamie.scrape.process import get_nested_key
 
 d = {
     "json": {
