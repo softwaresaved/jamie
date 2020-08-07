@@ -35,9 +35,9 @@ def _import_iterator(input_folder, skip):
         Job data in a dictionary
     """
     for filename in (f for f in input_folder.glob("*") if f.stem not in skip):
-        job = JobFile(input_folder / filename).parse()
-        if job:
-            yield job
+        job = JobFile(filename).parse()
+        if job.data:
+            yield job.data
 
 
 def main(config, employer="uk_uni"):
@@ -67,7 +67,9 @@ def main(config, employer="uk_uni"):
     njobs = defaultdict(int)
     for data in _import_iterator(config["scrape.folder"], skip=recorded_jobs):
         if njobs["inserted"] % REPORT_INTERVAL == 0:
-            logger.debug("Progress %s", njobs)
+            logger.debug(
+                "Progress %s", ", ".join("{} {}".format(v, k) for k, v in njobs.items())
+            )
         try:
             db_jobs.insert(data)
             njobs["inserted"] += 1
