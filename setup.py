@@ -8,16 +8,7 @@ setup(
     author="",
     author_email="hello@example.com",
     scripts=["bin/jamie"],
-    packages=[
-        "jamie",
-        "jamie.analysis",
-        "jamie.common",
-        "jamie.scrape",
-        "jamie.config",
-        "jamie.features",
-        "jamie.data",
-        "jamie.prediction",
-    ],
+    packages=["jamie", "jamie.common", "jamie.scrape", "jamie.features", "jamie.data"],
     install_requires=[
         "chevron",  # mustache templating
         "matplotlib",
