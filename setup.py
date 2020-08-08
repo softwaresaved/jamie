@@ -20,7 +20,6 @@ setup(
         "nltk==3.5",  # text cleaning
         "numpy>=1.12.0",
         "tqdm",  # progress bars
-        "pytest",
         "requests==2.22.0",
         "beautifulsoup4==4.9.0",
     ],
