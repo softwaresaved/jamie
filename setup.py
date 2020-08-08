@@ -16,7 +16,6 @@ setup(
         "pytoml",  # read .toml configuration files
         "fire",  # command line interface
         "pandas==1.0.3",
-        "gitpython==3.1.2",
         "scikit-learn==0.22.2",
         "imbalanced-learn==0.6.2",
         "nltk==3.5",  # text cleaning

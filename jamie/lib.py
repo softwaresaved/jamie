@@ -1,6 +1,5 @@
 # Common functions used throughout JAMIE
 import os
-import git
 import errno
 import datetime
 import pymongo
@@ -52,11 +51,6 @@ def connect_mongo(cfg):
     # Get the information about the db and the collections
     # Create the instance that connect to the db storing the training set
     return connect_db(*args_to_connect)
-
-
-def gitversion():
-    repo = git.Repo(__file__, search_parent_directories=True)
-    return repo.git.describe()
 
 
 def isodate():

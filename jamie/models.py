@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"Machine learning models"
 
 import copy
 import json
@@ -23,8 +22,9 @@ from sklearn.model_selection import (
 )
 from .snapshots import TrainingSnapshotCollection
 from .features import select_features
-from .lib import isotime_snapshot, gitversion
+from .lib import isotime_snapshot
 from .logger import logger
+from . import __version__
 
 logger = logger(name="models", stream_level="INFO")
 
@@ -389,7 +389,7 @@ def train(
         "features_transformed": "features.npz",
     }
     Features = select_features(featureset)
-    timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
+    timestamp = "_".join((featureset, isotime_snapshot(), __version__))
     model_snapshot_folder = config["common.snapshots"] / "models" / timestamp
     metadata = {
         "snapshot": timestamp,
