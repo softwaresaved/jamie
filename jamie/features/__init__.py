@@ -4,21 +4,29 @@ from .default import RSEFeatures
 from ..lib import arrow_table
 from .base import FeatureBase  # NOQA
 
-allowed_features = {
-    "rse": {"description": "Features corresponding to RSE jobs", "class": RSEFeatures}
-}
+featuresets = {"rse": RSEFeatures}
 
 
 def select_features(f):
-    "Select featureset"
-    if f in allowed_features:
-        return allowed_features[f]["class"]
-    else:
-        return None
+    "Select featureset from name"
+    return featuresets.get(f, None)
 
 
 def list_features():
     "List available featuresets"
-    return arrow_table(
-        [(k, allowed_features[k]["description"]) for k in allowed_features],
+    return arrow_table([(f, featuresets[f].description) for f in featuresets])
+
+
+def valid_doc(features, doc):
+    """Check whether document is valid according to featureset required
+    columns. Each featureset usually requires some attributes to be present
+    in the data for a valid feature transformation.
+
+    Returns
+    -------
+    bool
+        Whether document is valid
+    """
+    return doc is not None and all(
+        doc[x][0] is not None for x in featuresets[features].require_columns
     )

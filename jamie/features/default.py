@@ -3,8 +3,6 @@ from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from .base import FeatureBase, TextSelector
-from sklearn.preprocessing import StandardScaler
-from .base import CountTerm, LenSelector
 
 SEARCH_TERM_LIST = [
     "algorithm",
@@ -77,12 +75,15 @@ class RSEFeatures(FeatureBase):
     after removing stopwords, and using sublinear TF scaling.
     """
 
+    require_columns = ["description", "job_title"]
+    description = "Features corresponding to RSE jobs"
+
     def __init__(self, data):
         super().__init__(
             data,
             SEARCH_TERM_LIST,
-            require_columns=["description", "job_title"],
-            clean_columns=["description", "job_title"],
+            require_columns=self.require_columns,
+            clean_columns=self.require_columns,
         )
         self.set_features(
             [

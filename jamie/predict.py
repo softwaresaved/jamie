@@ -10,6 +10,7 @@ from bson.json_util import dumps
 from .logger import logger
 from .lib import isotime_snapshot, connect_mongo
 from .snapshots import ModelSnapshot
+from .features import valid_doc
 
 Date = datetime.date
 
@@ -173,7 +174,7 @@ class Predict:
             self.model_snapshot.features(i) for i in self.model_snapshot.data["indices"]
         ]
         for _id, doc in tqdm(self._get_documents(), desc="Predicting"):
-            if doc is not None:
+            if valid_doc(self.model_snapshot.metadata["training"]["featureset"], doc):
                 # Check if it has already been predicted
                 existing_prediction = self.db.predictions.find_one(
                     {"_id": _id + "_" + self.model_snapshot.name}
@@ -211,9 +212,9 @@ class Predict:
                 fp.write(dumps(r, sort_keys=True) + "\n")
         with (snapshot_root / "metadata.json").open("w") as fp:
             metadata = self.model_snapshot.metadata
-            metadata[
-                "best_model_average_score"
-            ] = self.model_snapshot.data.scores.mean_precision.max()
+            metadata["best_model_average_score"] = self.model_snapshot.data[
+                "scores"
+            ].mean_precision.max()
             json.dump(self.model_snapshot.metadata, fp, indent=True, sort_keys=True)
 
     @property
