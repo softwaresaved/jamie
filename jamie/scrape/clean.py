@@ -77,7 +77,7 @@ class OutputRow:
         """
         return set(
             " ".join(set([x for x in self.text_cleaner.clean_text(empl)]))
-            for empl in employers[self._employer].list
+            for empl in employers[self._employer]["list"]
         )
 
     def read_postcode(self):
@@ -86,7 +86,7 @@ class OutputRow:
         """
         return {
             row.PROVIDER_NAME: row.POSTCODE
-            for row in employers[self._employer].postcodes.itertuples()
+            for row in employers[self._employer]["postcodes"].itertuples()
         }
 
     def matching_key(self, key):
