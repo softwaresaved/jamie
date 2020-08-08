@@ -1,20 +1,15 @@
 # Common functions used throughout JAMIE
 import os
+import json
 import errno
 import datetime
 import pymongo
-import pytoml as toml
+from pathlib import Path
 from .logger import logger
 
 
-def read_toml(fn):
-    with open(fn) as fp:
-        return toml.load(fp)
-
-
 def connect_mongo(cfg):
-    """
-    """
+    "Returns connection to MongoDB given configuration"
 
     _logger = logger(name="database", stream_level="DEBUG")
 
@@ -40,7 +35,8 @@ def connect_mongo(cfg):
     args_to_connect = [cfg["db.name"]]
     # # MongoDB ACCESS #
     if "db.access" in cfg:
-        access_value = read_toml(cfg["db.access"])
+        with Path(cfg["db.access"]).open() as fp:
+            access_value = json.load(fp)
         args_to_connect += [
             access_value["MongoDB"].get("db_username", None),
             access_value["MongoDB"].get("DB_PASSWORD", None),
