@@ -1,6 +1,5 @@
 from pathlib import Path
 import pandas as pd
-from box import Box
 from ..lib import table
 
 
@@ -10,15 +9,13 @@ def read_list(fn):
 
 
 # Employer data
-employers = Box(
-    {
-        "uk_uni": {
-            "description": "Universities in the United Kingdom",
-            "list": read_list(Path(__file__).parent / "uk_uni_list.txt"),
-            "postcodes": pd.read_csv(Path(__file__).parent / "uk_uni_postcode.csv"),
-        }
+employers = {
+    "uk_uni": {
+        "description": "Universities in the United Kingdom",
+        "list": read_list(Path(__file__).parent / "uk_uni_list.txt"),
+        "postcodes": pd.read_csv(Path(__file__).parent / "uk_uni_postcode.csv"),
     }
-)
+}
 
 
 def list_employers():

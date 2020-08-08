@@ -20,7 +20,6 @@ setup(
         "scikit-learn==0.22.2",
         "imbalanced-learn==0.6.2",
         "nltk==3.5",  # text cleaning
-        "python-box==4.2.3",  # access dict using dot notation
         "numpy>=1.12.0",
         "tqdm",  # progress bars
         "pytest",

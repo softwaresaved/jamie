@@ -3,31 +3,24 @@ import json
 from bson.json_util import loads
 import datetime
 from enum import Enum, auto
-from box import Box
 from typing import Optional, List
 from dataclasses import dataclass, asdict
 
 
 class Alert(Enum):
     "Alert levels for reporting"
-    High = Box(
-        {
-            "alert_level": "alert-success",
-            "text": "High confidence is defined to be above a score of 0.80",
-        }
-    )
-    Medium = Box(
-        {
-            "alert_level": "alert-warning",
-            "text": "Medium confidence is defined to be for scores from 0.60 to 0.80",
-        }
-    )
-    Low = Box(
-        {
-            "alert_level": "alert-danger",
-            "text": "Low confidence is defined for a score below 0.60",
-        }
-    )
+    High = {
+        "alert_level": "alert-success",
+        "text": "High confidence is defined to be above a score of 0.80",
+    }
+    Medium = {
+        "alert_level": "alert-warning",
+        "text": "Medium confidence is defined to be for scores from 0.60 to 0.80",
+    }
+    Low = {
+        "alert_level": "alert-danger",
+        "text": "Low confidence is defined for a score below 0.60",
+    }
 
     @staticmethod
     def level(n):

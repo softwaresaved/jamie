@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from dataclasses import asdict
-from box import Box
 from .config import Config
 from .types import JobPrediction
 
@@ -187,7 +186,7 @@ class ModelSnapshot(Snapshot):
 
     @property
     def data(self):
-        """Data corresponding to model snapshot. Returned in a Box:
+        """Data corresponding to model snapshot. Returned as a dict:
 
         * model: The model object itself
         * scores: pd.DataFrame corresponding to best scores
@@ -204,7 +203,7 @@ class ModelSnapshot(Snapshot):
             if scores_fn.exists():
                 out["scores"] = pd.read_csv(scores_fn)
             self._data = out
-        return Box(self._data)
+        return self._data
 
     def model(self, index: str):
         "Returns model at index"

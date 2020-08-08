@@ -10,7 +10,6 @@ import numpy as np
 import sklearn
 import scipy.sparse
 from tqdm import tqdm
-from box import Box
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.svm import SVC
@@ -383,14 +382,12 @@ def train(
     random_state : int
         Seed to initialise the random state (default: 100)
     """
-    filename = Box(
-        {
-            "models": "model.pkl",
-            "scores": "scores.csv",
-            "features_original": "features.csv",
-            "features_transformed": "features.npz",
-        }
-    )
+    filename = {
+        "models": "model.pkl",
+        "scores": "scores.csv",
+        "features_original": "features.csv",
+        "features_transformed": "features.npz",
+    }
     Features = select_features(featureset)
     timestamp = "_".join((featureset, isotime_snapshot(), gitversion()))
     model_snapshot_folder = config["common.snapshots"] / "models" / timestamp
@@ -412,7 +409,7 @@ def train(
             "scikit-learn": sklearn.__version__,  # different sklearn versions may not have compatible pickles
         },
         "config": config.as_dict(),
-        "data": {"models": filename.models, "scores": filename.scores},
+        "data": {"models": filename["models"], "scores": filename["scores"]},
     }
     logger.info("Snapshot %s", timestamp)
     training_snapshots = TrainingSnapshotCollection(config["common.snapshots"])
@@ -421,9 +418,9 @@ def train(
     logger.info("Saving features")
     if not model_snapshot_folder.exists():
         model_snapshot_folder.mkdir(parents=True)
-    features.X.to_csv(model_snapshot_folder / filename.features_original)
+    features.X.to_csv(model_snapshot_folder / filename["features_original"])
     scipy.sparse.save_npz(
-        model_snapshot_folder / filename.features_transformed, X_train
+        model_snapshot_folder / filename["features_transformed"], X_train
     )
     logger.info("Features: {} jobs, {} features".format(*X_train.shape))
     logger.info("Nested cross validation")
@@ -442,9 +439,9 @@ def train(
     metadata["models"] = model_description
     with (model_snapshot_folder / "metadata.json").open("w") as fp:
         json.dump(metadata, fp, indent=2, sort_keys=True)
-    with (model_snapshot_folder / filename.models).open("wb") as fp:
+    with (model_snapshot_folder / filename["models"]).open("wb") as fp:
         pickle.dump(final_model, fp)
-    average_scores.to_csv(model_snapshot_folder / filename.scores, index=False)
+    average_scores.to_csv(model_snapshot_folder / filename["scores"], index=False)
 
     # Run ensemble by fitting best_estimator from final_model to
     # 100 different train test splits
