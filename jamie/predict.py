@@ -167,10 +167,10 @@ class Predict:
             Returns copy of itself
         """
         models = [
-            self.model_snapshot.model(i) for i in self.model_snapshot.data.indices
+            self.model_snapshot.model(i) for i in self.model_snapshot.data["indices"]
         ]
         features = [
-            self.model_snapshot.features(i) for i in self.model_snapshot.data.indices
+            self.model_snapshot.features(i) for i in self.model_snapshot.data["indices"]
         ]
         for _id, doc in tqdm(self._get_documents(), desc="Predicting"):
             if doc is not None:
