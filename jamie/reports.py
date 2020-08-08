@@ -48,21 +48,21 @@ class Report:
     def __init__(self, prediction_snapshot):
         self.prediction_snapshot = prediction_snapshot
         self.training_data = TrainingSnapshot(
-            self.prediction_snapshot["metadata"]["training"]["training_snapshot"]
+            self.prediction_snapshot.metadata["training"]["training_snapshot"]
         ).data
         self.training_data["year_month"] = self.training_data.placed_on.apply(fix_day)
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
-        self.scores = ModelSnapshot(
-            self.prediction_snapshot["metadata"]["snapshot"]
-        ).data["scores"]
-        self.scoring = self.prediction_snapshot["metadata"]["training"]["scoring"]
+        self.scores = ModelSnapshot(self.prediction_snapshot.metadata["snapshot"]).data[
+            "scores"
+        ]
+        self.scoring = self.prediction_snapshot.metadata["training"]["scoring"]
         # Keep only the best score classifier as a dictionary
         self.scores = (
             self.scores.sort_values("mean_" + self.scoring, ascending=False)
             .head(1)
             .to_dict("records")[0]
         )
-        self.featureset = self.prediction_snapshot["metadata"]["training"]["featureset"]
+        self.featureset = self.prediction_snapshot.metadata["training"]["featureset"]
         self.data = self.prediction_snapshot.data
 
         logger.info("              Total number of jobs: %d", len(self.data))
@@ -241,7 +241,7 @@ class Report:
     def create(self):
         "Create a report and store in a report snapshot"
         self.make_graphs()
-        score = self.prediction_snapshot["metadata"]["best_model_average_score"]
+        score = self.prediction_snapshot.metadata["best_model_average_score"]
         alert = Alert.level(score)
         recall = self.scores["mean_recall"]
         recall_alert = Alert.level(recall)
@@ -268,12 +268,12 @@ class Report:
             "job_target_keywords": ", ".join(JobType[self.featureset].search_keywords),
             "per_job_target": "{:.1f}".format(per_job_target),
             "job_type": JobType[self.featureset].title,
-            "alert_level": alert.value.alert_level,
+            "alert_level": alert.value["alert_level"],
             "score_name": self.scoring.replace("-", " ").capitalize(),
             "score_level": alert.name,
             "score": "{:.4f}".format(score),
             "score_explanation": PrecisionRecall.get(alert, recall_alert).value,
-            "recall_alert_level": recall_alert.value.alert_level,
+            "recall_alert_level": recall_alert.value["alert_level"],
             "recall_level": recall_alert.name,
             "recall": "{:.4f}".format(recall),
             "date": self.snapshot.name,
