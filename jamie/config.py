@@ -1,11 +1,12 @@
+import json
 from pathlib import Path
-import pytoml as toml
+from collections import ChainMap
 from .lib import arrow_table
 
 DEFAULTS = {
-    "common.snapshots": Path("snapshots"),
-    "scrape.folder": Path("input"),
-    "common.nltk-files": Path("nltk-files"),
+    "common.snapshots": "snapshots",
+    "scrape.folder": "input",
+    "common.nltk-files": "nltk-files",
     "scrape.njobs": 10000,
     "db.name": "jobsDB",
     "db.tags": "tags",
@@ -19,33 +20,27 @@ DEFAULTS = {
 
 
 class Config:
-    cf = DEFAULTS
     cache = Path("~/.cache/jamie").expanduser()
     paths = ["common.snapshots", "scrape.folder", "common.nltk-files"]
 
     def __init__(
-        self, filename=Path("~/.config/jamie/config.toml").expanduser(), who="jamie"
+        self, filename=Path("~/.config/jamie/config.json").expanduser(), who="jamie"
     ):
         self.who = who
         self.filename = filename
         self.exists = Path(filename).exists()
+        _cf = {}
         if filename.exists():
             with filename.open() as fp:
-                _cf = toml.load(fp)
-            for k in _cf:
-                if not isinstance(_cf[k], dict):
-                    raise ValueError(
-                        "Incorrect configuration file format in %s" % self.filename
-                    )
-                else:
-                    for y in _cf[k]:
-                        key = "%s.%s" % (k, y)
-                        if key in self.paths:
-                            self.cf[key] = Path(_cf[k][y]).expanduser()
-                        else:
-                            self.cf[key] = _cf[k][y]
+                _cf = json.load(fp)
+        # Find keys successively in specified config and then defaults
+        self.cf = ChainMap(_cf, DEFAULTS)
         if not self.cache.exists():
             self.cache.mkdir(parents=True)
+
+    def ensure_config_location_exists(self):
+        if not self.filename.parent.exists():
+            self.filename.parent.mkdir(parents=True)
 
     def __contains__(self, s):
         return s in self.cf
@@ -54,57 +49,29 @@ class Config:
         return arrow_table(self.cf.items())
 
     def get(self, s, default=None):
-        if s in self.cf:
-            return self.cf[s]
-        else:
-            return default
+        if s in self.paths:
+            return Path(self.cf[s]) if s in self.cf else default
+        return self.cf.get(s, default)
 
     def set(self, s, val):
-        if s in self.paths:
-            if not isinstance(val, Path):
-                raise ValueError("%s accepts Path keys")
         try:
             root, child = s.split(".")
         except ValueError:
-            raise ValueError("Indentation level not two levels (abc.xyz)")
-        cf = {}
-        for k in self.cf:
-            r, c = k.split(".")
-            if r not in cf:
-                cf[r] = {}
-            if k in self.paths:
-                cf[r][c] = str(self.cf[k])
-            else:
-                cf[r][c] = self.cf[k]
-        if root not in cf:
-            cf[root] = {}
-        if s in self.paths:
-            cf[root][child] = str(val)
-        else:
-            cf[root][child] = val
+            raise ValueError("All configuration items are two levels (abc.xyz)")
+        self.ensure_config_location_exists()
+        if isinstance(val, Path):
+            val = str(Path)
+        # New value in front of ChainMap same value later on
+        cf = self.cf.new_child({s: val})
         with self.filename.open("w") as fp:
-            toml.dump(cf, fp)
-
-    def save(self, folder, name="config.toml"):
-        cf = {}
-        for k in self.cf:
-            r, c = k.split(".")
-            if r not in cf:
-                cf[r] = {}
-            if k in self.paths:
-                cf[r][c] = str(self.cf[k])
-            else:
-                cf[r][c] = self.cf[k]
-
-        with (folder / name).open("w") as fp:
-            toml.dump(cf, fp)
+            json.dump(dict(cf), fp, sort_keys=True, indent=2)
 
     def as_dict(self):
-        cf = self.cf.copy()
-        for k in cf:
-            if k in self.paths:
-                cf[k] = str(cf[k])
-        return cf
+        return dict(self.cf)
+
+    def save(self, folder, name="config.json"):
+        with (folder / name).open("w") as fp:
+            json.dump(self.as_dict(), fp, sort_keys=True, indent=2)
 
     def __getitem__(self, key):
         return self.cf[key]

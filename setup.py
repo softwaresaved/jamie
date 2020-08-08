@@ -13,7 +13,6 @@ setup(
         "chevron",  # mustache templating
         "matplotlib",
         "pymongo>=3.4.0",
-        "pytoml",  # read .toml configuration files
         "fire",  # command line interface
         "pandas==1.0.3",
         "scikit-learn==0.22.2",
