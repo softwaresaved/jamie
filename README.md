@@ -8,7 +8,8 @@ aims to monitor and analyse the number of academic jobs, mainly in the UK, that
 require software skills.
 
 **[Documentation](http://data.trenozoic.net/jamie/docs/)** •
-**[Dashboard](http://data.trenozoic.net/jamie/reports/latest/)**
+**[Dashboard](http://data.trenozoic.net/jamie/reports/latest/)** •
+**[Contribution Guidelines](CONTRIBUTING.md)**
 
 ## Installation
 
