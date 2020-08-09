@@ -35,11 +35,21 @@ workflow](http://data.trenozoic.net/jamie/docs/workflow.html)** along with the
 help for the command line interface, or look at how we **[built the
 model](http://data.trenozoic.net/jamie/docs/methods.html)**.
 
+**Concurrency**. All the steps indicated above with `snapshots` support
+multiple snapshots, and independent snapshots can be worked on concurrently.
+Scraping writes to the filesystem and can be run independently of other steps
+as well. Prediction requires read access to the database, so running it
+concurrently with the load step (which writes to the database) might not work
+or result in unpredictable behaviour. This can be fixed by making prediction
+work from a database snapshot (not currently supported).
+
+**Reproducibility**. Training the model should be reproducible and the random number seed is set automatically where needed. Scraping is inherently non-reproducible, but loading and cleaning the data should be (not tested yet). Prediction is non-reproducible as it relies on a mutable database, but generation of reports from predictions is reproducible.
+
 ## Prerequisites
 
 1. **OS**. Any UNIX based OS can be used to run jamie. Development was done on
    Debian 11 (testing, bullseye), Ubuntu 20.04 should work as well.
-1. **Python**. Development used Python 3.8, though later versions should work
+1. **Python**. Development uses Python 3.8, though later versions should work
    as well.
 1. **Database**. Jamie uses MongoDB as the backing store for jobs data. Either
    [install MongoDB locally](https://docs.mongodb.com/manual/installation/) or
