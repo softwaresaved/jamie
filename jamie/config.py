@@ -12,9 +12,6 @@ DEFAULTS = {
     "db.tags": "tags",
     "db.jobs": "jobs",
     "db.prediction": "prediction",
-    "db.mysql-host": "127.0.0.1",
-    "db.mysql-port": None,
-    "db.mysql-name": "classify",
     "model.k-fold": 5,
 }
 
