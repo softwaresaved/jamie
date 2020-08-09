@@ -102,7 +102,7 @@ their rationale:
 
   Licenses: Apache (requests, nltk), MIT (beautifulsoup4)
 
-- **Database**. Connection to MongoDB is done via **pymongo** (Apache license).
+- **Database**. Connection to MongoDB is done via [**pymongo**](https://pymongo.readthedocs.io/) (Apache license).
 
 - **CLI**. [**fire**](https://github.com/google/python-fire) is used to easily
   create the command line interface and
