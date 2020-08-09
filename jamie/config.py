@@ -6,7 +6,6 @@ from .lib import arrow_table
 DEFAULTS = {
     "common.snapshots": "snapshots",
     "scrape.folder": "input",
-    "common.nltk-files": "nltk-files",
     "scrape.njobs": 10000,
     "db.name": "jobsDB",
     "db.tags": "tags",
@@ -18,7 +17,7 @@ DEFAULTS = {
 
 class Config:
     cache = Path("~/.cache/jamie").expanduser()
-    paths = ["common.snapshots", "scrape.folder", "common.nltk-files"]
+    paths = ["common.snapshots", "scrape.folder"]
 
     def __init__(
         self, filename=Path("~/.config/jamie/config.json").expanduser(), who="jamie"
