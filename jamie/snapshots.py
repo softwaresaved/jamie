@@ -114,6 +114,10 @@ class SnapshotCollection:
         "List of instances in collection"
         return self.instances
 
+    @property
+    def is_empty(self):
+        return self.instances == []
+
     def __contains__(self, key):
         "Returns whether instance *key* is in collection"
         return key in self.instances

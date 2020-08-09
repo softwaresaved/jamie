@@ -3,20 +3,42 @@ import os
 import errno
 import datetime
 import pymongo
-from .logger import logger
 
 
 def connect_mongo(cfg):
     "Returns connection to MongoDB given configuration"
 
-    _logger = logger(name="database", stream_level="DEBUG")
     if "JAMIE_MONGO_URI" in os.environ:
         client = pymongo.MongoClient(os.environ["JAMIE_MONGO_URI"])
     else:
         client = pymongo.MongoClient()
-        _logger.info("Connection to the database without password and authentication")
 
     return client[cfg["db.name"]]
+
+
+def setup_messages(msgs):
+    "Pretty prints setup messages"
+    m = ""
+    for msg in msgs:
+        status, text = msg
+        if status:
+            m += " \033[92m✔\033[0m \033[1m" + text + "\033[0m\n"
+        else:
+            m += " \033[31m×\033[0m\033[1m " + text + "\033[0m\n"
+    return m
+
+
+def check_nltk_download(*datasets):
+    "Check NLTK download for datasets"
+    import nltk
+
+    download_succeeded = []
+    for dataset in datasets:
+        if not nltk.download(dataset, quiet=True):
+            download_succeeded.append(False)
+        else:
+            download_succeeded.append(True)
+    return all(download_succeeded)
 
 
 def isodate():
