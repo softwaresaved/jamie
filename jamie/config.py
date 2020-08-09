@@ -71,7 +71,10 @@ class Config:
             json.dump(self.as_dict(), fp, sort_keys=True, indent=2)
 
     def __getitem__(self, key):
-        return self.cf[key]
+        if key in self.paths:
+            return Path(self.cf[key])
+        else:
+            return self.cf[key]
 
 
 def configurator(field=None, new_value=None):
