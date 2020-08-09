@@ -32,13 +32,7 @@ def check_nltk_download(*datasets):
     "Check NLTK download for datasets"
     import nltk
 
-    download_succeeded = []
-    for dataset in datasets:
-        if not nltk.download(dataset, quiet=True):
-            download_succeeded.append(False)
-        else:
-            download_succeeded.append(True)
-    return all(download_succeeded)
+    return all(nltk.download(dataset, quiet=True) for dataset in datasets)
 
 
 def isodate():
