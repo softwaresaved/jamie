@@ -19,8 +19,8 @@ This will install several tools:
   the repository once. This will trim trailing whitespaces, fix extra newlines
   at the end of the file and run `flake8` and `black` for linting and
   autoformatting.
-- [`pytest`]: Run unit tests using `pytest tests`
-- [`sphinx`]: Used to generate documentation from the `docs` folder. There is a
+- [`pytest`](https://docs.pytest.org): Run unit tests using `pytest tests`
+- [`sphinx`](https://www.sphinx-doc.org/): Used to generate documentation from the `docs` folder. There is a
   Makefile in the docs folder which can generate documentation in various
   formats, such as HTML (`make html`).
 
@@ -73,42 +73,42 @@ which are unmaintained could lead to security issues or incompatibilities
 further down the line. This lists current dependencies, grouped by type and
 their rationale:
 
-- **Machine learning**: `scikit-learn` is the core dependency, while
-  [`imbalanced-learn`](https://imbalanced-learn.org) is used for optional
-  oversampling, `numpy` for general matrix manipulation, `pandas` for data
-  manipulation. `imbalanced-learn` seems to be well maintained and has a
+- **Machine learning**: **scikit-learn** is the core dependency, while
+  [**imbalanced-learn**](https://imbalanced-learn.org) is used for optional
+  oversampling, **numpy** for general matrix manipulation, **pandas** for data
+  manipulation. imbalanced-learn seems to be well maintained and has a
   [published article](https://imbalanced-learn.org/stable/about.html), while
   the others are standard well-known libraries.
 
-  Licenses: New BSD (`scikit-learn`), BSD (`numpy`, `pandas`), MIT
-  (`imbalanced-learn`).
+  Licenses: New BSD (scikit-learn), BSD (numpy, pandas), MIT
+  (imbalanced-learn).
 
-- **Data visualization**: `matplotlib` is used to generate plots in the
+- **Data visualization**: **matplotlib** is used to generate plots in the
   reports; these plots are deprecated as we use d3 for visualization now, but
   kept for possible inclusion in PDF reports. This is a well-known, widely used
   library.
 
-  [`chevron`](https://github.com/noahmorrison/chevron) is used as a template
+  [**chevron**](https://github.com/noahmorrison/chevron) is used as a template
   engine to generate the report `index.html` file. The template engine uses the
   [mustache](http://mustache.github.io/) syntax. This library is not that
   well-known but essentially comprises two files, a renderer and tokenizer so
   should be easy to audit. Alternative mustache implementations or template
   engines could also be used instead.
 
-  Licenses: [BSD-compatible](https://matplotlib.org/3.3.0/users/license.html) (`matplotlib`), MIT (`chevron`)
+  Licenses: [BSD-compatible](https://matplotlib.org/3.3.0/users/license.html) (matplotlib), MIT (chevron)
 
-- **Scraping**. `requests` for fetching data over HTTP, `beautifulsoup4` for
-  HTML parsing. `nltk` is used to clean the text data. All of these are well-known, widely used libraries.
+- **Scraping**. **requests** for fetching data over HTTP, **beautifulsoup4** for
+  HTML parsing. **nltk** is used to clean the text data. All of these are well-known, widely used libraries.
 
-  Licenses: Apache (`requests`, `nltk`), MIT (`beautifulsoup4`)
+  Licenses: Apache (requests, nltk), MIT (beautifulsoup4)
 
 - **Database**. Connection to MongoDB is done via `pymongo` (Apache license).
 
-- **CLI**. [`fire`](https://github.com/google/python-fire) is used to easily
-- create the command line interface and
-  [`tqdm`](https://tqdm.github.io) is used to display progress bars during
+- **CLI**. [**fire**](https://github.com/google/python-fire) is used to easily
+  create the command line interface and
+  [**tqdm**](https://tqdm.github.io) is used to display progress bars during
   training and prediction. Both of these libraries are well-maintained but can
-  be removed if required, with `fire` being replaced by `argparse` and removing
+  be removed if required, with fire being replaced by argparse and removing
   progress bars.
 
-  Licenses: Apache (`fire`), MIT (`tqdm`)
+  Licenses: Apache (fire), MIT (tqdm)
