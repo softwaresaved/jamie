@@ -24,9 +24,9 @@ To install using pip:
 ## How it works
 
 The CLI tool `jamie` is a wrapper around the Jamie API (see the documentation).
-Working with Jamie is akin to a standard machine learning pipeline: we first
-train a model and use that to predict whether jobs are software jobs or not.
-The final step is the creation of the report.
+Working with Jamie is similar to running standard machine learning pipeline: we
+first train a model and use that to predict whether jobs are software jobs or
+not. The final step is the creation of the report.
 
 ![workflow](docs/workflow.svg)
 
@@ -38,7 +38,7 @@ model](http://data.trenozoic.net/jamie/docs/methods.html)**.
 ## Prerequisites
 
 1. **OS**. Any UNIX based OS can be used to run jamie. Development was done on
-   a Debian 11 (testing, bullseye), Ubuntu 20.04 should work as well.
+   Debian 11 (testing, bullseye), Ubuntu 20.04 should work as well.
 1. **Python**. Development used Python 3.8, though later versions should work
    as well.
 1. **Database**. Jamie uses MongoDB as the backing store for jobs data. Either
@@ -59,15 +59,14 @@ model](http://data.trenozoic.net/jamie/docs/methods.html)**.
 Detailed usage can be found in the
 [workflow](http://data.trenozoic.net/jamie/docs/workflow.html) document.
 
-1. **Configuration**.
-  - Show configuration: `jamie config`
-  - Set configuration: `jamie config <configname> <value>`
+1. **Configuration**. Show the configuration using `jamie config`, or set
+   configuration using `jamie config <configname> <value>`
 1. **Download** jobs: `jamie scrape`
 1. **Load** jobs into MongoDB: `jamie load`
 1. **Training snapshots**. A training snapshot is needed to run the machine
-learning pipeline. First check the snapshots folder location (`jamie config
-common.snapshots`), exists and then copy an existing training set CSV file into
-the training snapshot location. It should be called `training_set.csv`:
+   learning pipeline. First check the snapshots folder location (`jamie config
+   common.snapshots`), exists and then copy an existing training set CSV file
+   into the training snapshot location. It should be called `training_set.csv`:
 
        cd `jamie config common.snapshots`
        mkdir -p training/<date>  # date of snapshot
