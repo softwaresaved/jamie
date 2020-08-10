@@ -114,6 +114,8 @@ class JobFile:
             "th", {"class": "j-advert-details__table-header"}
         ):
             yield {self.transform_key(element.text): element.findNext("td").text}
+        for element in self._soup.findAll("dt"):
+            yield {self.transform_key(element.text): element.findNext("dd").text}
 
     @property
     def description(self):
