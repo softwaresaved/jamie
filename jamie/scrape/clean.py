@@ -8,6 +8,7 @@ This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs 
 import re
 import difflib
 from operator import itemgetter
+from contextlib import suppress
 import dateutil.parser
 from ..data import employers
 from ..text_clean import TextClean
@@ -63,7 +64,7 @@ class OutputRow:
         # populate it with the new_keys and the first
         self.keys_to_record = list(self.new_keys)
         self.create_dictionary()
-        self.invalid_code = list()
+        self.invalid_code = set()
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
         self.text_cleaner = TextClean()
@@ -71,7 +72,8 @@ class OutputRow:
         self.uk_postcode_dict = self.read_postcode()
 
     @staticmethod
-    def clean_date(date):
+    def parse_date(date):
+        "Parses date from job attributes"
         try:
             return dateutil.parser.parse(
                 date, dayfirst=True, fuzzy=False, ignoretz=True
@@ -166,26 +168,24 @@ class OutputRow:
 
     def clean_placed_on(self):
         self.check_validity(self.placed_on, "placed_on")
-        self.placed_on = OutputRow.clean_date(self.placed_on)
+        self.placed_on = OutputRow.parse_date(self.placed_on)
         if self.placed_on is None:
-            self.add_invalid_code("placed_on")
+            self.invalid_code.add("placed_on")
 
     def clean_closes(self):
         self.check_validity(self.closes, "closes")
-        self.closes = OutputRow.clean_date(self.closes)
+        self.closes = OutputRow.parse_date(self.closes)
         if self.closes is None:
-            self.add_invalid_code("closes")
+            self.invalid_code.add("closes")
 
     def add_duration(self):
         """
         Add a duration of the job ads by substracting closes to placed_on
         """
-        if "placed_on" not in self.invalid_code and "closes" not in self.invalid_code:
-            try:
+        if not {"placed_on", "closes"} & self.invalid_code:
+            with suppress(AttributeError, TypeError):
                 duration_ad = self.closes - self.placed_on
                 self.duration_ad_days = duration_ad.days
-            except (AttributeError, TypeError):
-                pass
 
     def clean_employRef(self):
         self.check_validity(self.employRef, "EmployRef")
@@ -198,7 +198,7 @@ class OutputRow:
 
     def clean_contract(self):
         self.check_validity(self.contract, "contract")
-        try:
+        with suppress(AttributeError):
             if self.Contract == "Contract / Temporary":
                 self.Contract = "Temporary"
             elif self.Contract == "Permanent":
@@ -206,15 +206,13 @@ class OutputRow:
             elif self.Contract == "Fixed-Term/Contract":
                 self.Contract = "Fixed-Term"
             else:
-                self.add_invalid_code("contract")
-        except AttributeError:
-            pass
+                self.invalid_code.add("contract")
 
     def clean_salary(self, field, fieldname):
         """
         """
         self.check_validity(field, fieldname)
-        try:
+        with suppress(TypeError):
             # First remove all the white spaces and replace them with a single whitespace
             field = " ".join(field.split())
             # Are there numbers associated with a £ symbol in the format £nn,nnn or £nnn,nnn?
@@ -225,10 +223,10 @@ class OutputRow:
             if num_salary_fields == 0:
                 # Does the salary field contain only text, i.e. no numbers
                 if re.search(r"[0-9]", field):
-                    self.add_invalid_code(fieldname)
+                    self.invalid_code.add(fieldname)
 
             elif num_salary_fields > 2:
-                self.add_invalid_code(fieldname)
+                self.invalid_code.add(fieldname)
             else:
                 # extract numeric salary values
                 salary_values = []
@@ -242,7 +240,7 @@ class OutputRow:
                 # Is the smallest number < £11k?
                 salary_min = salary_values[0]
                 if salary_min < 8000:
-                    self.add_invalid_code(fieldname)
+                    self.invalid_code.add(fieldname)
                 else:
                     # One number or two numbers?
                     if len(salary_values) == 1:
@@ -260,9 +258,7 @@ class OutputRow:
                         # higher
                         assert self.salary_values[2] > self.salary_values[1]
                     else:
-                        self.add_invalid_code(fieldname)
-        except TypeError:
-            pass
+                        self.invalid_code.add(fieldname)
 
     def check_validity(self, *args):
         """
@@ -281,18 +277,8 @@ class OutputRow:
         add the code into the list
         :params: args[0] attribute args[1] key
         """
-        self.add_invalid_code(args[1])
+        self.invalid_code.add(args[1])
         # self.remove_key(args[1])
-
-    def add_invalid_code(self, key):
-        """
-        Check the attribute of invalid code and append a key
-        :params: a string to append to the self.invalid_code dictionary
-        """
-        try:
-            self.invalid_code.append(key)
-        except AttributeError:
-            self.invalid_code = [key]
 
     def check_match(self, element_to_compare, list_to_use, limit_ratio=0.70):
         """
@@ -412,31 +398,17 @@ class OutputRow:
         self.clean_salary(self.salary, "salary")
         self.clean_salary(self.funding_amount, "funding_amount")
         if hasattr(self, "funding_amount") and "contract" in self.invalid_code:
-            self.invalid_code.remove("contract")
+            self.invalid_code -= {"contract"}
             self.contract = "funding"
 
         if hasattr(self, "salary_max") or hasattr(self, "salary_min"):
-            try:
-                self.invalid_code.remove("salary")
-            except ValueError:
-                pass
-            try:
-                self.invalid_code.remove("funding_amount")
-            except ValueError:
-                pass
+            self.invalid_code -= {"salary"}
+            self.invalid_code -= {"funding_amount"}
 
         self.clean_employer()
-        if self.invalid_code == []:
-            del self.invalid_code
-        try:
-            if "funding_amount" in self.invalid_code:
-                self.invalid_code.remove("funding_amount")
-                if "salary" in self.invalid_code:
-                    pass
-                else:
-                    self.invalid_code.append("salary")
-        except AttributeError:
-            pass
+        if "funding_amount" in self.invalid_code:
+            self.invalid_code -= {"funding_amount"}
+            self.invalid_code.add("salary")
         # New enhanced content (check in november 2017) doesnt have that key
         # Which was a reference to the employer (in form of MED203221)
         # commented
@@ -444,6 +416,11 @@ class OutputRow:
         self.clean_subject_area()
         self.add_median_salary()
         # self.add_not_student()
+
+        if self.invalid_code == set():
+            del self.invalid_code
+        else:
+            self.invalid_code = sorted(self.invalid_code)
         return self
 
     def to_dictionary(self):
@@ -451,14 +428,4 @@ class OutputRow:
         Converts this output row to a dictionary of key: value pairs.
         :return: a dictionary of key: value pairs
         """
-        result = dict()
-        # Check the list of key set up in TransformKey() and append
-        # the keys created during the analysis
-        # for k in [k for k in self.input_row.keys()] + self.new_keys:
-        for k in self.keys_to_record:
-            try:
-                result[k] = getattr(self, k)
-            except AttributeError:
-                pass
-
-        return result
+        return {k: getattr(self, k) for k in self.keys_to_record if hasattr(self, k)}
