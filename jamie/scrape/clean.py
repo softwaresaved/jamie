@@ -72,6 +72,14 @@ class OutputRow:
         self.uk_postcode_dict = self.read_postcode()
 
     @staticmethod
+    def strip_if_string(s):
+        "Returns string trimmed of whitespace, for other datatypes this is no-op"
+        if isinstance(s, str):
+            return s.strip()
+        else:
+            return s
+
+    @staticmethod
     def parse_date(date):
         "Parses date from job attributes"
         try:
@@ -428,4 +436,8 @@ class OutputRow:
         Converts this output row to a dictionary of key: value pairs.
         :return: a dictionary of key: value pairs
         """
-        return {k: getattr(self, k) for k in self.keys_to_record if hasattr(self, k)}
+        return {
+            k: OutputRow.strip_if_string(getattr(self, k))
+            for k in self.keys_to_record
+            if hasattr(self, k)
+        }
