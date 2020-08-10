@@ -1,8 +1,5 @@
 """
-
 This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs dictionary.
-
-
 """
 
 import re
@@ -62,14 +59,12 @@ class OutputRow:
         ]
         # Create a list for all the keys that are going to be recorded in the database
         # populate it with the new_keys and the first
-        self.keys_to_record = list(self.new_keys)
+        self.keys_to_record = self.new_keys
         self.create_dictionary()
         self.invalid_code = set()
         # get the list of university from the file ./uk_uni_list.txt for the method
         # self.add_uk_university
         self.text_cleaner = TextClean()
-        self.uk_uni_list = self.read_uni_list_file()
-        self.uk_postcode_dict = self.read_postcode()
 
     @staticmethod
     def strip_if_string(s):
@@ -150,35 +145,17 @@ class OutputRow:
             except KeyError:
                 setattr(self, key, None)
 
+        # Ensure all needed keys are present
         for key in self.needed_keys:
-            try:
-                getattr(self, key)
-            except AttributeError:
+            if not hasattr(self, key):
                 setattr(self, key, "")
 
-    def clean_description(self):
-        self.check_validity(self.description, "description")
-
-    def clean_jobid(self):
-        self.check_validity(self.jobid, "jobid")
-
-    def clean_job_title(self):
-        self.check_validity(self.job_title, "job_title")
-
-    def clean_subject_area(self):
-        self.check_validity(self.subject_area, "subject_area")
-
-    def clean_location(self):
-        self.check_validity(self.location, "location")
-
-    def clean_hours(self):
-        self.check_validity(self.hours, "hours")
-
-    def clean_placed_on(self):
-        self.check_validity(self.placed_on, "placed_on")
-        self.placed_on = OutputRow.parse_date(self.placed_on)
-        if self.placed_on is None:
-            self.invalid_code.add("placed_on")
+    def clean_date(self, key):
+        "Cleans a date field, and updates invalid code"
+        self.check_validity_key(key)
+        setattr(self, key, OutputRow.parse_date(getattr(self, key)))
+        if getattr(self, key) is None:
+            self.invalid_code.add(key)
 
     def clean_closes(self):
         self.check_validity(self.closes, "closes")
@@ -197,24 +174,6 @@ class OutputRow:
 
     def clean_employRef(self):
         self.check_validity(self.employRef, "EmployRef")
-
-    def clean_employer(self):
-        self.check_validity(self.employer, "employer")
-
-    def clean_type_role(self):
-        self.check_validity(self.employer, "type_role")
-
-    def clean_contract(self):
-        self.check_validity(self.contract, "contract")
-        with suppress(AttributeError):
-            if self.Contract == "Contract / Temporary":
-                self.Contract = "Temporary"
-            elif self.Contract == "Permanent":
-                self.Contract = "Permanent"
-            elif self.Contract == "Fixed-Term/Contract":
-                self.Contract = "Fixed-Term"
-            else:
-                self.invalid_code.add("contract")
 
     def clean_salary(self, field, fieldname):
         """
@@ -268,32 +227,24 @@ class OutputRow:
                     else:
                         self.invalid_code.add(fieldname)
 
-    def check_validity(self, *args):
-        """
-        Adds the passed invalid code to the output invalid_codes field.
-        :param: invalid_code: the invalid code to add
-        """
-        if args[0] is None:
-            return self.set_up_invalidity(*args)  # return to stop the func() here
-        if isinstance(args[0], str):
-            if args[0].strip().lower() in ["", "not specified"]:
-                self.set_up_invalidity(*args)
+    def check_validity(self, value, key):
+        "Checks if value is valid, otherwise updates invalid_code"
+        if value is None or (
+            isinstance(value, str) and value.strip().lower() in ["", "not specified"]
+        ):
+            self.invalid_code.add(key)
 
-    def set_up_invalidity(self, *args):
-        """
-        Function to remove the attribute if exists
-        add the code into the list
-        :params: args[0] attribute args[1] key
-        """
-        self.invalid_code.add(args[1])
-        # self.remove_key(args[1])
+    def check_validity_key(self, key):
+        """Checks if self.key is valid, otherwise adds key to invalid code.
+        Wrapper around check_validity, with value set to self.key"""
+        return self.check_validity(getattr(self, key), key)
 
     def check_match(self, element_to_compare, list_to_use, limit_ratio=0.70):
         """
         Check if the element to compare is close enough to an element
         in the list provided
         """
-        ratio_list = list()
+        ratio_list = []
         for s in list_to_use:
             # Get the ratio for each entry and the self.employer value
             ratio = difflib.SequenceMatcher(None, element_to_compare, s).ratio()
@@ -320,12 +271,12 @@ class OutputRow:
             employer = self.text_cleaner.clean_text(self.employer.split("-")[0])
             # List of keyword that are associated to university
             list_uni = ["university", "school", "college"]
-            if len(set(employer).intersection(set(list_uni))) > 0:
+            if set(employer) & set(list_uni):
                 self.uk_university = self.employer
                 return
 
             # if did not match an university. Try to match with the list provided
-            employer = " ".join(set([x for x in employer]))
+            employer = " ".join(set(employer))
             best_match = self.check_match(employer, self.uk_uni_list)
             if best_match:
                 self.uk_university = best_match
@@ -334,17 +285,16 @@ class OutputRow:
         """
         Check the string from extra_location is from uk
         """
-        if hasattr(self, "extra_location"):
-            if self.extra_location in [
-                "Northern England",
-                "London Midlands of England Scotland",
-                "South West England",
-                "South East England",
-                "Wales",
-                "Republic of Ireland",
-                "Northern Ireland",
-            ]:
-                self.in_uk = True
+        if hasattr(self, "extra_location") and self.extra_location in [
+            "Northern England",
+            "London Midlands of England Scotland",
+            "South West England",
+            "South East England",
+            "Wales",
+            "Republic of Ireland",
+            "Northern Ireland",
+        ]:
+            self.in_uk = True
 
     def add_postcode(self):
         """
@@ -364,9 +314,7 @@ class OutputRow:
         between the two salary. to get an average
         """
         if hasattr(self, "salary_min") and hasattr(self, "salary_max"):
-            self.salary_median = self.salary_min + (
-                (self.salary_max - self.salary_min) / 2
-            )
+            self.salary_median = (self.salary_min + self.salary_max) / 2
 
     def add_not_student(self):
         """
@@ -386,23 +334,21 @@ class OutputRow:
         self.not_student = False
 
     def clean_row(self):
-        self.clean_description()
-        self.clean_jobid()
-        self.clean_job_title()
-        # New enhanced content (check in november 2017) doesnt have that key
-        # self.clean_type_role()
-        # New enhanced content (check in november 2017) doesnt have that key
-        # self.clean_location_region()
-        self.clean_location()
-        self.clean_hours()
-        self.clean_placed_on()
-        self.clean_closes()
-        self.clean_contract()
-        self.clean_type_role()
+        for key in [
+            "contract",
+            "description",
+            "employer",
+            "hours",
+            "job_title",
+            "jobid",
+            "location",
+            "subject_area",
+        ]:
+            self.check_validity_key(key)
+        self.clean_date("placed_on")
+        self.clean_date("closes")
+        self.check_validity(self.employer, "type_role")
         self.add_duration()
-        # self.add_uk_university()
-        # self.add_in_uk()
-        # self.add_postcode()
         self.clean_salary(self.salary, "salary")
         self.clean_salary(self.funding_amount, "funding_amount")
         if hasattr(self, "funding_amount") and "contract" in self.invalid_code:
@@ -413,18 +359,11 @@ class OutputRow:
             self.invalid_code -= {"salary"}
             self.invalid_code -= {"funding_amount"}
 
-        self.clean_employer()
         if "funding_amount" in self.invalid_code:
             self.invalid_code -= {"funding_amount"}
             self.invalid_code.add("salary")
-        # New enhanced content (check in november 2017) doesnt have that key
-        # Which was a reference to the employer (in form of MED203221)
-        # commented
-        # self.clean_employRef()
-        self.clean_subject_area()
-        self.add_median_salary()
-        # self.add_not_student()
 
+        self.add_median_salary()
         if self.invalid_code == set():
             del self.invalid_code
         else:
