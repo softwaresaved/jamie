@@ -214,6 +214,8 @@ class OutputRow:
 
     def clean_closes(self):
         self.check_validity(self.closes, "closes")
+        if self.closes.strip() == "":
+            self.closes = self.input_row.get("closing_date", "")
         self.closes = self.transform_valid_date(self.remove_suffix_date(self.closes))
         if isinstance(self.closes, str):
             self.add_invalid_code("closes")
