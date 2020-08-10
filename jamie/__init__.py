@@ -72,12 +72,9 @@ class Jamie:
         "List possible employer sets"
         return jamie.data.list_employers()
 
-    def load(self, employer=None):  # NOQA
+    def load(self, dry_run=False, employer="uk_uni"):  # NOQA
         "Read scraped jobs into MongoDB"
-        if employer:
-            jamie.data.importer.main(self.cf, employer=employer)
-        else:
-            jamie.data.importer.main(self.cf)
+        jamie.data.importer.main(self.cf, dry_run=dry_run, employer=employer)
 
     def config(self, field=None, value=None):
         "Reads and sets jamie configuration"
