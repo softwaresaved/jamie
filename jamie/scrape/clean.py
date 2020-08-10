@@ -8,7 +8,7 @@ This Python 3 script cleans an input jobs dictionary and outputs a cleaned jobs 
 import re
 import difflib
 from operator import itemgetter
-from datetime import datetime
+import dateutil.parser
 from ..data import employers
 from ..text_clean import TextClean
 
@@ -70,6 +70,15 @@ class OutputRow:
         self.uk_uni_list = self.read_uni_list_file()
         self.uk_postcode_dict = self.read_postcode()
 
+    @staticmethod
+    def clean_date(date):
+        try:
+            return dateutil.parser.parse(
+                date, dayfirst=True, fuzzy=False, ignoretz=True
+            )
+        except dateutil.parser._parser.ParserError:
+            return None
+
     def read_uni_list_file(self):
         """
         Read the txt file containing all universities from a text file
@@ -98,7 +107,7 @@ class OutputRow:
         if key == "contract_type" or key == "contract" or key == "contract type":
             clean_key = "contract"
 
-        elif key == "expires" or key == "closes":
+        elif key == "expires" or key == "closes" or key == "closing_date":
             clean_key = "closes"
 
         elif key == "placed on":
@@ -145,47 +154,6 @@ class OutputRow:
             except AttributeError:
                 setattr(self, key, "")
 
-    @staticmethod
-    def remove_suffix_date(s):
-        """
-        Remove the st, th,... added to a string containing
-        a date
-        :params:
-            s str(): containing the string representation
-                        of the date
-        :return:
-            str() without the st, th
-        """
-        return re.sub(r"(\d)(st|nd|rd|th)", r"\1", str(s))
-
-    @staticmethod
-    def transform_valid_date(s):
-        """
-        Transform a string into a datetime object
-        Suppose to receive a string in two formats:
-                - 17th July 2018
-                - 2018-07-17
-                - 2018-10-07T00:00:00+00:00
-
-
-        :params:
-            s str(): containing the string representation of
-                        an date time object
-        :return:
-            a datetime object if valid. The str itself if transformation
-            failed
-        """
-        try:
-            return datetime.strptime(s, "%d %B %Y")
-        except ValueError:
-            try:
-                return datetime.strptime(s.replace(" ", "").strip(), "%Y-%m-%d")
-            except ValueError:
-                try:
-                    return datetime.strptime(s.split("+")[0], "%Y-%m-%dT%H:%M:%S")
-                except ValueError:
-                    return s
-
     def clean_description(self):
         self.check_validity(self.description, "description")
 
@@ -204,20 +172,16 @@ class OutputRow:
     def clean_hours(self):
         self.check_validity(self.hours, "hours")
 
-    def clean_place_on(self):
+    def clean_placed_on(self):
         self.check_validity(self.placed_on, "placed_on")
-        self.placed_on = self.transform_valid_date(
-            self.remove_suffix_date(self.placed_on)
-        )
-        if isinstance(self.placed_on, str):
+        self.placed_on = OutputRow.clean_date(self.placed_on)
+        if self.placed_on is None:
             self.add_invalid_code("placed_on")
 
     def clean_closes(self):
         self.check_validity(self.closes, "closes")
-        if self.closes.strip() == "":
-            self.closes = self.input_row.get("closing_date", "")
-        self.closes = self.transform_valid_date(self.remove_suffix_date(self.closes))
-        if isinstance(self.closes, str):
+        self.closes = OutputRow.clean_date(self.closes)
+        if self.closes is None:
             self.add_invalid_code("closes")
 
     def add_duration(self):
@@ -445,7 +409,7 @@ class OutputRow:
         # self.clean_location_region()
         self.clean_location()
         self.clean_hours()
-        self.clean_place_on()
+        self.clean_placed_on()
         self.clean_closes()
         self.clean_contract()
         self.clean_type_role()
