@@ -104,33 +104,25 @@ class OutputRow:
         """
         key = key.rstrip().lower()
 
-        if key == "contract_type" or key == "contract" or key == "contract type":
-            clean_key = "contract"
-
-        elif key == "expires" or key == "closes" or key == "closing_date":
-            clean_key = "closes"
-
-        elif key == "placed on":
-            clean_key = "placed_on"
-
-        elif key == "name":
-            clean_key = "job_title"
-        elif key == "type___role" or key == "extra_type___role":
-            clean_key = "type_role"
-        elif key in [
-            "subject_area_s",
-            "subject_area",
-            "extra_subject_area",
-            "extra_subject_area_s",
-        ]:
-            clean_key = "subject_area"
-        elif key == "location_s" or key == "location":
-            clean_key = "location"
-        elif key == "extra_location_s":
-            clean_key = "extra_location"
-        else:
-            clean_key = key
-        return clean_key
+        return {
+            "contract_type": "contract",
+            "contract": "contract",
+            "contract type": "contract",
+            "expires": "closes",
+            "closes": "closes",
+            "closing_date": "closes",
+            "placed on": "placed_on",
+            "name": "job_title",
+            "type___role": "type_role",
+            "extra_type___role": "type_role",
+            "subject_area_s": "subject_area",
+            "subject_area": "subject_area",
+            "extra_subject_area": "subject_area",
+            "extra_subject_area_s": "subject_area",
+            "location_s": "location",
+            "location": "location",
+            "extra_location_s": "extra_location",
+        }.get(key, key)
 
     def create_dictionary(self):
         """
