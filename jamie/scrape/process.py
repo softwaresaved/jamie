@@ -71,6 +71,7 @@ class JobFile:
 
     @staticmethod
     def transform_key(key_string):
+        "Create slug of key for insertion into dictionary"
         key_string = key_string.lower()
         key_string = str.encode(key_string, "utf-8").translate(_table_punc)
         key_string = key_string.translate(_table_space)
@@ -105,14 +106,14 @@ class JobFile:
             return self._soup.find("h3").text
 
     def details(self):
-        table_to_match = "td"
-        class_to_match = "detail-heading"
+        "Return table details as dictionary"
 
-        for element in self._soup.findAll(table_to_match, {"class": class_to_match}):
-            key = element.text
-            key = self.transform_key(key)
-            content = element.findNext("td").text
-            yield {key: content}
+        for element in self._soup.findAll("td", {"class": "detail-heading"}):
+            yield {self.transform_key(element.text): element.findNext("td").text}
+        for element in self._soup.findAll(
+            "th", {"class": "j-advert-details__table-header"}
+        ):
+            yield {self.transform_key(element.text): element.findNext("td").text}
 
     @property
     def description(self):
