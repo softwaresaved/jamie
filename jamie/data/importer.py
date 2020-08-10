@@ -40,7 +40,13 @@ def _import_iterator(input_folder, skip):
             yield job.data
 
 
-def main(config, employer="uk_uni"):
+def log_missing_attributes(data, attributes):
+    for attr in attributes:
+        if attr not in data:
+            logger.warning("Missing {} in {}".format(attr, data["jobid"]))
+
+
+def main(config, dry_run=False, employer="uk_uni"):
     """Import data from HTML to MongoDB
 
     Parameters
@@ -49,6 +55,8 @@ def main(config, employer="uk_uni"):
         Configuration
     employer : str, optional
         Employer set to use, by default uk_uni
+    dry_run: bool, optional
+        If True, does not insert jobs into database, only logs missing attributes
     """
 
     if not valid_employer(employer):
@@ -58,23 +66,31 @@ def main(config, employer="uk_uni"):
         )
         sys.exit(1)
 
-    db_conn = connect_mongo(config)
-    db_jobs = db_conn[config["db.jobs"]]
-    db_jobs.create_index("jobid", unique=True)  # faster searches for "jobid"
+    if not dry_run:
+        db_conn = connect_mongo(config)
+        db_jobs = db_conn[config["db.jobs"]]
+        db_jobs.create_index("jobid", unique=True)  # faster searches for "jobid"
 
-    recorded_jobs = db_jobs.distinct("jobid")
-    logger.info("Already recorded jobs: {}".format(len(recorded_jobs)))
-    njobs = defaultdict(int)
-    for data in _import_iterator(config["scrape.folder"], skip=recorded_jobs):
-        if njobs["inserted"] % REPORT_INTERVAL == 0:
-            logger.debug(
-                "Progress %s", ", ".join("{} {}".format(v, k) for k, v in njobs.items())
+        recorded_jobs = db_jobs.distinct("jobid")
+        logger.info("Already recorded jobs: {}".format(len(recorded_jobs)))
+        njobs = defaultdict(int)
+        for data in _import_iterator(config["scrape.folder"], skip=recorded_jobs):
+            if njobs["inserted"] % REPORT_INTERVAL == 0:
+                logger.debug(
+                    "Progress %s",
+                    ", ".join("{} {}".format(v, k) for k, v in njobs.items()),
+                )
+
+            try:
+                db_jobs.insert(data)
+                njobs["inserted"] += 1
+            except pymongo.errors.DuplicateKeyError:
+                njobs["duplicate"] += 1
+            except pymongo.errors:
+                njobs["mongo_error"] += 1
+        logger.info("Final import state %s", njobs)
+    else:
+        for data in _import_iterator(config["scrape.folder"], skip=[]):
+            log_missing_attributes(
+                data, ["description", "job_title", "placed_on", "salary"]
             )
-        try:
-            db_jobs.insert(data)
-            njobs["inserted"] += 1
-        except pymongo.errors.DuplicateKeyError:
-            njobs["duplicate"] += 1
-        except pymongo.errors:
-            njobs["mongo_error"] += 1
-    logger.info("Final import state %s", njobs)
