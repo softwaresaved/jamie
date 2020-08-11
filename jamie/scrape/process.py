@@ -232,37 +232,42 @@ class JobFile:
                     if len(p) > MINIMUM_DESCRIPTION_LENGTH and "@" not in p
                 )
 
+    def _extra_details_items(self, section):
+        key = section.find("p")
+        if key is None:
+            return None
+        original_content = key.findNext("p")
+        return (
+            "extra_" + self.transform_key(key.text),
+            (
+                # Sometime the content is not within a tag <p> and within
+                # <a> tag but under a <div class='j-nav-pill-box'> tags
+                # Check if the previous one give results and if not try to
+                # parse the <div> tag Work for <p>Subject Area(s) don't
+                # know for the others
+                [el.text for el in original_content.findAll("a")]
+                or [el.text for el in section.findNext("div").findAll("a")]
+                or original_content.text
+            ),
+        )
+
     def extra_details(self):
         "Get the extra details at the end of description"
         if not self.enhanced:
-            for section in self._soup.findAll("div", {"class": "inlineBox"}):
-                key = section.find("p")
-                if key:
-                    original_content = key.findNext("p")
-                    key = JobFile.transform_key(key.text)
-                    result = list()
-                    for element in original_content.findAll("a"):
-                        result.append(element.text)
-                    # Sometime the content is not within a tag <p> and
-                    # within <a> tag but under a
-                    # <div class='j-nav-pill-box'> tags
-                    # Check if the previous one give results and if not
-                    # try to parse the <div> tag
-                    # Work for <p>Subject Area(s) don't know for the others
-                    if len(result) == 0:
-                        second_content = section.findNext("div")
-                        for element in second_content.findAll("a"):
-                            result.append(element.text)
-                        if len(result) == 0:
-                            result = original_content.text
-                    yield {"extra_{}".format(key): result}
+            return dict(
+                filter(
+                    None,
+                    map(
+                        self._extra_details_items,
+                        self._soup.findAll("div", {"class": "inlineBox"}),
+                    ),
+                )
+            )
         else:
-            for element in self._soup.findAll("td", {"class": "detail-heading"}):
-                key = element.text
-                key = JobFile.transform_key(key)
-                content = element.findNext("td")
-                content = content.text
-                yield {key: content}
+            return {
+                self.transform_key(element.text): element.findNext("td").text
+                for element in self._soup.findAll("td", {"class": "detail-heading"})
+            }
 
     def parse_html(self):
         self.data.update(
@@ -274,19 +279,14 @@ class JobFile:
             }
         )
         self.data.update(self.details())
-
-        for extra_details in self.extra_details():
-            self.data.update(extra_details)
+        self.data.update(self.extra_details())
         return self.data
 
     def _extract_json_ads(self):
         "Get the json content from the page and return a dictionary from it"
         content_json = self._soup.find("script", attrs={"type": "application/ld+json"})
-        try:
-            content_json = content_json.contents[0]
-            return json.loads(content_json)
-        except AttributeError:
-            return None
+        with suppress(AttributeError):
+            return json.loads(content_json.contents[0])
 
     @property
     def new_subject_area(self):
