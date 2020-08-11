@@ -60,26 +60,28 @@ class JobFile:
         self._soup = bs4.BeautifulSoup(self._content, "html.parser")
 
         # Enhanced content alters behaviour of some parsing
-        if self._soup.find("div", {"id": "enhanced-content"}):
-            self.enhanced = True
-        else:
-            self.enhanced = False
+        self.enhanced = self._soup.find("div", {"id": "enhanced-content"}) is not None
         self.data["enhanced"] = self.enhanced
 
     def _first_section(self, elem, attrs):
         return self._soup.findAll(elem, attrs)[0].get_text(separator=u" ")
 
+    def _tag_text(self, tag):
+        "Returns text in tag if found, otherwise returns None"
+        found = self._soup.find(tag)
+        return found.text if found else None
+
     @staticmethod
     def transform_key(key_string):
         "Create slug of key for insertion into dictionary"
-        key_string = key_string.lower()
-        key_string = str.encode(key_string, "utf-8").translate(_table_punc)
-        key_string = key_string.translate(_table_space)
-        key_string = key_string.decode("utf-8")
-        key_string = key_string.replace("_", " ")
-        key_string = key_string.rstrip()
-        key_string = key_string.replace(" ", "_")
-        return key_string
+        key_string = str.encode(key_string.lower(), "utf-8").translate(_table_punc)
+        return (
+            key_string.translate(_table_space)
+            .decode("utf-8")
+            .replace("_", " ")
+            .rstrip()
+            .replace(" ", "_")
+        )
 
     @property
     def employer(self):
@@ -87,23 +89,19 @@ class JobFile:
         try:
             _employer = self._soup.find("h3").text
         except AttributeError:
-            try:
+            with suppress(AttributeError, TypeError):
                 for emp in self._soup.find("a").get("href"):
                     if emp[:10] == "/employer/":
                         _employer = emp[:10]
-            except (AttributeError, TypeError):
-                pass
         return _employer
 
     @property
     def job_title(self):
-        with suppress(AttributeError):
-            return self._soup.find("h1").text
+        return self._tag_text("h1")
 
     @property
     def place(self):
-        with suppress(AttributeError):
-            return self._soup.find("h3").text
+        return self._tag_text("h3")
 
     def _details_group(
         self, tag, tag_value=None, condition=None,
@@ -177,15 +175,13 @@ class JobFile:
         # Some ads have the first div as <div id='enhanced-content'> which
         # change the structure of the html
         if self.enhanced:
-            with suppress(IndexError):
-                return self._first_section("div", {"class": "section", "id": None})
-            with suppress(IndexError):
-                return self._first_section("div", {"id": "enhanced-right"})
-            try:
-                return self._first_section("div", {"id": "enhanced-content"})
-            except IndexError:
-                print(self._soup)
-                raise
+            for fmt in [
+                ("div", {"class": "section", "id": None}),
+                ("div", {"id": "enhanced-right"}),
+                ("div", {"id": "enhanced-content"}),
+            ]:
+                with suppress(IndexError):
+                    return self._first_section(*fmt)
         else:
             with suppress(IndexError):
                 sections = [
@@ -206,9 +202,9 @@ class JobFile:
                 # but also contains differents tags
                 text_desc = False
                 for description in section.findAll():
-                    if description.name == "p" and text_desc is False:
+                    if description.name == "p" and not text_desc:
                         text_desc = True
-                    if text_desc is True:
+                    if text_desc:
                         description_text.append(description.text)
                 return " ".join(description_text)
             with suppress(AttributeError):
@@ -216,23 +212,20 @@ class JobFile:
                 if jobPost:
                     paras = [p.get_text(separator=u" ") for p in jobPost.findAll("p")]
                     if len(paras) > 3:
-                        paras = paras[
-                            2:-1
-                        ]  # first para is location and salary, second is usually about working hours
-                        paras = [
-                            p for p in paras if len(p) > MINIMUM_DESCRIPTION_LENGTH
-                        ]
-                        return "\n".join(paras)
+                        # First para is location and salary, second is usually about working hours
+                        return "\n".join(
+                            p
+                            for p in paras[2:-1]
+                            if len(p) > MINIMUM_DESCRIPTION_LENGTH
+                        )
             with suppress(AttributeError):
                 paras = [p.get_text(separator=u" ") for p in self._soup.findAll("p")]
                 # Only keep long paragraphs and ones without emails
                 # (usually contact information)
                 return "\n".join(
-                    [
-                        p
-                        for p in paras
-                        if len(p) > MINIMUM_DESCRIPTION_LENGTH and "@" not in p
-                    ]
+                    p
+                    for p in paras
+                    if len(p) > MINIMUM_DESCRIPTION_LENGTH and "@" not in p
                 )
 
     def extra_details(self):
@@ -310,10 +303,7 @@ class JobFile:
 
     @property
     def new_extra_location(self):
-        for tag in self._soup.find_all(
-            "input", attrs={"class": "j-form-input__location"}
-        ):
-            return tag["value"]
+        return self._soup.find("input", {"class": "j-form-input__location"})["value"]
 
     @property
     def new_type_role(self):
@@ -322,7 +312,7 @@ class JobFile:
             lambda tag: tag.name == "b" and "Type / Role:" in tag.text
         )
         if type_role is not None:
-            list_type_role = list()
+            list_type_role = []
             while True:
                 # find the next type_role which not contain the value but it is just before
                 # the input that does have the value
@@ -337,8 +327,7 @@ class JobFile:
         return get_nested_key(self.data, keys)
 
     def parse_json(self):
-        """
-        """
+        "Parse JSON data in HTML body"
         for k, v in {
             "name": "json.title",
             "employer": "json.hiringOrganization.name",
