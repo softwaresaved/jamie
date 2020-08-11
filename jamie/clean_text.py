@@ -20,7 +20,6 @@ import sys
 from contextlib import suppress
 import nltk
 
-STOPWORDS = nltk.corpus.stopwords.words("english")
 REGEX_EMAIL = re.compile(
     (
         r"([a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`"
@@ -102,7 +101,7 @@ def _remove_currency(word):
 
 def _remove_stop_sent(sent):
     "Remove stopwords from sentence"
-    return [word for word in sent if word not in STOPWORDS]
+    return [word for word in sent if word not in nltk.corpus.stopwords.words("english")]
 
 
 def _remove_url(word):
