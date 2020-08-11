@@ -105,17 +105,58 @@ class JobFile:
         with suppress(AttributeError):
             return self._soup.find("h3").text
 
-    def details(self):
-        "Return table details as dictionary"
+    def _details_group(
+        self, tag, tag_value=None, condition=None,
+    ):
+        """Return job details corresponding to a specific format
 
-        for element in self._soup.findAll("td", {"class": "detail-heading"}):
-            yield {self.transform_key(element.text): element.findNext("td").text}
-        for element in self._soup.findAll(
-            "th", {"class": "j-advert-details__table-header"}
-        ):
-            yield {self.transform_key(element.text): element.findNext("td").text}
-        for element in self._soup.findAll("dt"):
-            yield {self.transform_key(element.text): element.findNext("dd").text}
+        Parameters
+        ----------
+        tag : str
+            Tag for the job attribute field. A class restriction can be
+            specified by using "tag.class" such as "td.detail-heading"
+        tag_value : str, optional
+            Tag for the job attribute value field. If set to None, uses nextSibling
+        condition : lambda, optional
+            An optional filter function to apply on the element before inclusion
+        """
+        if "." in tag:
+            tag, tag_class = tag.split(".")
+        else:
+            tag_class = None
+        class_filter = {"class": tag_class} if tag_class else {}
+        if condition is None:
+            condition = lambda x: True  # NOQA
+        if tag_value is None:
+            with suppress(AttributeError):
+                return {
+                    self.transform_key(el.text): el.nextSibling.get_text()
+                    for el in self._soup.findAll(tag, class_filter)
+                    if condition(el)
+                }
+        else:
+            with suppress(AttributeError):
+                return {
+                    self.transform_key(el.text): el.findNext(tag_value).text
+                    for el in self._soup.findAll(tag, class_filter)
+                    if condition(el)
+                }
+
+    def details(self):
+        "Return job details as dictionary"
+
+        # Loop through the various formats in which job details are
+        # presented and return the first matching format
+        for fmt in [
+            ("td.detail-heading", "td"),
+            ("th.j-advert-details__table-header", "td"),
+            ("dt", "dd"),
+            ("strong", None, lambda x: len(x.get_text()) < 30 and ":" in x.get_text()),
+        ]:
+            _details = self._details_group(*fmt)
+            if _details:
+                return _details
+        return {}
 
     @property
     def description(self):
@@ -223,8 +264,7 @@ class JobFile:
                 "location": self.place,
             }
         )
-        for d in self.details():
-            self.data.update(d)
+        self.data.update(self.details())
 
         for extra_details in self.extra_details():
             self.data.update(extra_details)
