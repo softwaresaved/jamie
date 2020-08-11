@@ -139,6 +139,13 @@ class JobFile:
                     for el in self._soup.findAll(tag, class_filter)
                     if condition(el)
                 }
+            with suppress(AttributeError):
+                # Sometimes, next sibling is directly a text
+                return {
+                    self.transform_key(el.text): str(el.nextSibling)
+                    for el in self._soup.findAll(tag, class_filter)
+                    if condition(el)
+                }
         else:
             with suppress(AttributeError):
                 return {
