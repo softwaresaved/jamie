@@ -14,7 +14,6 @@ operations are performed:
 * Transform the 'll 's and remove them
 """
 
-import string
 import re
 import unicodedata
 import sys
@@ -61,8 +60,12 @@ def _break_word(sent):
     return nltk.word_tokenize(re.sub(REGEX_SPLIT, " ", sent))
 
 
-def _remove_punctuation(word):
-    return word if word not in string.punctuation else None
+def _remove_number(word):
+    return word if not _is_numeric(word) else None
+
+
+def _remove_exceptions(word):
+    return word if word not in EXCEPTIONS else None
 
 
 def _remove_trailing_punctuation(word):
@@ -81,10 +84,6 @@ def _is_numeric(s):
         return False
 
 
-def _remove_number(word):
-    return word if not _is_numeric(word) else None
-
-
 def _transform_apostrophe(word):
     """
     After tokenise the `'ll` `'s` `'nt` are considered as single word
@@ -95,23 +94,7 @@ def _transform_apostrophe(word):
     - `'nt`: Is transformed into `n't` by the token_sentence().
                 Convert this `n't` into `not`
     """
-    if word.startswith("'"):
-        if word == "'s":
-            pass
-        elif word == "'ll":
-            return "will"
-        else:
-            return word
-    else:
-        if word == "n't":
-            return "not"
-        else:
-            return word
-
-
-def _remove_I(word):
-    # Remove the I that is not removed from the stopwords list
-    return word if word != "i" else None
+    return {"'s": None, "'ll": "will", "n't": "not"}.get(word, word)
 
 
 def _remove_currency(word):
@@ -125,21 +108,9 @@ def _remove_currency(word):
         return word
 
 
-def _remove_empty_words(word):
-    return word if word != "" else None
-
-
-def _remove_exceptions(word):
-    return word if word not in EXCEPTIONS else None
-
-
 def _remove_stop_sent(sent):
     "Remove stopwords from sentence"
     return [word for word in sent if word not in STOPWORDS]
-
-
-def _flattening_list(text):
-    return [word for sentence in text for word in sentence]
 
 
 def _remove_url(word):
@@ -172,4 +143,4 @@ def clean_text(text, remove_stop=True, flat_list=True):
     sentences = map(clean_sentence, nltk.sent_tokenize(text))
     if remove_stop:
         sentences = map(_remove_stop_sent, sentences)
-    return _flattening_list(sentences) if flat_list else list(sentences)
+    return sum(sentences, []) if flat_list else list(sentences)
