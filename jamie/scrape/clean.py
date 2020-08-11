@@ -7,7 +7,7 @@ import difflib
 from operator import itemgetter
 from contextlib import suppress
 import dateutil.parser
-from ..data import employers
+from ..data import EMPLOYERS, POSTCODES
 from ..clean_text import clean_text
 
 
@@ -19,7 +19,7 @@ class OutputRow:
     Return the cleaned dictionary and the key with the invalid code with it
     """
 
-    def __init__(self, input_row, employer="uk_uni"):
+    def __init__(self, input_row):
         """
         *Create attributes from the dict() input_row
         *Import the transformKey __init__() to have access to the key list
@@ -28,7 +28,6 @@ class OutputRow:
         """
         # Create attribute from the input_row
         self.input_row = input_row
-        self._employer = employer
 
         self.needed_keys = [
             "jobid",
@@ -66,10 +65,7 @@ class OutputRow:
     @staticmethod
     def strip_if_string(s):
         "Returns string trimmed of whitespace, for other datatypes this is no-op"
-        if isinstance(s, str):
-            return s.strip()
-        else:
-            return s
+        return s.strip() if isinstance(s, str) else s
 
     @staticmethod
     def parse_date(date):
@@ -82,23 +78,12 @@ class OutputRow:
             return None
 
     def read_uni_list_file(self):
-        """
-        Read the txt file containing all universities from a text file
-        and create a set of strings
-        """
-        return set(
-            " ".join(set([x for x in clean_text(empl)]))
-            for empl in employers[self._employer]["list"]
-        )
+        "Read list of universities from a text file"
+        return set(" ".join(set([x for x in clean_text(empl)])) for empl in EMPLOYERS)
 
     def read_postcode(self):
-        """
-        Read the csv file containing university and postcode for UK only
-        """
-        return {
-            row.PROVIDER_NAME: row.POSTCODE
-            for row in employers[self._employer]["postcodes"].itertuples()
-        }
+        "Read postcodes for UK universities"
+        return {row.PROVIDER_NAME: row.POSTCODE for row in POSTCODES.itertuples()}
 
     def matching_key(self, key):
         """
@@ -292,18 +277,6 @@ class OutputRow:
             "Northern Ireland",
         ]:
             self.in_uk = True
-
-    def add_postcode(self):
-        """
-        If there is a uk_university, try to match it with the code
-        provided by self.dict_uk_uni_postcode
-        """
-        if hasattr(self, "uk_university"):
-            best_match = self.check_match(
-                self.uk_university, self.uk_postcode_dict.keys()
-            )
-            if best_match:
-                self.uk_postcode = self.uk_postcode_dict[best_match]
 
     def add_median_salary(self):
         """

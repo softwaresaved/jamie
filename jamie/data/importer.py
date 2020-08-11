@@ -6,13 +6,11 @@ Python module to import scraped job data in HTML format
 downloaded from www.jobs.ac.uk to mongodb, after cleaning.
 """
 
-import sys
 import pymongo
 from collections import defaultdict
 from ..logger import logger
 from ..lib import connect_mongo
 from ..scrape.process import JobFile
-from . import valid_employer
 
 logger = logger(name="importer", stream_level="DEBUG")
 REPORT_INTERVAL = 1000  # report progress of database import every N jobs
@@ -46,25 +44,16 @@ def log_missing_attributes(data, attributes):
             logger.warning("Missing {} in {}".format(attr, data["jobid"]))
 
 
-def main(config, dry_run=False, employer="uk_uni"):
+def main(config, dry_run=False):
     """Import data from HTML to MongoDB
 
     Parameters
     ----------
     config : jamie.config.Config
         Configuration
-    employer : str, optional
-        Employer set to use, by default uk_uni
     dry_run: bool, optional
         If True, does not insert jobs into database, only logs missing attributes
     """
-
-    if not valid_employer(employer):
-        print(
-            "importer: not a valid employer set\n"
-            "          use 'jamie list-employers' to see them"
-        )
-        sys.exit(1)
 
     if not dry_run:
         db_conn = connect_mongo(config)

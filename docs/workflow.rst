@@ -7,9 +7,9 @@ classification of new jobs. In addition, Jamie can also scrape new data and
 import it into a local MongoDB.
 
 .. figure:: workflow.svg
-   
+
    Workflow pipeline
-   
+
 
 In the following *positive class job* refers to the job that we are trying to
 identify from the pool of jobs. Currently, Jamie supports identification of
@@ -25,9 +25,9 @@ latest snapshots; see below for more details of how snapshots are organised.
    https://jobs.ac.uk website and stored in a folder. The storage location can
    be configured by setting the ``scrape.folder`` configuration.
 
-**load** [*employer*]
-   Loads scraped data into a local MongoDB instance. Optional argument:
-   *employer* specifies the employer set to use.
+**load** [--dry-run]
+   Loads scraped data into a local MongoDB instance. Optional argument dry-run
+   does not load data into database, just shows warnings about missing attributes.
 
 **train**
    Trains models using the training set snapshot specified.
@@ -57,9 +57,6 @@ In addition to the pipeline commands we also have the following commands
 **snapshots**
    List the various kinds of snapshots, takes a parameter, one of
    training, models, predictions or reports.
-
-**employers**
-   List possible employer sets
 
 **version**
    Shows application version information
@@ -132,7 +129,7 @@ In the following ``$`` denotes the Terminal prompt, which shouldn't be typed.
     $ jamie train  # Latest snapshot by default
 
     # If you wanted to use a specific snapshot
-    $ jamie train <snapshot> 
+    $ jamie train <snapshot>
 
 5. The previous command will create model snapshots in ``snapshots/models``. You
    can now use these snapshots to make predictions::
