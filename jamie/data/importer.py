@@ -91,6 +91,4 @@ def main(config, dry_run=False, employer="uk_uni"):
         logger.info("Final import state %s", njobs)
     else:
         for data in _import_iterator(config["scrape.folder"], skip=[]):
-            log_missing_attributes(
-                data, ["description", "job_title", "placed_on", "salary"]
-            )
+            log_missing_attributes(data, ["description", "job_title", "date", "salary"])

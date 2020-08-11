@@ -23,6 +23,7 @@ setup(
         "requests==2.22.0",
         "beautifulsoup4==4.9.0",
         "python-dateutil==2.8.1",
+        "datefinder==0.7.1",
     ],
     extras_require={
         "docs": ["sphinx"],

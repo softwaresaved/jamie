@@ -7,6 +7,7 @@ import bs4
 import copy
 import string
 import datetime
+import datefinder
 from pathlib import Path
 from contextlib import suppress  # alternative to try: (...) except Exception: pass
 from typing import Union
@@ -42,6 +43,8 @@ class JobFile:
         is used instead to create the jobid. When reading from a string,
         jobid is not optional.
     """
+
+    EPOCH_YEAR = 2014  # Earliest year for datefinder fuzzy matching
 
     def __init__(self, content: Union[Path, str], jobid: str = None):
         self.data = {}
@@ -372,12 +375,30 @@ class JobFile:
             self.parse_html()
         if clean:
             self.data = OutputRow(self.data).clean_row().to_dictionary()
+        # Pick the first non-null option for date
+        date = (
+            self.data.get("placed_on", None)
+            or self.data.get("closes", None)
+            or min(
+                (  # Use datefinder to find earliest date beyond epoch
+                    d
+                    for d in datefinder.find_dates(  # Colons confuse datefinder
+                        self._soup.get_text().replace(":", "")
+                    )
+                    if d.year >= self.EPOCH_YEAR
+                ),
+                default=None,
+            )
+        )
+        if date is not None:
+            self.data["date"] = date
+
         return self
 
     @property
     def json(self):
         _json = self.data.copy()
-        for date in ["placed_on", "closes"]:
+        for date in ["placed_on", "closes", "date"]:
             if date in self.data and isinstance(self.data[date], datetime.datetime):
                 _json[date] = self.data[date].date().isoformat()
         return _json
