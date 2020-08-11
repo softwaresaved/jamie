@@ -70,11 +70,11 @@ work from a database snapshot (not currently supported).
 Detailed usage can be found in the
 [workflow](http://data.trenozoic.net/jamie/docs/workflow.html) document.
 
-1. **Configuration**. Show the configuration using `jamie config`, or set
+1. **Configuration**: Show the configuration using `jamie config`, or set
    configuration using `jamie config <configname> <value>`
 1. **Download** jobs: `jamie scrape`
-1. **Load** jobs into MongoDB: `jamie load`
-1. **Training snapshots**. A training snapshot is needed to run the machine
+1. **Load** jobs into MongoDB: `jamie load`. Pass option `--dry-run` to test.
+1. **Training snapshots**: A training snapshot is needed to run the machine
    learning pipeline. First check the snapshots folder location (`jamie config
    common.snapshots`), exists and then copy an existing training set CSV file
    into the training snapshot location. It should be called `training_set.csv`:
@@ -83,9 +83,9 @@ Detailed usage can be found in the
        mkdir -p training/<date>  # date of snapshot
        cp /path/to/training_set.csv training/<date>
 
-1. **Train** the model: `jamie train [<snapshot]`. If snapshot is not
+1. **Train** the model: `jamie train [<snapshot>]`. If snapshot is not
    specified, uses the latest snapshot.
-1. **Predict classification**. The previous command will create model snapshots
+1. **Predict classification**: The previous command will create model snapshots
    in `<snapshots>/models` of the snapshots location. You can now use these
    snapshots to make predictions: `jamie predict [<snapshot>]`. This saves the
    prediction snapshot in `<snapshots>/predictions`.
