@@ -97,14 +97,15 @@ their rationale:
 
   Licenses: [BSD-compatible](https://matplotlib.org/3.3.0/users/license.html) (matplotlib), MIT (chevron)
 
-- **Scraping**. **requests** for fetching data over HTTP, **beautifulsoup4** for
-  HTML parsing. **nltk** is used to clean the text data. All of these are well-known, widely used libraries.
+- **Scraping**: **requests** for fetching data over HTTP, **beautifulsoup4** for
+  HTML parsing. **nltk** is used to clean the text data. All of these are well-known, widely used libraries. [**dateutil**](https://dateutil.readthedocs.io/) and [**datefinder**](https://github.com/akoumjian/datefinder) are used to parse dates from the text.
 
-  Licenses: Apache (requests, nltk), MIT (beautifulsoup4)
+  Licenses: Apache (requests, nltk), MIT (beautifulsoup4, datefinder), Apache +
+  BSD (dateutil)
 
-- **Database**. Connection to MongoDB is done via [**pymongo**](https://pymongo.readthedocs.io/) (Apache license).
+- **Database**: Connection to MongoDB is done via [**pymongo**](https://pymongo.readthedocs.io/) (Apache license).
 
-- **CLI**. [**fire**](https://github.com/google/python-fire) is used to easily
+- **CLI**: [**fire**](https://github.com/google/python-fire) is used to easily
   create the command line interface and
   [**tqdm**](https://tqdm.github.io) is used to display progress bars during
   training and prediction. Both of these libraries are well-maintained but can
