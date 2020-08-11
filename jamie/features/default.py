@@ -5,6 +5,29 @@ from imblearn.pipeline import Pipeline
 from .base import FeatureBase, TextSelector
 
 
+def _tfidf(max_features=None, pipeline_name="tfidf"):
+    "Tfidf wrapper for pipeline with default arguments"
+    return (
+        pipeline_name,
+        TfidfVectorizer(
+            sublinear_tf=True,
+            norm="l2",
+            max_features=max_features,
+            ngram_range=(1, 2),
+            stop_words="english",
+        ),
+    )
+
+
+def _text_feature(name, max_features=None, column=None):
+    """Returns text feature pipeline component. If column is not specified,
+    defaults to the name parameter"""
+    return (
+        name,
+        Pipeline([("selector", TextSelector(column or name)), _tfidf(max_features)]),
+    )
+
+
 class RSEFeatures(FeatureBase):
     """Default featureset for finding Research Software Engineering (RSE) jobs.
     To see the methods, see :class:`FeatureBase`.
@@ -27,43 +50,7 @@ class RSEFeatures(FeatureBase):
             clean_columns=self.require_columns,
         )
         self.set_features(
-            [
-                (
-                    "description",
-                    Pipeline(
-                        [
-                            ("selector", TextSelector("description")),
-                            (
-                                "tfidf",
-                                TfidfVectorizer(
-                                    sublinear_tf=True,
-                                    norm="l2",
-                                    max_features=24000,
-                                    ngram_range=(1, 2),
-                                    stop_words="english",
-                                ),
-                            ),
-                        ]
-                    ),
-                ),
-                (
-                    "job_title",
-                    Pipeline(
-                        [
-                            ("selector", TextSelector("job_title")),
-                            (
-                                "tfidf",
-                                TfidfVectorizer(
-                                    sublinear_tf=True,
-                                    norm="l2",
-                                    ngram_range=(1, 2),
-                                    stop_words="english",
-                                ),
-                            ),
-                        ]
-                    ),
-                ),
-            ]
+            [_text_feature("description", 24000), _text_feature("job_title")]
         )
 
     def make_arrays(self, prediction_field):
