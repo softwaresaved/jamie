@@ -4,7 +4,7 @@ import sklearn.model_selection as model_selection
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import LabelBinarizer
-from ..text_clean import clean_text
+from ..clean_text import clean_text
 
 
 class TextSelector(BaseEstimator, TransformerMixin):

@@ -8,7 +8,7 @@ from operator import itemgetter
 from contextlib import suppress
 import dateutil.parser
 from ..data import employers
-from ..text_clean import clean_text
+from ..clean_text import clean_text
 
 
 class OutputRow:

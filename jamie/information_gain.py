@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from collections import defaultdict
 import pandas as pd
 from .snapshots import TrainingSnapshot
-from .text_clean import clean_text
+from .clean_text import clean_text
 
 
 def L(col, y):  # as in (2.5) on p29 of Fundamentals of Predictive Text Mining
