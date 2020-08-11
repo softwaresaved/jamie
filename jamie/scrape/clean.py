@@ -70,12 +70,10 @@ class OutputRow:
     @staticmethod
     def parse_date(date):
         "Parses date from job attributes"
-        try:
+        with suppress(dateutil.parser._parser.ParserError):
             return dateutil.parser.parse(
                 date, dayfirst=True, fuzzy=False, ignoretz=True
             )
-        except dateutil.parser._parser.ParserError:
-            return None
 
     def read_uni_list_file(self):
         "Read list of universities from a text file"

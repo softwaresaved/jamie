@@ -6,6 +6,7 @@ import json
 import bs4
 import copy
 import string
+import calendar
 import datetime
 import datefinder
 from pathlib import Path
@@ -365,6 +366,18 @@ class JobFile:
         )
         return self.data
 
+    @staticmethod
+    def _earliest_date_in_text(text):
+        with suppress(calendar.IllegalMonthError, TypeError):
+            return min(
+                [
+                    d
+                    for d in datefinder.find_dates(text.replace(":", ""))
+                    if d.year >= JobFile.EPOCH_YEAR
+                ],
+                default=None,
+            )
+
     def parse(self, clean=True):
         "Parses job HTML or JSON and returns as a dictionary"
         raw_json = self._extract_json_ads()
@@ -379,16 +392,7 @@ class JobFile:
         date = (
             self.data.get("placed_on", None)
             or self.data.get("closes", None)
-            or min(
-                (  # Use datefinder to find earliest date beyond epoch
-                    d
-                    for d in datefinder.find_dates(  # Colons confuse datefinder
-                        self._soup.get_text().replace(":", "")
-                    )
-                    if d.year >= self.EPOCH_YEAR
-                ),
-                default=None,
-            )
+            or self._earliest_date_in_text(self._soup.get_text())
         )
         if date is not None:
             self.data["date"] = date
