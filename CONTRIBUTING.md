@@ -3,6 +3,11 @@
 This document has general guidelines on contributing to Jamie and describes
 areas where the code could be improved, as well as style guidelines.
 
+[**Guidelines**](#guidelines) •
+[**Testing**](#testing) •
+[**Extending**](#extending) •
+[**Dependencies**](#dependencies)
+
 ## Guidelines
 
 First, install the development tools from the cloned repository directory:
@@ -102,7 +107,7 @@ alternative features for existing job types.
 
 Jamie has a reporting interface with a number of graphs, such as those for
 number of jobs and mean salary. New jobs can be added easily. All graphs are
-created in two files [`jamie/report.py`](jamie/report.py) and
+created in two files [`jamie/reports.py`](jamie/reports.py) and
 [`jamie/templates/script.js`](jamie/templates/script.js).
 
 1. In reports, the main function to modify is the static method `metrics()`.
@@ -171,7 +176,7 @@ their rationale:
   Licenses: [BSD-compatible](https://matplotlib.org/3.3.0/users/license.html) (matplotlib), MIT (chevron)
 
 - **Scraping**: **requests** for fetching data over HTTP, **beautifulsoup4** for
-  HTML parsing. **nltk** is used to clean the text data. All of these are well-known, widely used libraries. [**dateutil**](https://dateutil.readthedocs.io/) and [**datefinder**](https://github.com/akoumjian/datefinder) are used to parse dates from the text.
+  HTML parsing. **nltk** is used to clean the text data. All of these are well-known, widely used libraries. [**dateutil**](https://dateutil.readthedocs.io/) and [**datefinder**](https://github.com/akoumjian/datefinder) are used to parse dates from the text. dateutil is relatively widely used with many contributors, while datefinder is a smaller library that uses dateutil to find dates in text. datefinder has a few issues (such as not recognising ambiguous dates like 01/05/2000 properly before 0.7.2), but it is only used when no date can be found for the job.
 
   Licenses: Apache (requests, nltk), MIT (beautifulsoup4, datefinder), Apache +
   BSD (dateutil)
