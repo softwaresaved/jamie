@@ -79,9 +79,6 @@ class FeatureBase:
     ----------
     data : pd.DataFrame
         Data file to use
-    search_term_list : list of str
-        List of search terms to use. This attribute may or may not be used
-        depending on the particular featureset used
     require_columns : list of str
         List of required columns in DataFrame.
     clean_columns : list of str, optional
@@ -93,9 +90,8 @@ class FeatureBase:
         If any of the required columns are missing
     """
 
-    def __init__(self, data, search_term_list, require_columns, clean_columns=None):
+    def __init__(self, data, require_columns, clean_columns=None):
         self.features = None
-        self.search_term_list = [s.lower() for s in search_term_list]
         self.data = data
         if any(f not in self.data for f in require_columns):
             raise ValueError("Missing one of required columns %r" % require_columns)

@@ -4,64 +4,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from imblearn.pipeline import Pipeline
 from .base import FeatureBase, TextSelector
 
-SEARCH_TERM_LIST = [
-    "algorithm",
-    "big data",
-    "beautifulsoup",
-    "code",
-    "computation",
-    "computational",
-    "computed",
-    "computer",
-    "data analysis",
-    "data base",
-    "database",
-    "excel",
-    "fortran",
-    "geographic information science",
-    "geographic information systems",
-    "gis",
-    "git",
-    "github",
-    "graphics",
-    "high performance computing",
-    "hpc",
-    "imagej",
-    "implemented in",
-    "in silico",
-    "matlab",
-    "matplotlib",
-    "numpy",
-    "nvivo",
-    "open source",
-    "open-source",
-    "pipeline",
-    "python",
-    "quantitative",
-    "regression",
-    "r language",
-    "in r",
-    "scrapy",
-    "scipy",
-    "simulated",
-    "simulation",
-    "software",
-    "spss",
-    "sqlalchemy",
-    "stata",
-    "statistical" "supercomputing",
-    "visualisation",
-    "visualization",
-    "Rcpp",
-    "ggplot2",
-    "plyr",
-    "stringr",
-    "reshape2",
-    "RColorBrewer",
-    "workflow",
-    "wxpython",
-]
-
 
 class RSEFeatures(FeatureBase):
     """Default featureset for finding Research Software Engineering (RSE) jobs.
@@ -81,7 +23,6 @@ class RSEFeatures(FeatureBase):
     def __init__(self, data):
         super().__init__(
             data,
-            SEARCH_TERM_LIST,
             require_columns=self.require_columns,
             clean_columns=self.require_columns,
         )
@@ -122,11 +63,6 @@ class RSEFeatures(FeatureBase):
                         ]
                     ),
                 ),
-                # ('count_term', Pipeline([('selector', TextSelector('description')),
-                #                          ('count', CountTerm(self.search_term_list)),
-                #                          ('scale', StandardScaler())])),
-                # ('len_txt', Pipeline([('length', LenSelector('description')),
-                #                       ('scale', StandardScaler())]))
             ]
         )
 
