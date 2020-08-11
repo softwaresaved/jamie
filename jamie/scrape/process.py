@@ -119,6 +119,11 @@ class JobFile:
             Tag for the job attribute value field. If set to None, uses nextSibling
         condition : lambda, optional
             An optional filter function to apply on the element before inclusion
+
+        Returns
+        -------
+        dict
+            Job details dictionary corresponding to the given format
         """
         if "." in tag:
             tag, tag_class = tag.split(".")
