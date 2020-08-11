@@ -65,7 +65,7 @@ Configuration
 =============
 
 Jamie stores its configuration file by default in
-``~/.config/jamie/config.toml`` where ``~`` refers to your home folder. The
+``~/.config/jamie/config.json`` where ``~`` refers to your home folder. The
 configuration file can be edited manually, or you can use the ``jamie config``
 command to read and set values.
 
