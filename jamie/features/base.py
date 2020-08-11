@@ -4,7 +4,7 @@ import sklearn.model_selection as model_selection
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import FeatureUnion
 from sklearn.preprocessing import LabelBinarizer
-from ..text_clean import TextClean
+from ..text_clean import clean_text
 
 
 class TextSelector(BaseEstimator, TransformerMixin):
@@ -96,11 +96,8 @@ class FeatureBase:
         if any(f not in self.data for f in require_columns):
             raise ValueError("Missing one of required columns %r" % require_columns)
         if clean_columns:
-            cleaner = TextClean()
             for tc in clean_columns:
-                self.data[tc] = self.data[tc].apply(
-                    lambda x: " ".join(cleaner.clean_text(x))
-                )
+                self.data[tc] = self.data[tc].apply(lambda x: " ".join(clean_text(x)))
 
     def set_features(self, features):
         "Set features using a FeatureUnion"

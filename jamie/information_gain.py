@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from collections import defaultdict
 import pandas as pd
 from .snapshots import TrainingSnapshot
-from .text_clean import TextClean
+from .text_clean import clean_text
 
 
 def L(col, y):  # as in (2.5) on p29 of Fundamentals of Predictive Text Mining
@@ -109,10 +109,7 @@ class InformationGainTransformer:
 def _information_gain(training_snapshot, text_column, output_column="aggregate_tags"):
     ts = TrainingSnapshot(training_snapshot)
     data = ts.data
-    cleaner = TextClean()
-    data[text_column] = data[text_column].apply(
-        lambda x: " ".join(cleaner.clean_text(x))
-    )
+    data[text_column] = data[text_column].apply(lambda x: " ".join(clean_text(x)))
     vec = CountVectorizer(ngram_range=(1, 2), stop_words="english")
     X = vec.fit_transform(data[text_column])
     ig = InformationGainTransformer()

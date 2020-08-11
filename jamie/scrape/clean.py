@@ -8,7 +8,7 @@ from operator import itemgetter
 from contextlib import suppress
 import dateutil.parser
 from ..data import employers
-from ..text_clean import TextClean
+from ..text_clean import clean_text
 
 
 class OutputRow:
@@ -62,9 +62,6 @@ class OutputRow:
         self.keys_to_record = self.new_keys
         self.create_dictionary()
         self.invalid_code = set()
-        # get the list of university from the file ./uk_uni_list.txt for the method
-        # self.add_uk_university
-        self.text_cleaner = TextClean()
 
     @staticmethod
     def strip_if_string(s):
@@ -90,7 +87,7 @@ class OutputRow:
         and create a set of strings
         """
         return set(
-            " ".join(set([x for x in self.text_cleaner.clean_text(empl)]))
+            " ".join(set([x for x in clean_text(empl)]))
             for empl in employers[self._employer]["list"]
         )
 
@@ -268,7 +265,7 @@ class OutputRow:
         if hasattr(self, "employer"):
 
             # clean the employer string to get only key word
-            employer = self.text_cleaner.clean_text(self.employer.split("-")[0])
+            employer = clean_text(self.employer.split("-")[0])
             # List of keyword that are associated to university
             list_uni = ["university", "school", "college"]
             if set(employer) & set(list_uni):
