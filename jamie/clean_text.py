@@ -34,14 +34,8 @@ REGEX_SPLIT = re.compile(r",|/|-|\s|'")
 # following workaround in order to build the TABLE to use in the translate
 # func()
 
-# Workaround can be found on the following
-# http://stackoverflow.com
-#   /questions/11066400
-#   /remove-punctuation-from-unicode-formatted-strings/21635971#21635971
-# Discussion about removing punctuation
-# http://stackoverflow.com/
-#   /questions/265960
-#   /best-way-to-strip-punctuation-from-a-string-in-python
+# Workaround can be found on the following http://stackoverflow.com/questions/11066400
+# Discussion about removing punctuation http://stackoverflow.com/questions/265960
 
 TABLE = dict.fromkeys(
     i for i in range(sys.maxunicode) if unicodedata.category(chr(i)).startswith("P")
@@ -102,8 +96,6 @@ def _remove_currency(word):
     with suppress(IndexError, TypeError):
         for ch in [word[0], word[-1]]:
             if unicodedata.category(ch) == "Sc":
-                # return an empty word instead of None
-                # and get removed in the remove_empty_words()
                 return None
         return word
 
@@ -133,14 +125,15 @@ def _clean_word(word):
     return word
 
 
-def clean_sentence(input_list):
-    words = [_clean_word(word) for word in _break_word(_remove_email(input_list))]
-    return [word for word in words if word]
+def _clean_sentence(input_list):
+    return filter(  # Remove None from list
+        None, map(_clean_word, _break_word(_remove_email(input_list)))
+    )
 
 
 def clean_text(text, remove_stop=True, flat_list=True):
     "Main text cleaning method"
-    sentences = map(clean_sentence, nltk.sent_tokenize(text))
+    sentences = map(_clean_sentence, nltk.sent_tokenize(text))
     if remove_stop:
         sentences = map(_remove_stop_sent, sentences)
     return sum(sentences, []) if flat_list else list(sentences)
