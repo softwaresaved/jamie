@@ -13,7 +13,7 @@ from ..lib import connect_mongo
 from ..scrape.process import JobFile
 
 logger = logger(name="importer", stream_level="DEBUG")
-REPORT_INTERVAL = 1000  # report progress of database import every N jobs
+REPORT_INTERVAL = 10000  # report progress of database import every N jobs
 
 
 def _import_iterator(input_folder, skip):
@@ -80,4 +80,4 @@ def main(config, dry_run=False):
         logger.info("Final import state %s", njobs)
     else:
         for data in _import_iterator(config["scrape.folder"], skip=[]):
-            log_missing_attributes(data, ["description", "job_title", "date", "salary"])
+            log_missing_attributes(data, ["description", "job_title", "date"])
