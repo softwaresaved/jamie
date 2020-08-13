@@ -11,6 +11,25 @@ require software skills.
 **[Dashboard](http://data.trenozoic.net/jamie/reports/latest/)** •
 **[Contribution Guidelines](CONTRIBUTING.md)**
 
+## Prerequisites
+
+1. **OS**. Any UNIX based OS can be used to run jamie. Development was done on
+   Debian 11 (testing, bullseye), Ubuntu 20.04 should work as well.
+1. **Python**. Development uses Python 3.8, though later versions should work
+   as well.
+1. **Database**. Jamie uses MongoDB as the backing store for jobs data. Either
+   [install MongoDB locally](https://docs.mongodb.com/manual/installation/) or
+   connect to a MongoDB database by setting a [valid MongoDB connection
+   URI](https://docs.mongodb.com/manual/reference/connection-string/) (with
+   username and password, if required) in the `JAMIE_MONGO_URI` environment
+   variable.
+
+   The database uses the name `jobsDB`. If such a database already exists in the MongoDB, then either rename it or set the database name using `jamie config db.name <newname>`.
+
+1. **Setup**. Run `jamie setup`. This (i) checks the database connection, (ii)
+   downloads necessary NLTK datasets which are needed for text cleaning, and
+   (iii) checks that a training set exists.
+
 ## Installation
 
 To install using pip:
@@ -45,25 +64,6 @@ or result in unpredictable behaviour. This can be fixed by making prediction
 work from a database snapshot (not currently supported).
 
 **Reproducibility**. Training the model should be reproducible and the random number seed is set automatically where needed. Scraping is inherently non-reproducible, but loading and cleaning the data should be (not tested yet). Prediction is non-reproducible as it relies on a mutable database, but generation of reports from predictions is reproducible.
-
-## Prerequisites
-
-1. **OS**. Any UNIX based OS can be used to run jamie. Development was done on
-   Debian 11 (testing, bullseye), Ubuntu 20.04 should work as well.
-1. **Python**. Development uses Python 3.8, though later versions should work
-   as well.
-1. **Database**. Jamie uses MongoDB as the backing store for jobs data. Either
-   [install MongoDB locally](https://docs.mongodb.com/manual/installation/) or
-   connect to a MongoDB database by setting a [valid MongoDB connection
-   URI](https://docs.mongodb.com/manual/reference/connection-string/) (with
-   username and password, if required) in the `JAMIE_MONGO_URI` environment
-   variable.
-
-   The database uses the name `jobsDB`. If such a database already exists in the MongoDB, then either rename it or set the database name using `jamie config db.name <newname>`.
-
-1. **Setup**. Run `jamie setup`. This (i) checks the database connection, (ii)
-   downloads necessary NLTK datasets which are needed for text cleaning, and
-   (iii) checks that a training set exists.
 
 ## Usage
 
