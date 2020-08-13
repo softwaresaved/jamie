@@ -307,7 +307,9 @@ class JobFile:
 
     @property
     def new_extra_location(self):
-        return self._soup.find("input", {"class": "j-form-input__location"})["value"]
+        tag = self._soup.find("input", {"class": "j-form-input__location"})
+        if tag:
+            return tag["value"]
 
     @property
     def new_type_role(self):
@@ -340,9 +342,12 @@ class JobFile:
             "placed_on": "json.datePosted",
             "closes": "json.validThrough",
             "description": "json.description",
-            "region": "json.jobLocation.address.addressRegion",
+            "type_role": "json.employmentType",
         }.items():
             self.data[k] = self._get_nested_data(v)
+        self.data["description"] = bs4.BeautifulSoup(
+            self.data["description"], "html.parser"
+        ).get_text()
         joblocation = self._get_nested_data("json.jobLocation")
         if isinstance(joblocation, list):
             joblocation = joblocation[0]
@@ -361,7 +366,6 @@ class JobFile:
                 "enhanced": "json",
                 "subject_area": self.new_subject_area,
                 "extra_location": self.new_extra_location,
-                "type_role": self.type_role,
             }
         )
         return self.data
