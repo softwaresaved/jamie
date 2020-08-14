@@ -1,0 +1,8 @@
+p { line-height: 1.5 !important}
+h2 {
+    font-weight: 600 !important;
+    border-bottom: 2px solid #f6f8fa;
+    padding-bottom: 7px !important;
+    font-size: 18pt !important;
+}
+strong { font-weight: 600 !important }
