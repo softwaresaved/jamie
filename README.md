@@ -91,9 +91,11 @@ Detailed usage can be found in the
    prediction snapshot in `<snapshots>/predictions`.
 1. **Generate report** corresponding to the prediction snapshot: `jamie
    report`. The report is created in `<snapshots>/reports` with the same name
-   as the corresponding prediction snapshot. To view the report, copy the
-   reports folder to a server. The minified JS (`jamie/templates/*.min.js`) and
-   CSS assets (`jamie/templates/*.css`) in the source repository need to be
-   copied into a location such that they are available under the `/assets`
-   location on the webserver. As this is common for all reports, this only
-   needs to be done once.
+   as the corresponding prediction snapshot. To view the report, run
+
+       # If snapshot not specified, see latest report
+       jamie view-report [<snapshot>]
+
+   This will start a local webserver for viewing the report. The report
+   snapshot folder is self contained and can be served using standard
+   webservers as well.
