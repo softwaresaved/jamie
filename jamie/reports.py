@@ -210,7 +210,6 @@ class Report:
     def _graph_salary_mean(self):
         plt.clf()
         df = self.by_year(as_dataframe=True)
-        print(df)
         plt.plot(df.group, df.salary_mean_pos)
         plt.savefig(self.snapshot.path / "mean_salary.png")
 
@@ -261,6 +260,7 @@ class Report:
         with (self.snapshot.path / "training_by_month.json").open("w") as fp:
             json.dump(self.training_by_month(), fp, indent=2, sort_keys=True)
         copyfile(templates / "script.js", self.snapshot.path / "script.js")
+        copyfile(templates / "style.css", self.snapshot.path / "style.css")
         data = {
             "mean_salary_target": "{:,.0f}".format(
                 self.data[self.data.probability > 0.5].salary_median.mean()
@@ -288,3 +288,4 @@ class Report:
         }
         with (templates / "default_index.mustache").open() as fp:
             (self.snapshot.path / "index.html").write_text(chevron.render(fp, data))
+        return self
