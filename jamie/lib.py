@@ -1,5 +1,6 @@
 # Common functions used throughout JAMIE
 import os
+import sys
 import errno
 import datetime
 import pymongo
@@ -32,6 +33,12 @@ def connect_mongo(cfg):
 def setup_messages(msgs):
     "Pretty prints setup messages"
     return "\n".join(status_text(s, t) for s, t in msgs)
+
+
+def fail(msg, exitcode=1):
+    "Fail with message and exitcode (default: 1)"
+    print(status_text(False, msg))
+    sys.exit(exitcode)
 
 
 def check_nltk_download(*datasets):

@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from shutil import copyfile
+from .lib import fail
 from .logger import logger
 from .snapshots import ReportSnapshot, ModelSnapshot, TrainingSnapshot
 from .types import Alert, JobType, PrecisionRecall, Contract
@@ -52,9 +53,11 @@ class Report:
         ).data
         self.training_data["year_month"] = self.training_data.placed_on.apply(fix_day)
         self.snapshot = ReportSnapshot(self.prediction_snapshot.name).create()
-        self.scores = ModelSnapshot(self.prediction_snapshot.metadata["snapshot"]).data[
-            "scores"
-        ]
+        model_snapshot = ModelSnapshot(self.prediction_snapshot.metadata["snapshot"])
+        if not model_snapshot.exists():
+            fail("Model snapshot '{}' does not exist".format(model_snapshot.name))
+
+        self.scores = model_snapshot.data["scores"]
         self.scoring = self.prediction_snapshot.metadata["training"]["scoring"]
         # Keep only the best score classifier as a dictionary
         self.scores = (
