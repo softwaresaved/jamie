@@ -1,12 +1,16 @@
 # Get snapshots
+import os
 import json
 import pickle
+import http.server
+import socketserver
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from dataclasses import asdict
 from .config import Config
 from .types import JobPrediction
+from .lib import bullet_text
 
 
 class Snapshot:
@@ -169,6 +173,20 @@ class ReportSnapshot(Snapshot):
             fn = self.instance_location / "index.html"
             self._data = fn.read_text()
         return self._data
+
+    def view(self, port=8000):
+        os.chdir(self.path)
+        with socketserver.TCPServer(
+            ("", port), http.server.SimpleHTTPRequestHandler
+        ) as httpd:
+            print(bullet_text("Viewing report at http://localhost:{}".format(port)))
+            print("   Press Ctrl-C to stop the server")
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                httpd.server_close()
+                print()
+                return
 
 
 class TrainingSnapshot(Snapshot):

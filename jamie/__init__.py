@@ -17,7 +17,7 @@ import jamie.data.importer
 import jamie.predict
 import jamie.reports
 from jamie.information_gain import _information_gain
-from jamie.lib import connect_mongo, arrow_table, check_nltk_download, setup_messages
+from jamie.lib import connect_mongo, check_nltk_download, setup_messages
 
 NLTK_DATA = ["stopwords", "punkt"]
 
@@ -181,7 +181,19 @@ class Jamie:
                 self.cf["common.snapshots"]
             )
             snapshot = predictions.most_recent()
-            jamie.reports.Report(jamie.snapshots.PredictionSnapshot(snapshot)).create()
+        report = jamie.reports.Report(
+            jamie.snapshots.PredictionSnapshot(snapshot)
+        ).create()
+        print(setup_messages([(True, "Report successfully created")]))
+        print("   View it: jamie view-report {}".format(report.snapshot.name))
+
+    def view_report(self, snapshot=None, port=8000):
+        "Starts a local webserver to display reports"
+        if snapshot is None:
+            snapshot = jamie.snapshots.ReportSnapshotCollection(
+                self.cf["common.snapshots"]
+            ).most_recent()
+        jamie.reports.ReportSnapshot(snapshot).view(port)
 
     def information_gain(
         self,

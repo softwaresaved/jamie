@@ -19,6 +19,10 @@ def status_text(status, text):
     return OK + bold(text) if status else FAIL + bold(text)
 
 
+def bullet_text(text):
+    return " \033[92m●\033[0m " + bold(text)
+
+
 def connect_mongo(cfg):
     "Returns connection to MongoDB given configuration"
 
