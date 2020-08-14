@@ -4,6 +4,19 @@ import errno
 import datetime
 import pymongo
 
+OK = " \033[92m✔\033[0m "
+FAIL = " \033[31m×\033[0m "
+
+
+def bold(text):
+    "Return text in bold"
+    return "\033[1m{}\033[0m".format(text)
+
+
+def status_text(status, text):
+    "Returns status text"
+    return OK + bold(text) if status else FAIL + bold(text)
+
 
 def connect_mongo(cfg):
     "Returns connection to MongoDB given configuration"
@@ -18,14 +31,7 @@ def connect_mongo(cfg):
 
 def setup_messages(msgs):
     "Pretty prints setup messages"
-    m = ""
-    for msg in msgs:
-        status, text = msg
-        if status:
-            m += " \033[92m✔\033[0m \033[1m" + text + "\033[0m\n"
-        else:
-            m += " \033[31m×\033[0m\033[1m " + text + "\033[0m\n"
-    return m
+    return "\n".join(status_text(s, t) for s, t in msgs)
 
 
 def check_nltk_download(*datasets):
