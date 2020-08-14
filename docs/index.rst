@@ -21,7 +21,7 @@ Jamie is hosted on GitHub_. This page provides the *API*, or *developer
 documentation* for ``jamie``.
 
 Quickstart
-==========
+----------
 
 Jamie is available on GNU/Linux, MacOS and Windows. To install using **pip**:
 
@@ -39,7 +39,7 @@ as a Jupyter notebook), or dive into the detailed methodology in
 :doc:`methods`.
 
 API documentation
-=================
+-----------------
 
 .. toctree::
    :maxdepth: 2
