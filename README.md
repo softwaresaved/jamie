@@ -34,7 +34,7 @@ require software skills.
 
 To install using pip:
 
-    git clone git@github.com:softwaresaved/jamie.git
+    git clone https://github.com/softwaresaved/jamie.git
     cd jamie
     python3 -m venv .venv
     source .venv/bin/activate
