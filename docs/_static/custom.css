@@ -5,4 +5,8 @@ h2 {
     padding-bottom: 7px !important;
     font-size: 18pt !important;
 }
-strong { font-weight: 600 !important }
+strong, dt.field-odd, dt.field-even { font-weight: 600 !important }
+dl.class { padding-bottom: 40px !important}
+dl.function { padding-bottom: 15px !important}
+dl.method { padding-top: 5px !important; padding-bottom: 5px !important}
+pre { padding-top: 15px; padding-bottom: 15px}
