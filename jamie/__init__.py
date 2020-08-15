@@ -17,7 +17,14 @@ import jamie.data.importer
 import jamie.predict
 import jamie.reports
 from jamie.information_gain import _information_gain
-from jamie.lib import connect_mongo, check_nltk_download, setup_messages
+from jamie.lib import (
+    connect_mongo,
+    check_nltk_download,
+    setup_messages,
+    bullet_text,
+    success,
+    bold,
+)
 
 NLTK_DATA = ["stopwords", "punkt"]
 
@@ -117,6 +124,22 @@ class Jamie:
             snapshot = ts.most_recent()
         if models is not None:
             models = models.split(",")
+        print(bullet_text("Training using snapshot: {}".format(snapshot)))
+        print("\n   " + bold("Known warnings"))
+        print("   --------------")
+        print(
+            """   scikit-learn shows UndefinedMetricWarning in cases when the precision
+   or recall score is ill-defined, when there are no positive predictions,
+   or no positive labels respectively. This can happen for small datasets,
+   In the case of precision, a classifier that is conservative in
+   predicting the positive class will often generate this warning. In these
+   cases the score is set to zero.
+
+   The problem can be resolved by choosing a large enough dataset, such
+   that each of the cross-validation folds is large enough, or by choosing
+   a metric that emphasies both precision and recall, such as f1 score.
+   """
+        )
         jamie.models.train(
             self.cf,
             snapshot,
@@ -127,6 +150,8 @@ class Jamie:
             scoring,
             random_state,
         )
+        print(success("Training complete"))
+        print("   Run prediction: jamie predict")
 
     def predict(self, snapshot=None):
         "Predict using specified snapshot"
