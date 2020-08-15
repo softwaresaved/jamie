@@ -73,13 +73,13 @@ class Report:
         self.data = self.data[~pd.isna(self.data.salary_median)]
         logger.info("After dropping jobs without salary: %d", len(self.data))
 
-        # Drop jobs without posted date
-        self.data = self.data[~pd.isna(self.data.posted)]
-        logger.info("After dropping jobs without posted: %d", len(self.data))
-        self.data["year_month"] = self.data.posted.apply(fix_day)
+        # Drop jobs without date
+        self.data = self.data[~pd.isna(self.data.date)]
+        logger.info("After dropping jobs without date: %d", len(self.data))
+        self.data["year_month"] = self.data.date.apply(fix_day)
 
         # Convert to datetime format to allow pandas operations
-        self.data["posted"] = pd.DatetimeIndex(self.data.posted)
+        self.data["date"] = pd.DatetimeIndex(self.data.date)
         # Drop PhD jobs, this should ideally be done earlier
         self.data = self.data[~self.data.job_title.str.contains("PhD")]
         logger.info("  After dropping jobs at PhD level: %d", len(self.data))
@@ -182,7 +182,7 @@ class Report:
         if self._yearly is None:
             self._yearly = [
                 {"group": str(i), **self.metrics(data)}
-                for i, data in self.data.groupby(self.data.posted.dt.year)
+                for i, data in self.data.groupby(self.data.date.dt.year)
             ]
         return pd.DataFrame(self._yearly) if as_dataframe else self._yearly
 

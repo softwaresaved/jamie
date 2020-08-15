@@ -242,15 +242,20 @@ class Jamie:
         "Distribution of jobs in database: monthly or yearly"
         dist = collections.defaultdict(int)
         db = connect_mongo(self.cf)
+
+        def _get_date(i):
+            return (
+                i.get("date", None) or i.get("placed_on", None) or i.get("closes", None)
+            )
+
         for i in db[self.cf["db.jobs"]].find():
-            if "placed_on" not in i:
+            date = _get_date(i)
+            if date is None:
                 continue
             if kind == "monthly":
-                dist[
-                    "{:d}-{:02d}".format(i["placed_on"].year, i["placed_on"].month)
-                ] += 1
+                dist["{:d}-{:02d}".format(date.year, date.month)] += 1
             else:
-                dist[i["placed_on"].year] += 1
+                dist[date.year] += 1
         data = pd.DataFrame(
             data=[(y, dist[y]) for y in sorted(dist)], columns=[kind[:-2], "frequency"]
         )

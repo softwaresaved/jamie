@@ -7,6 +7,12 @@ from typing import Optional, List
 from dataclasses import dataclass, asdict
 
 
+def _get_mongo_date(record, key):
+    if key in record and record[key] is not None and "$date" in record[key]:
+        return loads(json.dumps(record[key])).date()
+    return None
+
+
 class Alert(Enum):
     "Alert levels for reporting"
     High = {
@@ -108,6 +114,11 @@ class JobPrediction:
         the job is associated with
     employer : str
         Job employer
+    date : datetime.date
+        Date of the job. This is usually the same as the posted date,
+        but if that is not available, defaults to the date of job applications
+        closing, or the earliest date found in the job description. This
+        attribute should be used for computing timeseries.
     posted : datetime.date
         Date job was posted
     extra_location : str
@@ -142,6 +153,7 @@ class JobPrediction:
     employer: str
     hours: List[str]
     job_title: str
+    date: datetime.date
     posted: datetime.date
     extra_location: str
     probability: float
@@ -181,10 +193,10 @@ class JobPrediction:
         self.probability = prediction["probability"]
         self.probability_lower = prediction["lower_ci"]
         self.probability_upper = prediction["upper_ci"]
-        if "placed_on" in prediction:
-            self.posted = loads(json.dumps(prediction["placed_on"])).date()
-        else:
-            self.posted = None
+        self.posted = _get_mongo_date(prediction, "placed_on")
+        self.date = _get_mongo_date(prediction, "date")
+        closes = _get_mongo_date(prediction, "closes")
+        self.date = self.date or self.posted or closes  # select first non-null
 
     def to_dict(self):
         return asdict(self)
