@@ -53,6 +53,11 @@ def main(config, dry_run=False):
         Configuration
     dry_run: bool, optional
         If True, does not insert jobs into database, only logs missing attributes
+
+    Returns
+    -------
+    dict, optional
+        If not a dry run, returns the number of jobs inserted, duplicates and errors
     """
 
     if not dry_run:
@@ -78,6 +83,7 @@ def main(config, dry_run=False):
             except pymongo.errors:
                 njobs["mongo_error"] += 1
         logger.info("Final import state %s", njobs)
+        return njobs
     else:
         for data in _import_iterator(config["scrape.folder"], skip=[]):
             log_missing_attributes(data, ["description", "job_title", "date"])

@@ -21,7 +21,7 @@ from jamie.lib import (
     connect_mongo,
     check_nltk_download,
     setup_messages,
-    bullet_text,
+    bullet_text as o,
     success,
     bold,
 )
@@ -77,7 +77,23 @@ class Jamie:
 
     def load(self, dry_run=False):  # NOQA
         "Read scraped jobs into MongoDB"
-        jamie.data.importer.main(self.cf, dry_run=dry_run)
+        folder = " " + str(self.cf["scrape.folder"])
+        print(
+            dry_run
+            and (
+                o("Checking for missing attributes from: " + folder)
+                + "\n   This will not modify the database.\n"
+            )
+            or o("Loading jobs into database from:" + folder) + "\n"
+        )
+        njobs = jamie.data.importer.main(self.cf, dry_run=dry_run)
+        print(
+            njobs
+            and success(
+                "Loading complete, added {} jobs to database".format(njobs["inserted"])
+            )
+            or success("Check completed")
+        )
 
     def config(self, field=None, value=None):
         "Reads and sets jamie configuration"
@@ -124,7 +140,7 @@ class Jamie:
             snapshot = ts.most_recent()
         if models is not None:
             models = models.split(",")
-        print(bullet_text("Training using snapshot: {}".format(snapshot)))
+        print(o("Training using snapshot: {}".format(snapshot)))
         print("\n   " + bold("Known warnings"))
         print("   --------------")
         print(
@@ -209,7 +225,7 @@ class Jamie:
         report = jamie.reports.Report(
             jamie.snapshots.PredictionSnapshot(snapshot)
         ).create()
-        print(setup_messages([(True, "Report successfully created")]))
+        print(success("Report successfully created"))
         print("   View it: jamie view-report {}".format(report.snapshot.name))
 
     def view_report(self, snapshot=None, port=8000):
