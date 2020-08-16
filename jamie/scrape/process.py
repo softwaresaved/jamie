@@ -20,6 +20,10 @@ _table_punc = bytes.maketrans(
 _table_space = bytes.maketrans(bytes(" ", "utf-8"), bytes("_", "utf-8"))
 MINIMUM_DESCRIPTION_LENGTH = 150  # characters
 
+# Maximum number of days a job can be advertised, ensures that
+# incorrectly parsed dates are not too far in the future
+JOB_ADVERTISING_DURATION_DAYS = 400
+
 
 def get_nested_key(d, key):
     keys = key.split(".")
@@ -385,6 +389,9 @@ class JobFile:
     def parse(self, clean=True):
         "Parses job HTML or JSON and returns as a dictionary"
         raw_json = self._extract_json_ads()
+        max_date = datetime.datetime.now() + datetime.timedelta(
+            days=JOB_ADVERTISING_DURATION_DAYS
+        )
         if raw_json:
             self.data["json"] = raw_json
             self.parse_json()
@@ -398,7 +405,7 @@ class JobFile:
             or self.data.get("closes", None)
             or self._earliest_date_in_text(self._soup.get_text())
         )
-        if date is not None:
+        if date and date < max_date:
             self.data["date"] = date
 
         return self

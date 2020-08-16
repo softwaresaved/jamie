@@ -266,7 +266,7 @@ class Jamie:
 
         for i in db[self.cf["db.jobs"]].find():
             date = _get_date(i)
-            if date is None:
+            if date is None or isinstance(date, str):
                 continue
             if kind == "monthly":
                 dist["{:d}-{:02d}".format(date.year, date.month)] += 1
