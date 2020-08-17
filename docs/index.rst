@@ -50,4 +50,5 @@ API documentation
    models
    config
    predict
+   types
    cli
