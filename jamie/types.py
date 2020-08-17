@@ -1,5 +1,8 @@
 # Custom types and enums for use in Jamie
+import re
 import json
+import numpy as np
+import pandas as pd
 from bson.json_util import loads
 import datetime
 from enum import Enum, auto
@@ -200,3 +203,171 @@ class JobPrediction:
 
     def to_dict(self):
         return asdict(self)
+
+
+@dataclass
+class TrainingData:
+    """Schema for the training dataset.
+
+    Required columns for model training are 'description', 'job_title',
+    'aggregate_tags'. The attribute 'placed_on' is required for timeseries
+    graphs of the training data.
+
+    Parameters
+    ----------
+    description : str
+        Job description
+    job_title : str
+        Job title
+    aggregate_tags : int
+        Integer equals 0 or 1
+    placed_on : datetime.date
+        Date job was placed on
+    jobid : str
+        Unique jobid given by jobs.ac.uk
+    job_ref : str
+        Job reference, possibly used internally by the employer
+    contract : str
+        Contract type, fixed term or permanent, full-time or part-time
+    department : str
+        Department of the employer
+    duration_ad_days : int
+        Duration of job advertisment in days from placed_on to closes.
+    employer : str
+        Employer name
+    enhanced : str
+        HTML content can be "enhanced" or "normal", which alters the parsing
+    extra_location : str
+        Region of UK where job is from
+    final_bool : int
+        *Unknown* boolean type
+    funding_amount : Optional[str]
+        Funding amount text if for a PhD position
+    funding_for: Optional[str]
+        Specifies whether funding is for UK, EU, international or self-funded students
+    hours : str
+        Specifies whether job is full time or part time
+    in_uk : bool
+        Specifies whether job is actually in the UK. Some jobs are by UK institutions
+        but located overseas
+    invalid_code : Optional[List[str]]
+        List of job attributes that could not be parsed
+    json : Optional[str]
+        JSON representation of job
+    location : str
+        City where job is located
+    not_student : bool
+        Whether job is a PhD level position
+    original : int
+        *Unknown* boolean type
+    original_proba : float
+        *Unknown* probability
+    qualification_type : str
+        Type of qualification required for the job in term of education level
+    reference : str
+        Unknown field
+    region : str
+        Unknown field, possibly country of the UK where job is
+    run_tag : str
+        Whether job was classified in first or second run
+    salary : str
+        Text fragment which has information on salary
+    salary_max : Optional[float]
+        If a salary range is specified, higher end of the salary range, otherwise same
+        as median salary
+    salary_min : Optional[float]
+        If a salary range is specified, lower end of the salary range, otherwise same
+        as median salary
+    salary_median : Optional[float]
+        Median of salary_min, salary_max if both are present, otherwise equals
+        the salary value
+    subject_area : List[str]
+        List of academic fields for the job
+    tags : List[str]
+        List of tags (labels) given by coders to the job
+    tags_1, tags_2 : str
+        Label given to job given by coder 1 and 2 respectively,
+        one of {'No', 'Some', 'Insufficient Evidence', 'Most'} when answering the question
+        "How much time would be spent in this job developing software?"
+    tags_3 : Optional[str]
+        Label given to job by coder 3 when coder 1 and coder 2 disagreed
+    tag_count : int
+        Number of coders who classified the job
+    agg_tags : float
+        Aggregate score from coders
+    aggregate_tags : int
+        Classification of whether the job is in the target class or not
+        (1 indicating it is, 0 otherwise)
+    multi_agg_tags : str
+        Unknown field
+    consensus_tags : str
+        [tentative] Consensus of tags_1 and tags_2
+    diff_consensus_tags : str
+        Unknown field
+    """
+
+    description: str
+    job_title: str
+    aggregate_tags: int
+    placed_on: datetime.date
+    jobid: str
+    job_ref: str
+    contract: str
+    department: str
+    duration_ad_days: int
+    employer: str
+    enhanced: str
+    extra_location: str
+    final_bool: int
+    funding_amount: Optional[str]
+    funding_for: Optional[str]
+    hours: str
+    in_uk: bool
+    invalid_code: Optional[List[str]]
+    json: Optional[str]
+    location: str
+    not_student: bool
+    original: int
+    original_proba: float
+    qualification_type: str
+    reference: str
+    region: str
+    run_tag: str
+    salary: str
+    salary_max: Optional[float]
+    salary_min: Optional[float]
+    salary_median: Optional[float]
+    subject_area: List[str]
+    tags: List[str]
+    tags_1: str
+    tags_2: str
+    tags_3: Optional[str]
+    tag_count: int
+    agg_tags: float
+    aggregate_tags: int
+    multi_agg_tags: str
+    consensus_tags: str
+    diff_consensus_tags: str
+
+    def validate(self):
+        "Validates a single row of training set data"
+        contract_re = re.compile(".*(Fixed-Term|Permanent|Temporary).*", re.IGNORECASE)
+        allowed_tags = ["No", "Some", "Insufficient Evidence", "Most"]
+        return all(
+            (
+                self.tags_1 in allowed_tags and self.tags_2 in allowed_tags,
+                self.enhanced in ["normal", "enhanced"],
+                contract_re.match(self.contract),
+            )
+        )
+
+    @staticmethod
+    def reliability(data, coders=3):
+        "Returns DataFrame which can be used to compute reliability"
+        if not isinstance(data, pd.DataFrame):
+            data = pd.read_csv(data)
+        ordinal = {"No": 1, "Some": 2, "Most": 3, "Insufficient Evidence": np.nan}
+        for i in range(1, coders + 1):
+            data["coder%d" % i] = data["tags_%d" % i].map(ordinal.get)
+        data = data.set_index("jobid")
+        return data[["coder%d" % i for i in range(1, coders + 1)]]
