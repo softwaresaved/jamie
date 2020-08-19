@@ -4,7 +4,6 @@ from scipy.stats import rankdata
 from sklearn.feature_extraction.text import CountVectorizer
 from collections import defaultdict
 import pandas as pd
-from .snapshots import TrainingSnapshot
 from .clean_text import clean_text
 
 
@@ -107,13 +106,14 @@ class InformationGainTransformer:
 
 
 def _information_gain(training_snapshot, text_column, output_column="aggregate_tags"):
-    ts = TrainingSnapshot(training_snapshot)
-    data = ts.data
+    data = training_snapshot.data
     data[text_column] = data[text_column].apply(lambda x: " ".join(clean_text(x)))
     vec = CountVectorizer(ngram_range=(1, 2), stop_words="english")
     X = vec.fit_transform(data[text_column])
     ig = InformationGainTransformer()
     ig.fit(X, data[output_column], vec.get_feature_names())
-    fn = ts.path / "informationgain_{}__{}.csv".format(text_column, output_column)
+    fn = training_snapshot.path / "informationgain_{}__{}.csv".format(
+        text_column, output_column
+    )
     ig.sorted_dataframe().to_csv(fn, index=False)
     return fn
