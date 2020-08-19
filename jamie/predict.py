@@ -9,7 +9,6 @@ from tqdm import tqdm
 from bson.json_util import dumps
 from .logger import logger
 from .lib import isotime_snapshot, connect_mongo
-from .snapshots import ModelSnapshot
 from .features import valid_doc
 
 Date = datetime.date
@@ -65,7 +64,7 @@ class Predict:
 
     Parameters
     ----------
-    model_snapshot : str
+    model_snapshot : :class:`jamie.snapshots.ModelSnapshot`
         Model snapshot to use for prediction
     random_state : int, default=0
         Random state, passed to :class:`Bootstrap` instance
@@ -74,7 +73,7 @@ class Predict:
     """
 
     def __init__(self, model_snapshot, random_state=0, bootstrap_size=1000):
-        self.model_snapshot = ModelSnapshot(model_snapshot)
+        self.model_snapshot = model_snapshot
         self.bootstrap = Bootstrap(random_state, bootstrap_size)
         self.config = self.model_snapshot.metadata["config"]
         self.db = self._connect_db()

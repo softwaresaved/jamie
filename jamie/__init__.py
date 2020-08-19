@@ -59,10 +59,7 @@ class Jamie:
         ts = jamie.snapshots.TrainingSnapshotCollection()
         if (
             not ts.is_empty
-            and (
-                jamie.snapshots.TrainingSnapshot(ts.most_recent()).instance_location
-                / "training_set.csv"
-            ).exists()
+            and (ts.latest().instance_location / "training_set.csv").exists()
         ):
             msgs.append((True, "Training set exists"))
         else:
@@ -126,7 +123,7 @@ class Jamie:
 
     def train(
         self,
-        snapshot="last",
+        snapshot=None,
         featureset="rse",
         models=None,
         prediction_field="aggregate_tags",
@@ -136,11 +133,10 @@ class Jamie:
     ):
         "Train using specified snapshot (default: last)"
         ts = jamie.snapshots.TrainingSnapshotCollection(self.cf["common.snapshots"])
-        if snapshot == "last":
-            snapshot = ts.most_recent()
+        snapshot = ts[snapshot] if snapshot else ts.latest()
         if models is not None:
             models = models.split(",")
-        print(o("Training using snapshot: {}".format(snapshot)))
+        print(o("Training using snapshot: {}".format(snapshot.name)))
         print("\n   " + bold("Known warnings"))
         print("   --------------")
         print(
@@ -171,11 +167,10 @@ class Jamie:
 
     def predict(self, snapshot=None):
         "Predict using specified snapshot"
-        if snapshot is None:
-            model_snapshots = jamie.snapshots.ModelSnapshotCollection(
-                self.cf["common.snapshots"]
-            )
-            snapshot = model_snapshots.most_recent()
+        model_snapshots = jamie.snapshots.ModelSnapshotCollection(
+            self.cf["common.snapshots"]
+        )
+        snapshot = model_snapshots[snapshot] if snapshot else model_snapshots.latest()
         print(jamie.predict.Predict(snapshot).predict().dataframe)
 
     def random_sample_prediction(
@@ -184,15 +179,14 @@ class Jamie:
         "Generates a random sample of positive and negative classes"
         fn = "random-sample_n{}_rnd{}.csv".format(n_each_class, random_state)
         db = connect_mongo(self.cf)
-        if snapshot is None:
-            prediction_snapshots = jamie.snapshots.PredictionSnapshotCollection(
-                self.cf["common.snapshots"]
-            )
-            snapshot = jamie.snapshots.PredictionSnapshot(
-                prediction_snapshots.most_recent()
-            )
-        else:
-            snapshot = jamie.snapshots.PredictionSnapshot(snapshot)
+        prediction_snapshots = jamie.snapshots.PredictionSnapshotCollection(
+            self.cf["common.snapshots"]
+        )
+        snapshot = (
+            prediction_snapshots[snapshot]
+            if snapshot
+            else prediction_snapshots.latest()
+        )
         positives, negatives = snapshot.partition_jobs(n_each_class, random_state)
         data = []
 
@@ -217,35 +211,32 @@ class Jamie:
 
     def report(self, snapshot=None):
         "Generate report using specified snapshot"
-        if snapshot is None:
-            predictions = jamie.snapshots.PredictionSnapshotCollection(
-                self.cf["common.snapshots"]
-            )
-            snapshot = predictions.most_recent()
-        report = jamie.reports.Report(
-            jamie.snapshots.PredictionSnapshot(snapshot)
-        ).create()
+        predictions = jamie.snapshots.PredictionSnapshotCollection(
+            self.cf["common.snapshots"]
+        )
+        snapshot = predictions[snapshot] if snapshot else predictions.latest()
+        report = jamie.reports.Report(snapshot).create()
         print(success("Report successfully created"))
         print("   View it: jamie view-report {}".format(report.snapshot.name))
 
     def view_report(self, snapshot=None, port=8000):
         "Starts a local webserver to display reports"
-        if snapshot is None:
-            snapshot = jamie.snapshots.ReportSnapshotCollection(
-                self.cf["common.snapshots"]
-            ).most_recent()
-        jamie.reports.ReportSnapshot(snapshot).view(port)
+        reports = jamie.snapshots.ReportSnapshotCollection(self.cf["common.snapshots"])
+        snapshot = reports[snapshot] if snapshot else reports.latest()
+        snapshot.view(port)
 
     def information_gain(
         self,
-        training_snapshot="last",
+        training_snapshot=None,
         text_column="description",
         output_column="aggregate_tags",
     ):
         "Calculates information gain for text ngrams in training snapshot"
-        ts = jamie.snapshots.TrainingSnapshotCollection()
-        if training_snapshot == "last":
-            training_snapshot = ts.most_recent()
+        training_snapshot = (
+            jamie.snapshots.TrainingSnapshot(training_snapshot)
+            if training_snapshot
+            else jamie.snapshots.TrainingSnapshotCollection().latest()
+        )
         return _information_gain(training_snapshot, text_column, output_column)
 
     def list_jobids(self):

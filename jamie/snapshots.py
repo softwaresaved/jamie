@@ -131,36 +131,9 @@ class SnapshotCollection:
         "String representation of collection"
         return "\n".join(str(s) for s in self.list)
 
-    def most_recent(self):
-        "Returns most recent instance in collection using lexicographical sorting"
-        return sorted(self.instances)[-1]
-
-
-class ReportSnapshotCollection(SnapshotCollection):
-    "Training :class:`SnapshotCollection`, with subpath=reports"
-    subpath = "reports"
-
-    def __getitem__(self, key):
-        if key in self.instances:
-            return ReportSnapshot(key, self.root)
-
-
-class TrainingSnapshotCollection(SnapshotCollection):
-    "Training :class:`SnapshotCollection`, with subpath=training"
-    subpath = "training"
-
-    def __getitem__(self, key):
-        if key in self.instances:
-            return TrainingSnapshot(key, self.root)
-
-
-class ModelSnapshotCollection(SnapshotCollection):
-    "Model :class:`SnapshotCollection`, with subpath=models"
-    subpath = "models"
-
-    def __getitem__(self, key):
-        if key in self.instances:
-            return ModelSnapshot(key, self.root)
+    def latest(self):
+        "Returns latest instance in collection using lexicographical sorting"
+        return self.SnapshotClass(sorted(self.instances)[-1])
 
 
 class ReportSnapshot(Snapshot):
@@ -289,9 +262,40 @@ class PredictionSnapshot(Snapshot):
             return sample_positives, sample_negatives
 
 
+class ReportSnapshotCollection(SnapshotCollection):
+    "Training :class:`SnapshotCollection`, with subpath=reports"
+    subpath = "reports"
+    SnapshotClass = ReportSnapshot
+
+    def __getitem__(self, key):
+        if key in self.instances:
+            return ReportSnapshot(key, self.root)
+
+
+class TrainingSnapshotCollection(SnapshotCollection):
+    "Training :class:`SnapshotCollection`, with subpath=training"
+    subpath = "training"
+    SnapshotClass = TrainingSnapshot
+
+    def __getitem__(self, key):
+        if key in self.instances:
+            return TrainingSnapshot(key, self.root)
+
+
+class ModelSnapshotCollection(SnapshotCollection):
+    "Model :class:`SnapshotCollection`, with subpath=models"
+    subpath = "models"
+    SnapshotClass = ModelSnapshot
+
+    def __getitem__(self, key):
+        if key in self.instances:
+            return ModelSnapshot(key, self.root)
+
+
 class PredictionSnapshotCollection(SnapshotCollection):
     "Prediction :class:`SnapshotCollection`, with subpath=predictions"
     subpath = "predictions"
+    SnapshotClass = PredictionSnapshot
 
     def __getitem__(self, key):
         if key in self.instances:

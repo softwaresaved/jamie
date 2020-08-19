@@ -20,7 +20,6 @@ from sklearn.model_selection import (
     GridSearchCV,
     StratifiedKFold,
 )
-from .snapshots import TrainingSnapshotCollection
 from .features import select_features
 from .lib import isotime_snapshot
 from .logger import logger
@@ -367,7 +366,7 @@ def train(
     ----------
     config : :class:`jamie.config.Config`
         Configuration object
-    snapshot : str
+    snapshot : :class:`jamie.snapshots.TrainingSnapshot`
         Training snapshot to use
     featureset : str
         Featureset to use
@@ -412,8 +411,7 @@ def train(
         "data": {"models": filename["models"], "scores": filename["scores"]},
     }
     logger.info("Snapshot %s", timestamp)
-    training_snapshots = TrainingSnapshotCollection(config["common.snapshots"])
-    features = Features(training_snapshots[snapshot].data).make_arrays(prediction_field)
+    features = Features(snapshot.data).make_arrays(prediction_field)
     X_train = features.fit_transform(features.X)
     logger.info("Saving features")
     if not model_snapshot_folder.exists():
