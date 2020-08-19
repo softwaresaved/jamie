@@ -119,6 +119,9 @@ class SnapshotCollection:
         "List of instances in collection"
         return self.instances
 
+    def keys(self):
+        return self.list
+
     @property
     def is_empty(self):
         return self.instances == []
@@ -127,13 +130,18 @@ class SnapshotCollection:
         "Returns whether instance *key* is in collection"
         return key in self.instances
 
+    def __getitem__(self, key):
+        "Returns snapshot instance if present in collection"
+        if key in self.instances:
+            return self.SnapshotClass(key, root=self.root)
+
     def __str__(self):
         "String representation of collection"
         return "\n".join(str(s) for s in self.list)
 
     def latest(self):
         "Returns latest instance in collection using lexicographical sorting"
-        return self.SnapshotClass(sorted(self.instances)[-1])
+        return self.SnapshotClass(sorted(self.instances)[-1], root=self.root)
 
 
 class ReportSnapshot(Snapshot):
@@ -267,19 +275,11 @@ class ReportSnapshotCollection(SnapshotCollection):
     subpath = "reports"
     SnapshotClass = ReportSnapshot
 
-    def __getitem__(self, key):
-        if key in self.instances:
-            return ReportSnapshot(key, self.root)
-
 
 class TrainingSnapshotCollection(SnapshotCollection):
     "Training :class:`SnapshotCollection`, with subpath=training"
     subpath = "training"
     SnapshotClass = TrainingSnapshot
-
-    def __getitem__(self, key):
-        if key in self.instances:
-            return TrainingSnapshot(key, self.root)
 
 
 class ModelSnapshotCollection(SnapshotCollection):
@@ -287,19 +287,11 @@ class ModelSnapshotCollection(SnapshotCollection):
     subpath = "models"
     SnapshotClass = ModelSnapshot
 
-    def __getitem__(self, key):
-        if key in self.instances:
-            return ModelSnapshot(key, self.root)
-
 
 class PredictionSnapshotCollection(SnapshotCollection):
     "Prediction :class:`SnapshotCollection`, with subpath=predictions"
     subpath = "predictions"
     SnapshotClass = PredictionSnapshot
-
-    def __getitem__(self, key):
-        if key in self.instances:
-            return PredictionSnapshot(key, self.root)
 
 
 def main(kind, instance=None):
