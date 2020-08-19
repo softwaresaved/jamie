@@ -10,6 +10,7 @@ from pathlib import Path
 from dataclasses import asdict
 from .config import Config
 from .types import JobPrediction
+from .types import TrainingData
 from .lib import bullet_text
 
 
@@ -200,6 +201,10 @@ class TrainingSnapshot(Snapshot):
             fn = self.instance_location / "training_set.csv"
             self._data = pd.read_csv(fn)
         return self._data
+
+    def reliability(self):
+        "Converts ratings into numerical scale for inter-rater reliability analysis"
+        return TrainingData.reliability(self.data)
 
 
 class ModelSnapshot(Snapshot):
