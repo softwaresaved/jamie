@@ -316,25 +316,17 @@ def main(kind, instance=None):
     snapshot_path = Path(c["common.snapshots"])
     if not snapshot_path.exists():
         snapshot_path.mkdir()
-    if kind == "models":
-        if instance is None:
-            return ModelSnapshotCollection(snapshot_path)
-        else:
-            return ModelSnapshotCollection(snapshot_path)[instance]
-    elif kind == "training":
-        if instance is None:
-            return TrainingSnapshotCollection(snapshot_path)
-        else:
-            return TrainingSnapshotCollection(snapshot_path)[instance]
-    elif kind == "predictions":
-        if instance is None:
-            return PredictionSnapshotCollection(snapshot_path)
-        else:
-            return PredictionSnapshotCollection(snapshot_path)[instance]
-    elif kind == "reports":
-        if instance is None:
-            return ReportSnapshotCollection(snapshot_path)
-        else:
-            return ReportSnapshotCollection(snapshot_path)[instance]
-    else:
-        return "usage: jamie snapshots [training|models|predictions|reports]"
+    Collection = {
+        "models": ModelSnapshotCollection,
+        "training": TrainingSnapshotCollection,
+        "predictions": PredictionSnapshotCollection,
+        "reports": ReportSnapshotCollection,
+    }
+    if kind not in Collection:
+        return "usage: jamie snapshots [{}]".format("|".join(Collection))
+
+    return (
+        Collection[kind](snapshot_path)
+        if instance is None
+        else Collection[kind](snapshot_path)[instance]
+    )
