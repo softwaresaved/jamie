@@ -44,6 +44,11 @@ class Snapshot:
             self.root = Path(root)
         self.instance_location = self.root / self.subpath / self.instance
 
+    def __repr__(self):
+        return type(self).__name__ + "('{}', root='{}')".format(
+            self.instance, self.root
+        )
+
     def exists(self):
         "Returns whether instance exists"
         return self.instance_location.exists()
@@ -129,6 +134,9 @@ class SnapshotCollection:
     def __contains__(self, key):
         "Returns whether instance *key* is in collection"
         return key in self.instances
+
+    def __repr__(self):
+        return type(self).__name__ + "(root='{}')".format(self.root)
 
     def __getitem__(self, key):
         "Returns snapshot instance if present in collection"
