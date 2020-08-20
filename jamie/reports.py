@@ -2,6 +2,7 @@
 import json
 import chevron
 import calendar
+import datetime
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -13,6 +14,14 @@ from .snapshots import ReportSnapshot, ModelSnapshot, TrainingSnapshot
 from .types import Alert, JobType, PrecisionRecall, Contract
 
 logger = logger(name="report", stream_level="DEBUG")
+
+
+def readable_date(d):
+    try:
+        d = datetime.datetime.strptime(d, "%Y-%m-%dT%H-%M-%S")
+        return d.strftime("%H:%M on %d %B %Y")
+    except ValueError:
+        return d
 
 
 def label(x):
@@ -281,7 +290,7 @@ class Report:
             "recall_alert_level": recall_alert.tag,
             "recall_level": recall_alert.tag,
             "recall": "{:.4f}".format(recall),
-            "date": self.snapshot.name,
+            "date": readable_date(self.snapshot.name),
             "njobs_year_fig": "njobs_yearly.png",
             "propjobs_year_fig": "propjobs_yearly.png",
             "njobs_month_fig": "njobs_monthly.png",

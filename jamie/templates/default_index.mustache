@@ -24,16 +24,17 @@
     <div class="container">
 
         <h1>{{job_type}} Jobs Tracker</h1>
+        <p>
+            <i class="far fa-clock"></i> Snapshot: {{ date }} &nbsp;&nbsp;
+            <a href="https://github.com/softwaresaved/jamie"><i class="fab fa-github"></i> Github</a> &nbsp;&nbsp;
+            <a href="http://jamie.trenozoic.net"><i class="fas fa-book"></i> Documentation</a>
+        </p>
         <p class="lead">Dashboard showing how <strong>{{ job_type_lower }}</strong> jobs
-            have changed with time. We use <a href="/docs/methods.html">machine learning
+            have changed with time. We use <a href="http://jamie.trenozoic.net/methods.html">machine learning
             methods</a> and data from <a href="https://jobs.ac.uk">jobs.ac.uk</a>
           to build a predictive model that determines the probability of a
           job being a {{job_type_lower}} job.</p>
 
-        <p style="font-weight:bold">
-            <a href="https://github.com/softwaresaved/jamie"><i class="fab fa-github"></i> Github</a> &nbsp;•&nbsp;
-            <a href="/docs"><i class="fas fa-book"></i> Documentation</a>
-        </p>
         <details>
         <summary>
         <span class="{{model_confidence}}">●</span> Model confidence is <strong>{{model_confidence}}</strong>
@@ -46,6 +47,15 @@
             <div class="col-md-9"><p>{{ score_explanation }}</p></div>
         </div>
         </details>
+        <div class="row">
+            <div class="col-md-12" style="font-weight: bold">
+<a href="#hjobs"><i class="fas fa-chart-line"></i> Number of jobs</a> &nbsp;&nbsp;
+<a href="#hmeansalary"><i class="fas fa-pound-sign"></i> Mean salary</a> &nbsp;&nbsp;
+<a href="#htarget"><i class="fas fa-file-contract"></i> <a href="#hcontract">Contract type</a> &nbsp;&nbsp;
+<a href="#hlocation"><i class="fas fa-map-marker-alt"></i> Location</a> &nbsp;&nbsp;
+<a href="#htraining"><i class="fas fa-database"></i> Training data</a>
+            </div>
+        </div>
           <div class="row">
         <div class="col-md-12">
             <h3 id="hjobs">How many jobs are there?</h2>
