@@ -7,10 +7,13 @@
 aims to monitor and analyse the number of academic jobs, mainly in the UK, that
 require software skills.
 
-**[Documentation](http://data.trenozoic.net/jamie/docs/)** •
-**[Dashboard](http://data.trenozoic.net/jamie/reports/latest/)** |
+**[Documentation](http://jamie.trenozoic.net)** •
 **[Contribution Guidelines](CONTRIBUTING.md)** •
 **[Machine Learning](ML.md)**
+
+There is a [**research software jobs tracker**](http://rsejobs.trenozoic.net)
+which is an instance of jamie that tracks software jobs in
+UK universities.
 
 ## Prerequisites
 
