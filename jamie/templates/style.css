@@ -3,6 +3,7 @@ body {
   padding-bottom: 2rem;
 }
 
+a { color: #0366d6 }
 h3 {
   margin-top: 2rem;
 }
@@ -24,3 +25,6 @@ hr {
   margin-bottom: 2rem;
 }
 
+span.high { color: #28a745 }
+span.low { color: #d73a49 }
+span.medium { color: orange}

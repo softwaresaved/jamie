@@ -18,18 +18,9 @@ def _get_mongo_date(record, key):
 
 class Alert(Enum):
     "Alert levels for reporting"
-    High = {
-        "alert_level": "alert-success",
-        "text": "High confidence is defined to be above a score of 0.80",
-    }
-    Medium = {
-        "alert_level": "alert-warning",
-        "text": "Medium confidence is defined to be for scores from 0.60 to 0.80",
-    }
-    Low = {
-        "alert_level": "alert-danger",
-        "text": "Low confidence is defined for a score below 0.60",
-    }
+    High = 3
+    Medium = 2
+    Low = 1
 
     @staticmethod
     def level(n):
@@ -39,6 +30,10 @@ class Alert(Enum):
             return Alert.Medium
         else:
             return Alert.Low
+
+    @property
+    def tag(self):
+        return self.name.lower()
 
 
 class PrecisionRecall(Enum):
@@ -74,6 +69,15 @@ for the target job type."""
         }
         return return_map[precision == Alert.High, recall == Alert.High]
 
+    @property
+    def alert(self):
+        if self.name == "High":
+            return Alert.High
+        elif self.name == "Low":
+            return Alert.Low
+        else:
+            return Alert.Medium
+
 
 class Contract(Enum):
     "Contract type: Fixed Term or Permanent"
@@ -83,7 +87,7 @@ class Contract(Enum):
 
 class JobType(Enum):
     rse = {
-        "title": "Research Software Engineer",
+        "title": "Research Software",
         "search_keywords": ["research", "software"],
     }
 
