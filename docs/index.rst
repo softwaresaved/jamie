@@ -38,17 +38,13 @@ the API documentation if you want to use Jamie from a Python environment (such
 as a Jupyter notebook), or dive into the detailed methodology in
 :doc:`methods`.
 
-API documentation
+Documentation
 -----------------
 
 .. toctree::
    :maxdepth: 2
 
-   features
-   scrape
-   snapshots
-   models
-   config
-   predict
-   types
+   workflow
+   methods
    cli
+   api
