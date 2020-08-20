@@ -24,7 +24,7 @@
     <div class="container">
 
         <h1>{{job_type}} Jobs Tracker</h1>
-        <p class="lead">Dashboard showing how <strong>{{ job_type_lower}}</strong>
+        <p class="lead">Dashboard showing how <strong>{{ job_type_lower }}</strong> jobs
             have changed with time. We use <a href="/docs/methods.html">machine learning
             methods</a> and data from <a href="https://jobs.ac.uk">jobs.ac.uk</a>
           to build a predictive model that determines the probability of a
@@ -62,7 +62,7 @@
         <h3 id="hmeansalary">Mean salary</h2>
         </div>
         <div class="col-md-6"><p class="lead">
-                The mean salary of a <strong>{{job_type_lower}}<strong> job was
+                The mean salary of a <strong>{{job_type_lower}}</strong> job was
                 <strong>£{{mean_salary_target}}</strong>, compared to
             £{{mean_salary_non_target}} for other jobs.</p>
         </div>
@@ -74,7 +74,7 @@
         </div>
         <div class="col-md-6"><p class="lead">
             To track adoption of the job, this graph shows the number of
-            {{job_type}} jobs which have any of the words
+            {{job_type}} jobs which have all of the words
     <em>{{job_target_keywords}}</em> in their job title; making up a
     <strong>{{per_job_target}}%</strong> of all such jobs.</p>
         </div>
