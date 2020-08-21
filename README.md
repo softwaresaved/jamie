@@ -55,9 +55,9 @@ not. The final step is the creation of the report.
 ![workflow](docs/workflow.svg)
 
 You can take a look at the **[detailed
-workflow](http://data.trenozoic.net/jamie/docs/workflow.html)** along with the
+workflow](http://jamie.trenozoic.net/workflow.html)** along with the
 help for the command line interface, or look at how we **[built the
-model](http://data.trenozoic.net/jamie/docs/methods.html)**.
+model](http://jamie.trenozoic.net/methods.html)**.
 
 **Concurrency**. All the steps indicated above with `snapshots` support
 multiple snapshots, and independent snapshots can be worked on concurrently.
@@ -72,7 +72,7 @@ work from a database snapshot (not currently supported).
 ## Usage
 
 Detailed usage can be found in the
-[workflow](http://data.trenozoic.net/jamie/docs/workflow.html) document.
+[workflow](http://jamie.trenozoic.net/workflow.html) document.
 
 1. **Configuration**: Show the configuration using `jamie config`, or set
    configuration using `jamie config <configname> <value>`
