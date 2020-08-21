@@ -23,6 +23,14 @@ present in the [correct schema](jamie/types.py#L209), where
 `<training-snapshot>` is a slightly altered ISO8601 format of
 YYYY-MM-DDTHH-MM-SS.
 
+**Including training data in study**. The previous version automatically
+filtered out training data which had a location outside the UK and were of PhD
+or Masters level. This functionality is no longer present. This should not
+cause any major issues as (i) these jobs are a minority (<20%) of advertised
+jobs, and (ii) classifying a job as software job or not should not depend on
+the level of the job. PhD and Masters level jobs are filtered in the prediction
+phase.
+
 ### Inter-rater reliability
 
 Inter-rater reliability refers to the internal consistency in ratings of
