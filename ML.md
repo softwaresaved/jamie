@@ -54,6 +54,26 @@ Alternatively, packages such as
 [`irr`](https://cran.r-project.org/web/packages/irr/index.html) for R can also
 be used.
 
+#### Improving inter-rater reliability
+
+The first step is to collect more data, and preferably, from more coders. For
+the training set used in the current iteration, only two coders were used, with
+a third for resolving ambiguities. A better approach is to use at least three
+coders (preferably five), ask each coder to rate the proportion of time spent
+developing software in the job on a Likert scale, and combine their responses.
+This can be performed using simple tools such as mode or mean, but it is better
+to use dimensionality reduction techniques such as
+[item response theory](https://en.wikipedia.org/wiki/Item_response_theory) or
+[principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis).
+
+Once the data has been reduced to a single dimension which explains most of the
+variance, we can use a suitable threshold for dichotomization of the variable.
+The dichotomised binary variable can then be used as labels to train the
+model.
+
+[Crowdsourcing](https://doi.org/10.3758/s13428-011-0081-0) platforms can be
+used to scale the ratings process, and also make it more reproducible.
+
 ## Limitations
 
 Currently, the model has high precision and low recall, which means we have
